@@ -1,0 +1,202 @@
+================================================================
+PROSODIC — HOW TO START THE APP (DAILY REFERENCE)
+================================================================
+
+Read this top to bottom every time. Takes about 2 minutes.
+
+----------------------------------------------------------------
+WHAT YOU NEED RUNNING BEFORE THE APP WORKS
+----------------------------------------------------------------
+
+You need TWO things running at the same time:
+
+  1. The BACKEND  (Flask/Python)  — the brain of the app
+  2. The FRONTEND (React/npm)     — the visual interface
+
+If either one is missing, the app will not work.
+You must start them both, in order, every single time.
+
+================================================================
+PART 1 — START THE BACKEND
+================================================================
+
+STEP 1 — Open VS Code
+-------------------------------------------------------------
+Open VS Code from your desktop or taskbar.
+
+STEP 2 — Open the Prosodic folder
+-------------------------------------------------------------
+  1. Click "File" in the top menu bar
+  2. Click "Open Folder"
+  3. Navigate to:  C:\Users\bsfka\OneDrive\Documents\Prosodic
+  4. Click "Select Folder"
+
+You should see all the Prosodic files listed in the left sidebar.
+
+STEP 3 — Open a terminal
+-------------------------------------------------------------
+  1. Click "Terminal" in the top menu bar
+  2. Click "New Terminal"
+  3. A black panel opens at the bottom — this is Terminal 1
+
+STEP 4 — Navigate to the Prosodic folder
+-------------------------------------------------------------
+Type this exactly and press Enter:
+
+    cd "C:\Users\bsfka\OneDrive\Documents\Prosodic"
+
+The prompt should now end with:  ...\Prosodic>
+
+STEP 5 — Start the backend
+-------------------------------------------------------------
+Type this and press Enter:
+
+    python api.py
+
+WAIT. Do not touch anything. Watch for these lines to appear:
+
+    * Serving Flask app 'api'
+    * Running on http://127.0.0.1:5000
+
+When you see that — the backend is running.
+
+!!! DO NOT CLOSE THIS TERMINAL !!!
+!!! DO NOT TYPE ANYTHING ELSE IN THIS TERMINAL !!!
+
+================================================================
+PART 2 — START THE FRONTEND
+================================================================
+
+STEP 6 — Open a SECOND terminal
+-------------------------------------------------------------
+  1. Look at the terminal panel at the bottom of VS Code
+  2. Click the "+" icon at the top right of the terminal panel
+  3. A new blank terminal tab opens — this is Terminal 2
+
+You now have two tabs. Terminal 1 is still running the backend.
+
+STEP 7 — Navigate INTO the frontend folder
+-------------------------------------------------------------
+*** THIS STEP IS CRITICAL. DO NOT SKIP IT. ***
+
+Type this exactly and press Enter:
+
+    cd "C:\Users\bsfka\OneDrive\Documents\Prosodic\frontend"
+
+The prompt should now end with:  ...\Prosodic\frontend>
+
+If it does NOT say "frontend" at the end — stop and retype the command.
+Running npm start from the wrong folder is the #1 cause of errors.
+
+STEP 8 — Start the frontend
+-------------------------------------------------------------
+Type this and press Enter:
+
+    npm start
+
+WAIT. This takes 20–30 seconds. Do not close the terminal.
+
+Your browser will open automatically to:
+
+    http://localhost:3000
+
+That is the app. You are ready to work.
+
+!!! DO NOT CLOSE THIS TERMINAL !!!
+
+================================================================
+DAILY CHECKLIST — Confirm before you start working
+================================================================
+
+  [ ] Terminal 1 is open — shows "Running on http://127.0.0.1:5000"
+  [ ] Terminal 2 is open — shows npm compile messages
+  [ ] Browser is open to http://localhost:3000
+  [ ] The app loads and looks normal
+
+If all four are true — you are good to go.
+
+================================================================
+COMMON PROBLEMS AND FIXES
+================================================================
+
+PROBLEM: npm error — "Cannot find package.json" or ENOENT error
+-----------------------------------------------------------------
+CAUSE:  You ran "npm start" from the wrong folder.
+FIX:    Make sure your terminal shows ...\Prosodic\frontend> first.
+        Run the cd command again:
+            cd "C:\Users\bsfka\OneDrive\Documents\Prosodic\frontend"
+        Then run:
+            npm start
+
+PROBLEM: Browser says "Not Found"
+-----------------------------------------------------------------
+CAUSE:  You are looking at port 5000 (the backend), not the app.
+FIX:    Go to this address in your browser:
+            http://localhost:3000
+
+PROBLEM: App loads but nothing works (analyze, suggest, etc.)
+-----------------------------------------------------------------
+CAUSE:  The backend is not running.
+FIX:    Go to Terminal 1 and run:
+            python api.py
+        Wait for "Running on http://127.0.0.1:5000"
+
+PROBLEM: "npm start" says "missing script: start"
+-----------------------------------------------------------------
+CAUSE:  You are in the wrong folder.
+FIX:    Same fix as the ENOENT error above — cd into frontend first.
+
+PROBLEM: "npm start" gives error about missing modules
+-----------------------------------------------------------------
+CAUSE:  npm packages are not installed.
+FIX:    Run this first, then try npm start again:
+            npm install
+
+PROBLEM: Port 5000 already in use — backend won't start
+-----------------------------------------------------------------
+FIX:    Run this in a terminal:
+            netstat -ano | findstr :5000
+        Find the PID number at the end of the line.
+        Then run (replace 1234 with your actual PID):
+            taskkill /PID 1234 /F
+        Then try python api.py again.
+
+PROBLEM: "ModuleNotFoundError" when starting the backend
+-----------------------------------------------------------------
+FIX:    Your Python packages may need reinstalling.
+        Paste the full error message to Claude Code for help.
+
+PROBLEM: App was working, then stopped mid-session
+-----------------------------------------------------------------
+FIX:    Check both terminals. One probably crashed or was closed.
+        Restart whichever one is not running.
+
+================================================================
+IMPORTANT REMINDERS
+================================================================
+
+- NEVER close Terminal 1 or Terminal 2 while working
+- The app only runs locally on YOUR computer
+- Nothing is saved to the internet — it is all on your machine
+- The .env file holds your ANTHROPIC_API_KEY — do not delete it
+- If you changed any backend .py files, restart Terminal 1
+- If you changed any frontend files, the browser auto-refreshes
+
+================================================================
+QUICK START (once you know the steps by heart)
+================================================================
+
+Terminal 1:
+    cd "C:\Users\bsfka\OneDrive\Documents\Prosodic"
+    python api.py
+
+Terminal 2:
+    cd "C:\Users\bsfka\OneDrive\Documents\Prosodic\frontend"
+    npm start
+
+Browser:
+    http://localhost:3000
+
+================================================================
+END OF REFERENCE
+================================================================

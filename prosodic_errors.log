@@ -1,0 +1,12 @@
+2026-04-16 09:47:43,241 [model_registry] INFO: Registry initialized with 5 stub models: ['rhyme_similarity', 'cadence_pattern', 'motif_detection', 'structure', 'style']
+2026-04-16 09:47:43,242 [model_registry] INFO: Model 'rhyme_similarity': rhyme_model.pt not found — running as stub
+2026-04-16 09:47:43,242 [model_registry] INFO: Model 'cadence_pattern': cadence_model.pt not found — running as stub
+2026-04-16 09:47:43,243 [model_registry] INFO: Model 'motif_detection': motif_model.pt not found — running as stub
+2026-04-16 09:47:43,243 [model_registry] INFO: Model 'structure': structure_model.pt not found — running as stub
+2026-04-16 09:47:43,243 [model_registry] INFO: Model 'style': style_model.pt not found — running as stub
+2026-04-16 10:57:56,233 [model_registry] INFO: Registry initialized with 5 stub models: ['rhyme_similarity', 'cadence_pattern', 'motif_detection', 'structure', 'style']
+2026-04-16 10:57:56,233 [model_registry] INFO: Model 'rhyme_similarity': rhyme_model.pt not found — running as stub
+2026-04-16 10:57:56,233 [model_registry] INFO: Model 'cadence_pattern': cadence_model.pt not found — running as stub
+2026-04-16 10:57:56,233 [model_registry] INFO: Model 'motif_detection': motif_model.pt not found — running as stub
+2026-04-16 10:57:56,233 [model_registry] INFO: Model 'structure': structure_model.pt not found — running as stub
+2026-04-16 10:57:56,233 [model_registry] INFO: Model 'style': style_model.pt not found — running as stub

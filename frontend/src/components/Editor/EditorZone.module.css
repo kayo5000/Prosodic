@@ -1,0 +1,6 @@
+.zone {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  background: var(--bg);
+}

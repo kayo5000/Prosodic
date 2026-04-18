@@ -1,0 +1,105 @@
+.container {
+  position: relative;
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* ── Line numbers ── */
+.lineNumbers {
+  width: 42px;
+  padding: 18px 0;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border);
+  overflow: hidden;
+  background: var(--surface);
+}
+.lineNum {
+  height: calc(15px * 1.75);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 10px;
+  font-family: var(--font-editor);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-faint);
+  transition: color var(--t);
+  user-select: none;
+}
+.lineNum.active { color: var(--accent); }
+
+/* ── Grid overlay — mirror sets height, textarea overlays ── */
+.editorWrap {
+  flex: 1;
+  display: grid;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.textarea,
+.mirror {
+  grid-area: 1 / 1;
+  padding: 18px 22px;
+  font-family: var(--font-editor);
+  font-size: 15px;
+  line-height: 1.75;
+  white-space: pre-wrap;
+  word-break: break-word;
+  tab-size: 2;
+  box-sizing: border-box;
+  width: 100%;
+  border: none;
+  outline: none;
+  resize: none;
+  overflow: hidden;
+}
+.textarea {
+  color: transparent;
+  caret-color: var(--accent);
+  background: transparent;
+  z-index: 2;
+  position: relative;
+}
+.mirror {
+  color: var(--text-primary);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── Lines ── */
+.line {
+  min-height: calc(15px * 1.75);
+  position: relative;
+  border-radius: 2px;
+  transition: background var(--t-fast);
+}
+.line.activeLine::before {
+  content: '';
+  position: absolute;
+  left: -22px; right: -22px; top: 0; bottom: 0;
+  background: rgba(245, 197, 24, 0.035);
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+/* ── Rhyme highlight ── */
+.rhymeWord {
+  border-radius: 3px;
+  padding: 0 1px;
+  display: inline;
+  transition: opacity var(--t);
+}
+
+/* ── Placeholder ── */
+.placeholder {
+  grid-area: 1 / 1;
+  padding: 18px 22px;
+  font-family: var(--font-editor);
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--text-muted);
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+}

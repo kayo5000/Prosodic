@@ -1,0 +1,243 @@
+.topbar {
+  height: var(--topbar-h);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  gap: 10px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+}
+
+/* ── Logo ── */
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-right: 4px;
+  flex-shrink: 0;
+  text-decoration: none;
+}
+.logoIcon {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 20px;
+}
+.logoBar {
+  width: 4px;
+  background: var(--accent);
+  border-radius: 2px 2px 0 0;
+  transition: height var(--t);
+}
+.logo:hover .logoBar:nth-child(1) { height: 8px; }
+.logo:hover .logoBar:nth-child(2) { height: 20px; }
+.logo:hover .logoBar:nth-child(3) { height: 14px; }
+.logoText {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+/* ── Divider ── */
+.sep {
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+/* ── BPM ── */
+.bpmGroup {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+.bpmLabel {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.bpmInput {
+  width: 48px;
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 4px 6px;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+  transition: border-color var(--t), box-shadow var(--t);
+}
+.bpmInput:focus {
+  border-color: var(--accent-border);
+  box-shadow: 0 0 0 2px var(--accent-glow);
+}
+.bpmInput.pulse {
+  animation: pulse-border 0.5s ease 3;
+}
+.tapBtn {
+  padding: 4px 9px;
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  transition: border-color var(--t), color var(--t), background var(--t);
+  user-select: none;
+}
+.tapBtn:hover { border-color: var(--accent-border); color: var(--accent); }
+.tapBtn:active { background: var(--accent-dim); }
+
+/* ── Section name ── */
+.sectionInput {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  width: 120px;
+  transition: border-color var(--t), background var(--t);
+}
+.sectionInput:hover { border-color: var(--border); background: var(--surface-3); }
+.sectionInput:focus { border-color: var(--border-focus); background: var(--surface-3); }
+.sectionInput::placeholder { color: var(--text-muted); }
+
+/* ── Flow badge ── */
+.flowBadge {
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: 1px solid currentColor;
+  white-space: nowrap;
+  opacity: 0.9;
+  transition: opacity var(--t);
+  animation: glow-in var(--t);
+}
+.flowOnGrid       { color: var(--flow-on-grid);       background: rgba(74,222,128,0.07); }
+.flowSyncopated   { color: var(--flow-syncopated);     background: rgba(251,146,60,0.07); }
+.flowFloating     { color: var(--flow-floating);       background: rgba(96,165,250,0.07); }
+.flowPocketJumper { color: var(--flow-pocket-jumper);  background: rgba(245,197,24,0.07); }
+.flowEmpty        { color: var(--text-muted);          border-color: var(--border);  background: transparent; }
+
+/* ── Beat switch ── */
+.beatSwitch {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  user-select: none;
+  flex-shrink: 0;
+}
+.beatLabel {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  transition: color var(--t);
+}
+.beatSwitch:hover .beatLabel { color: var(--text-secondary); }
+.beatTrack {
+  width: 30px; height: 16px;
+  border-radius: 8px;
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  position: relative;
+  transition: background var(--t), border-color var(--t);
+}
+.beatTrack.on { background: var(--accent-dim); border-color: var(--accent-border); }
+.beatThumb {
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transition: left var(--t), background var(--t);
+}
+.beatTrack.on .beatThumb { left: 16px; background: var(--accent); }
+
+/* ── Beat prompt dropdown ── */
+.beatPrompt {
+  position: absolute;
+  top: calc(var(--topbar-h) + 6px);
+  right: 48px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-mid);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 50;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+  animation: fadeSlideUp 150ms ease;
+}
+.beatPromptLabel {
+  font-size: 11px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.beatPromptInput {
+  width: 56px;
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--accent);
+}
+.beatPromptInput:focus { border-color: var(--accent-border); }
+.beatPromptConfirm {
+  padding: 5px 12px;
+  background: var(--accent);
+  color: #111;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font-display);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition: opacity var(--t);
+}
+.beatPromptConfirm:hover { opacity: 0.85; }
+
+/* ── Settings button ── */
+.settingsBtn {
+  width: 30px; height: 30px;
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: background var(--t), color var(--t);
+}
+.settingsBtn:hover { background: var(--surface-3); color: var(--text-primary); }
+
+.spacer { flex: 1; min-width: 0; }

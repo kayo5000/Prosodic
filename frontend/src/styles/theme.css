@@ -1,0 +1,66 @@
+:root {
+  /* ── Core backgrounds ── */
+  --bg:           #0d0d0d;
+  --surface:      #141414;
+  --surface-2:    #1c1c1c;
+  --surface-3:    #242424;
+  --surface-4:    #2c2c2c;
+
+  /* ── Gold accent system ── */
+  --accent:         #F5C518;
+  --accent-bright:  #FFD700;
+  --accent-dim:     rgba(245, 197, 24, 0.12);
+  --accent-glow:    rgba(245, 197, 24, 0.06);
+  --accent-border:  rgba(245, 197, 24, 0.25);
+
+  /* ── Text ── */
+  --text-primary:   #EDEDEC;
+  --text-secondary: #9B9B9B;
+  --text-muted:     #4A4A4A;
+  --text-faint:     #2E2E2E;
+
+  /* ── Borders ── */
+  --border:         #242424;
+  --border-mid:     #333333;
+  --border-focus:   #4A4A4A;
+
+  /* ── Density bar colors ── */
+  --bar-internal:   #F5C518;
+  --bar-multi:      #38BDF8;
+  --bar-motif:      #C084FC;
+
+  /* ── Flow signature colors ── */
+  --flow-on-grid:        #4ADE80;
+  --flow-syncopated:     #FB923C;
+  --flow-floating:       #60A5FA;
+  --flow-pocket-jumper:  #F5C518;
+
+  /* ── Status ── */
+  --error:    #EF4444;
+  --success:  #22C55E;
+  --warning:  #F59E0B;
+
+  /* ── Typography ── */
+  --font-display: 'Outfit', sans-serif;
+  --font-ui:      'DM Sans', sans-serif;
+  --font-editor:  'JetBrains Mono', monospace;
+
+  /* ── Spacing / radius ── */
+  --radius-xs: 3px;
+  --radius-sm: 5px;
+  --radius:    8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  /* ── Transitions ── */
+  --t-fast:   100ms ease;
+  --t:        180ms ease;
+  --t-slow:   320ms ease;
+  --t-bar:    600ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ── Layout ── */
+  --topbar-h:    52px;
+  --tabs-h:      38px;
+  --density-h:   82px;
+  --panel-w:     288px;
+}

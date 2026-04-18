@@ -1,0 +1,57 @@
+.panel {
+  height: var(--density-h);
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 18px;
+  gap: 20px;
+  flex-shrink: 0;
+}
+
+.bar { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+
+.barHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.label {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.pct {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+.track {
+  height: 4px;
+  background: var(--surface-3);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width var(--t-bar);
+  position: relative;
+}
+/* Subtle glow on the fill */
+.fill::after {
+  content: '';
+  position: absolute;
+  top: -2px; right: 0;
+  width: 12px; height: 8px;
+  border-radius: 50%;
+  background: inherit;
+  filter: blur(4px);
+  opacity: 0.7;
+}
