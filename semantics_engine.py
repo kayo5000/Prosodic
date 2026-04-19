@@ -5,16 +5,15 @@ Raises confidence on intentional near-rhymes without overriding phonetics.
 
 Part of the Prosodic hip-hop lyric analysis suite.
 '''
-import spacy
 from phoneme_engine import rhyme_score
 
 nlp = None
 try:
+    import spacy
     nlp = spacy.load('en_core_web_md')
     SPACY_AVAILABLE = True
-except OSError:
+except (ImportError, OSError):
     SPACY_AVAILABLE = False
-    print('WARNING: Run: python -m spacy download en_core_web_md')
 
 def semantic_similarity(word_a, word_b):
     if not SPACY_AVAILABLE:
