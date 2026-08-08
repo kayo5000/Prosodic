@@ -31,6 +31,8 @@ What I *did* do: used the plain-language summary of §2.6 (Engine Disposition) a
 
 ### Commits (all local, on `cantos-overnight-build`)
 ```
+bfc6bb1 Commit the pre-existing Behavioral Layer (analysis/ + behavior/) and its tests
+77a43c0 Cantos: overnight build summary for Khris
 e0604b5 Cantos: full session-loop integration test (§3)
 d439167 Cantos: Direct mode (§5.2)
 35f547d Cantos: rule-voiced templates (§6)
@@ -39,7 +41,11 @@ d439167 Cantos: Direct mode (§5.2)
 9831877 Cantos: Board + Posts (§2.2)
 0564bf9 Cantos: Notebooks (§2.1) + Disposition (§2.6) + one live wiring example
 ```
-(One earlier checkpoint attempt genuinely didn't land — a prior response got cut off before the commit ran. Caught and fixed before continuing; verified via `git log` before trusting "committed" again after that.)
+
+**Two real process failures caught and fixed tonight, not swept under the rug:**
+
+1. An early checkpoint response got cut off before the commit tool call actually ran — I'd narrated "committing" without it happening. Caught by re-checking `git log`/`git status` before trusting the claim, per your direct question about it mid-build. Fixed, and I verified every commit against `git log` after that point rather than assuming.
+2. More seriously: after finishing all 6 build items, I checked `git status` for stray untracked Cantos files and found **`cantos_dev_log.py` itself — the module every single file tonight imports — had never been committed**, in an earlier session. Worse, `cantos/wiring.py` depends on `analysis/` and `behavior/` (the Behavioral Layer), which had **never been committed at all, in any branch, since before this session started**. Every commit I'd made up to that point was technically resting on uncommitted dependencies — correct in my own working directory, but broken on a fresh checkout. I didn't just assume this was fine: I `git clone`'d this branch into a scratch directory twice — once to catch the problem, once to confirm the fix — and ran the actual Cantos test suite there both times. First clone failed with `ImportError`. After committing the missing pieces, second clone: **132/132 Cantos tests passing.** That's what `bfc6bb1` and the `cantos_dev_log.py` commit are.
 
 ### Prime Directive — how it's actually enforced, not just asserted
 - `cantos/voice.py` is the only place that composes user-facing text, and every output is built from a small fixed set of developer-authored template strings + numeric/label interpolation — there is no code path that accepts or emits free text shaped like a lyric. A test scans the module's own source for LLM/network imports (`anthropic`, `openai`, `requests`, etc.) and fails if any appear.
@@ -72,6 +78,7 @@ None of these are silent — each is called out in-code and here.
 - **Only 8 of 21 engines have a real voice register** in `cantos/voice.py` (motif, rhyme, semantics, density, pocket, phrase_container, device, mastery — plus `state`). Every other engine name falls back to a generic-but-still-in-voice-shape template rather than crashing, but it's not bespoke.
 - **`SIGNAL_ADJACENCY` in `meetings.py` is a 9-pair starter set** — your spec gives exactly one worked example (theme_strengthening/emotion_rising/rhyme_family_return); the rest is my own reasonable extension, since no engine produces real signals yet to calibrate against.
 - **Nothing is wired to `api.py` / live Flask endpoints.** This entire build is a tested Python package, reachable from a Python shell or pytest — not yet reachable from the frontend or any HTTP route. That's a deliberate next step, not an oversight.
+- **Two unrelated pre-existing uncommitted files were deliberately left alone:** `tests/test_pocket_engine.py` and `tests/test_stress_signals.py`, from the earlier stress-inversion/cadence signal work (a different task, different branch conceptually). Not part of tonight's Cantos scope — flagging so you know they're still sitting uncommitted too, in case you want them handled separately.
 - **Postgres portability is structural, not literal.** Per your instruction, `cantos/db.py` uses UUID primary keys, Python-computed ISO8601 timestamps, and JSON-as-TEXT columns specifically so a migration is scoped to one file — but every query still uses SQLite's `?` placeholder style, which Postgres's `psycopg2` doesn't accept (`%s` instead). That's a mechanical find/replace scoped entirely to `cantos/*.py`, not a rewrite — but it is a real remaining step, not zero-touch. Said plainly in `db.py`'s own docstring.
 
 ---
