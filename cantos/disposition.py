@@ -186,28 +186,26 @@ def _recompute_trajectory(engine, user_id):
     return 'flat'
 
 
-def update_view(engine, user_id, subject, stance, basis):
+def update_view(engine, user_id, subject, stance, basis=None):
     '''
     Record this engine's standing view on a studied artist/work.
 
-    JUDGMENT CALL, flagged explicitly: the pasted §2.6 summary doesn't
-    fully specify whether `views` updates through the same strict
-    outcome-check gate as confidence/pride, or separately (an engine
-    forming a view WHILE studying a work reads differently than an engine
-    checking whether ITS OWN past prediction about a user's writing panned
-    out — a view can reasonably form from analysis alone). This function
-    takes the latter reading: not gated by record_outcome(), but still
-    requires `basis` (what analysis grounds the view) so it's never a bare
-    assertion, and every call is logged. Revisit if the full §2.6 text
-    says otherwise.
+    CONFIRMED design (per Khris, resolving the judgment call flagged in
+    the overnight build): views update FREELY, not gated through
+    record_outcome() — forming a view while studying a work is a
+    different act than checking whether the engine's own past prediction
+    about THIS user's writing panned out, and shouldn't carry the same
+    caution. `basis` is now optional context for the dev log, not a
+    requirement — nothing blocks a view from forming. Every call is still
+    logged either way, so views remain inspectable even though they're
+    no longer gated.
     '''
-    if not basis:
-        raise ValueError('basis is required — a view must be grounded in something computed')
     disposition = get_disposition(engine, user_id)
     disposition['views'][subject] = stance
     disposition['updated_at'] = db.now_iso()
     _save_disposition(disposition)
-    log_event((engine or '').strip().upper(), f'formed view on {subject}', f'{stance} — {basis}')
+    detail = f'{stance} — {basis}' if basis else stance
+    log_event((engine or '').strip().upper(), f'formed view on {subject}', detail)
     return disposition
 
 

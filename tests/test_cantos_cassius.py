@@ -6,7 +6,16 @@ import pytest
 import cantos.db as db
 import cantos.notes as notes
 import cantos.cassius as cassius
+import cantos.disposition as disposition
 import cantos_dev_log as cdl
+
+
+def test_delta_threshold_anchored_to_one_outcome_step():
+    """DELTA_TRIVIAL_THRESHOLD is deliberately set equal to disposition's
+    own _OUTCOME_STEP (see cassius.py's module docstring for the
+    reasoning) — if one drifts from the other in a future edit, that
+    anchor is broken silently. This test makes the drift loud instead."""
+    assert cassius.DELTA_TRIVIAL_THRESHOLD == disposition._OUTCOME_STEP
 
 
 @pytest.fixture(autouse=True)

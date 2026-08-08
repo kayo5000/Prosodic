@@ -14,11 +14,32 @@ Cassius holds the only line to the user. Daily mode:
     WITHHELD: still stored, still logged, never deleted. Per spec: "the
     gap between generated and surfaced is the mentorship."
 
-JUDGMENT CALL, flagged: "non-trivial delta" needs a numeric threshold the
-pasted spec summary doesn't specify. DELTA_TRIVIAL_THRESHOLD=0.05 here
-matches the step size disposition.py already uses for confidence/pride
-per outcome — a reasonable, documented choice, not something stated in
-the spec. Revisit if Khris specifies otherwise.
+THRESHOLD DECISION (Khris: "not sure, make your best call" — kept 0.05,
+reasoning below, not just carried over unexamined):
+
+"Non-trivial delta" needs a numeric threshold the spec doesn't specify.
+Kept at 0.05 rather than changing it, for a sharper reason than "it was
+the first number I picked": 0.05 is exactly ONE outcome-step's worth of
+movement in disposition.py (_OUTCOME_STEP). That gives it a real anchor
+instead of being arbitrary — "meaningful change" surfacing to the user
+at roughly the same magnitude as "one confirmed/contradicted call's
+worth of movement" is a coherent, defensible bar, not a round number
+picked for its own sake.
+
+CAVEAT this only holds for roughly-[0,1]-normalized metrics — everything
+actually flowing through this system so far IS on that scale (board post
+`strength`, disposition confidence/pride, state_engine's `confidence`).
+It is NOT calibrated for arbitrary-scale metrics (raw syllable counts,
+0-100 percentages like density_engine's scores) — a 0.05 absolute
+threshold would be nearly always "non-trivial" against a 0-100 scale and
+nearly never against large raw counts. This wasn't a problem to solve
+tonight since only 1 of 21 engines is wired to Notebooks and its metric
+(confidence) is already 0-1. When more engines get wired (the largest
+remaining piece of work per the overnight summary), whichever wiring
+layer feeds their metrics in should normalize to a comparable [0,1]
+range before storing, OR this threshold should become scale-aware
+(e.g. relative-change-based) at that point — flagged here rather than
+silently assumed to already generalize.
 """
 from cantos import notes as notes_module
 from cantos_dev_log import log_event

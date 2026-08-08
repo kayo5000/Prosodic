@@ -129,9 +129,11 @@ def test_mood_tags_deduplicate_and_cap():
     assert len(d['mood_tags']) <= 5
 
 
-def test_update_view_requires_basis():
-    with pytest.raises(ValueError):
-        disp.update_view('motif', 'user1', 'J. Cole', 'admires density', basis='')
+def test_update_view_works_with_no_basis_at_all():
+    """Confirmed design: views update freely — basis is optional context,
+    never a requirement. No ValueError, no grounding needed."""
+    d = disp.update_view('motif', 'user1', 'J. Cole', 'admires density')
+    assert d['views']['J. Cole'] == 'admires density'
 
 
 def test_update_view_stores_stance_and_logs():
@@ -140,6 +142,19 @@ def test_update_view_stores_stance_and_logs():
     assert d['views']['J. Cole'] == 'admires density, distrusts pocket'
     lines = cdl.read_recent(5, engine='MOTIF')
     assert any('J. Cole' in l for l in lines)
+
+
+def test_update_view_log_line_omits_basis_when_not_given():
+    disp.update_view('motif', 'user1', 'J. Cole', 'admires density')
+    lines = cdl.read_recent(5, engine='MOTIF')
+    assert any('J. Cole' in l and ' — ' not in l for l in lines)
+
+
+def test_update_view_can_be_called_repeatedly_and_freely():
+    """No cap, no cooldown, no gate — matches 'update FREELY'."""
+    for i in range(5):
+        d = disp.update_view('motif', 'user1', 'J. Cole', f'stance version {i}')
+    assert d['views']['J. Cole'] == 'stance version 4'
 
 
 def test_update_view_does_not_affect_confidence_or_pride():
