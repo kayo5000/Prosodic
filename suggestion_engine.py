@@ -136,10 +136,12 @@ def _syllable_priority(syll_count, target):
 
 # ── Layer 1 — Local filter ────────────────────────────────────────────────────
 
-def _layer1(verse_lines, bpm=None):
+def _layer1(verse_lines, ctx=None):
     '''
     Runs the full local filter pipeline.
     Returns (candidates, dominant_word, content_words).
+
+    BUILD SPEC 01: takes a SongContext instead of a bare bpm.
     '''
     dominant_word, target_rhyme = _dominant_family(verse_lines)
     if not target_rhyme:
@@ -154,7 +156,7 @@ def _layer1(verse_lines, bpm=None):
 
     content_words = _top_content_words(verse_lines)
     target_sylls = _mode_syllable_count(verse_lines)
-    motif_result = build_motif_map(verse_lines, bpm)
+    motif_result = build_motif_map(verse_lines, ctx)
     family_units = _family_rhyme_units(motif_result)
 
     MAX_CANDIDATES = 20  # top candidates sent to Claude — keeps response under token limit
@@ -344,14 +346,15 @@ _suggestion_cache = []
 
 # ── Main callable ─────────────────────────────────────────────────────────────
 
-def get_suggestions(verse_lines, bpm=None, trigger_mode='auto', target_word=None, context_lines=None, motif_bank=None):
+def get_suggestions(verse_lines, ctx=None, trigger_mode='auto', target_word=None, context_lines=None, motif_bank=None):
     '''
     Takes a partial verse and returns the top 10 ranked rhyme suggestions.
     All 20 ranked results are cached so get_more_suggestions() returns instantly.
 
     Parameters:
       verse_lines   — list of lyric lines written so far
-      bpm           — optional, passed to motif engine for pocket awareness
+      ctx           — SongContext, optional (BUILD SPEC 01 — was a bare bpm).
+                      ctx.bpm passed to motif engine for pocket awareness.
       trigger_mode  — 'auto' or 'manual', passed through to output for UI display
       target_word   — the specific word to find rhymes for (overrides dominant family detection)
       context_lines — full song context across all sections (used when motif mode is on)
@@ -364,7 +367,7 @@ def get_suggestions(verse_lines, bpm=None, trigger_mode='auto', target_word=None
     # Use context_lines for thematic scoring when provided (motif mode)
     scoring_lines = context_lines if context_lines else verse_lines
 
-    candidates, dominant_word, content_words = _layer1(scoring_lines, bpm)
+    candidates, dominant_word, content_words = _layer1(scoring_lines, ctx)
 
     # If a specific target word was given, override phonetic candidates around that word
     if target_word:
@@ -373,7 +376,11 @@ def get_suggestions(verse_lines, bpm=None, trigger_mode='auto', target_word=None
         if target_rhyme:
             raw = _scan_phonetic_candidates(target_rhyme)
             target_sylls = _mode_syllable_count(verse_lines)
-            motif_result = build_motif_map(verse_lines, bpm)
+            # BUILD SPEC 01: this used to be a SECOND, independent bpm
+            # hand-off site from the one inside _layer1() above — found
+            # during Step 0's migration-surface audit. Same ctx object
+            # now flows through both, closing that internal drift gap too.
+            motif_result = build_motif_map(verse_lines, ctx)
             family_units = _family_rhyme_units(motif_result)
             override_candidates = []
             for word, r_score, rhyme_unit in raw:
@@ -441,7 +448,8 @@ if __name__ == '__main__':
             print(f"       {s['reason']}")
             print()
 
-    top10 = get_suggestions(verse, bpm=80, trigger_mode='manual')
+    from song_context import SongContext
+    top10 = get_suggestions(verse, ctx=SongContext(bpm=80), trigger_mode='manual')
     _print_suggestions('TOP 10 SUGGESTIONS', top10)
 
     more = get_more_suggestions()

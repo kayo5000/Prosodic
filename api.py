@@ -389,7 +389,7 @@ def suggest():
     bpm, err = _parse_bpm(data, required=False)
     if err:
         return err
-    ctx = SongContext(bpm=bpm)  # BUILD SPEC 01 Step 2: minted in parallel, unused downstream for now
+    ctx = SongContext(bpm=bpm)  # BUILD SPEC 01 Step 3: /suggest chain now reads bpm from here
 
     trigger_mode = data.get('trigger_mode', 'auto')
     if trigger_mode not in ('auto', 'manual'):
@@ -405,7 +405,7 @@ def suggest():
 
     try:
         suggestions = get_suggestions(
-            verse, bpm=bpm, trigger_mode=trigger_mode,
+            verse, ctx=ctx, trigger_mode=trigger_mode,
             target_word=target_word, context_lines=context_lines,
             motif_bank=motif_bank,
         )
