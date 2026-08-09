@@ -170,6 +170,32 @@ def get_lexical_stress(word: str) -> List[int]:
     return stress if stress else [1]
 
 
+def get_lexical_stress_variants(word: str) -> List[List[int]]:
+    """
+    Return the stress pattern for EVERY CMU pronunciation variant of a word,
+    not just the first (get_lexical_stress() only ever looks at index [0]).
+
+    Used to detect words where the dictionary itself disagrees on which
+    syllable carries primary stress — the "level/even stress ambiguity"
+    signal in stress_signals.py (contested-prominence compounds, e.g. some
+    compound nouns/adjectives with legitimately disputed prominence).
+
+    Returns:
+        List of stress-pattern lists, one per CMU pronunciation variant.
+        Falls back to [get_lexical_stress(word)] (a single-item list) for
+        OOV words or words with only one listed pronunciation.
+    """
+    cmu = _load_cmudict()
+    clean = re.sub(r"[^a-zA-Z']", "", word).lower().rstrip("'")
+    if not clean or clean not in cmu:
+        return [get_lexical_stress(word)]
+    variants = [
+        [int(p[-1]) for p in phonemes if p[-1].isdigit()]
+        for phonemes in cmu[clean]
+    ]
+    return variants or [get_lexical_stress(word)]
+
+
 # ---------------------------------------------------------------------------
 # Syllable count from CMU dict
 # ---------------------------------------------------------------------------
@@ -307,6 +333,62 @@ def infer_performed_stress(
             "grid_position":    grid_pos,
             "beat_number":      beat_num,
             "performed_stress": perf_stress,
+            "lexical_stress":   lex_stress,
+        })
+
+    return result
+
+
+def infer_performed_stress_from_stream(stream_syllables: List[Dict]) -> List[Dict]:
+    """
+    Same output shape as infer_performed_stress(), but sourced from a
+    syllable stream pocket_engine has already placed on the grid
+    (pocket_engine.enrich_stream_with_pocket output, or the equivalent
+    per-line list from map_line_to_pocket) instead of recomputing a
+    proportional distribution independently from raw text.
+
+    This is the live-pipeline entry point. Since pocket_engine's placement
+    is no longer pure proportional distribution — it nudges stressed
+    syllables toward strong/pocket beats — recomputing position from
+    scratch here would silently produce a DIFFERENT, disagreeing "performed"
+    position than the one the rest of the app (UI, flow signature) actually
+    uses. Reading the real pocket_position off the stream instead keeps the
+    lexical-vs-performed comparison honest: "performed" means what
+    pocket_engine actually did, not a second independent guess.
+
+    Args:
+        stream_syllables: syllable dicts for ONE line, each already
+            carrying word, word_index, pocket_position, beat_number,
+            and stress (0/1/2, from syllable_engine) — i.e. output of
+            pocket_engine's position assignment.
+
+    Returns:
+        Same shape as infer_performed_stress(): list of dicts with word,
+        word_index, syllable_index, global_syll_idx, grid_position,
+        beat_number, performed_stress, lexical_stress. Syllables missing a
+        pocket_position (not yet grid-placed) are skipped.
+    """
+    result = []
+    word_syll_counter: Dict[int, int] = {}
+    for gi, s in enumerate(stream_syllables):
+        grid_pos = s.get("pocket_position")
+        if grid_pos is None:
+            continue
+        wi = s.get("word_index", 0)
+        si = word_syll_counter.get(wi, 0)
+        word_syll_counter[wi] = si + 1
+        lex_stress = s.get("stress")
+        if lex_stress is None:
+            lex_stress = 1 if s.get("is_stressed") else 0
+
+        result.append({
+            "word":             s.get("word", ""),
+            "word_index":       wi,
+            "syllable_index":   si,
+            "global_syll_idx":  gi,
+            "grid_position":    grid_pos,
+            "beat_number":      s.get("beat_number", (grid_pos // 4) + 1),
+            "performed_stress": _grid_position_to_stress(grid_pos),
             "lexical_stress":   lex_stress,
         })
 

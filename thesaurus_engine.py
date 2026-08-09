@@ -203,7 +203,3 @@ def suggest_cluster_words(cluster_words: list[str], exclude: list[str] = None, l
         {'word': word, 'score': score, 'matched_from': matched_from[word]}
         for word, score in ranked[:limit]
     ]
-
-
-def db_available() -> bool:
-    return os.path.exists(DB_PATH)

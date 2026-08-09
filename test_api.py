@@ -80,6 +80,38 @@ check('density_summary has internal', 'internal' in data.get('density_summary', 
 check('density_summary has motif', 'motif' in data.get('density_summary', {}))
 check('density_summary has multisyllabic', 'multisyllabic' in data.get('density_summary', {}))
 
+# ── POST /analyze — cadence_signals (stress/rhythm taxonomy) ───────────────────
+# Guards specifically against the semantic_shift failure mode: a field that's
+# present in the response shape but is actually a hardcoded no-op. Proves a
+# REAL request through the real HTTP layer produces non-empty, populated,
+# input-dependent data — not just that the key exists.
+section('POST /analyze cadence_signals:')
+cs = data.get('cadence_signals', {})
+check('has cadence_signals', 'cadence_signals' in data)
+check('cadence_signals has signal_counts', 'signal_counts' in cs)
+check('signal_counts has all 8 taxonomy types',
+      set(cs.get('signal_counts', {}).keys()) == {
+          'promotion', 'demotion', 'syncopation', 'trochaic_inversion',
+          'stress_clash', 'stress_lapse', 'secondary_recruitment',
+          'level_stress_ambiguity',
+      })
+check('signals list is non-empty for this verse', len(cs.get('signals', [])) > 0,
+      f"got {len(cs.get('signals', []))} signals")
+check('every signal has a deliberateness field',
+      all('deliberateness' in s for s in cs.get('signals', [])))
+check('deliberateness is never a bare "deliberate"',
+      all(s.get('deliberateness') != 'deliberate' for s in cs.get('signals', [])))
+check('deliberateness values are only the 3 allowed',
+      set(s.get('deliberateness') for s in cs.get('signals', [])) <=
+      {'uncertain', 'likely_automatic', 'possible_deliberate'})
+
+# Not-a-no-op proof: a different verse must produce different counts.
+r2 = client.post('/analyze', json={'verse_lines': ['Losin winnin bank account thinnin'], 'bpm': 140})
+cs2 = r2.get_json().get('cadence_signals', {})
+check('cadence_signals differs for a different verse (not a static placeholder)',
+      cs.get('signal_counts') != cs2.get('signal_counts'),
+      f"both returned {cs.get('signal_counts')}")
+
 # ── POST /suggest — validation ────────────────────────────────────────────────
 section('POST /suggest validation:')
 r = client.post('/suggest', json={'verse_lines': VERSE, 'trigger_mode': 'bad'})
