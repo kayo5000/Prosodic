@@ -37,6 +37,7 @@ from veil_prompt import VEIL_SYSTEM_PROMPT
 from learning_engine import record_signals_batch, get_top_signals
 from veil_revival_routes import veil_revival_bp
 import usage_history
+from song_context import SongContext
 
 logging.basicConfig(
     level=logging.INFO,
@@ -355,6 +356,7 @@ def analyze():
     bpm, err = _parse_bpm(data, required=True)
     if err:
         return err
+    ctx = SongContext(bpm=bpm)  # BUILD SPEC 01 Step 2: minted in parallel, unused downstream for now
 
     log.info('POST /analyze  lines=%d  bpm=%s', len(verse), bpm)
 
@@ -387,6 +389,7 @@ def suggest():
     bpm, err = _parse_bpm(data, required=False)
     if err:
         return err
+    ctx = SongContext(bpm=bpm)  # BUILD SPEC 01 Step 2: minted in parallel, unused downstream for now
 
     trigger_mode = data.get('trigger_mode', 'auto')
     if trigger_mode not in ('auto', 'manual'):
