@@ -7,7 +7,6 @@ Part of the Prosodic hip-hop lyric analysis suite.
 '''
 import logging
 import nltk
-import re
 from functools import lru_cache
 
 log = logging.getLogger(__name__)
@@ -15,6 +14,7 @@ log = logging.getLogger(__name__)
 nltk.download('cmudict', quiet=True)
 nltk.download('averaged_perceptron_tagger_eng', quiet=True)
 from nltk.corpus import cmudict
+import normalization_engine
 from normalization_engine import CONTRACTIONS
 
 # Pre-warm the NLTK perceptron tagger so it loads once at import time
@@ -49,13 +49,39 @@ FUNCTION_WORDS = {
 # ── Normalization ────────────────────────────────────────
 
 def normalize(word):
-    word = word.lower().strip()
-    word = re.sub(r'[^a-z\']', '', word)
-    if word in CONTRACTIONS:
-        return CONTRACTIONS[word]
-    if word.endswith("in'"):
-        return word[:-3] + 'ing'
-    return word
+    '''
+    Was a smaller local cleaner (lowercase, strip non-letters, contraction
+    lookup, a narrow -in' -> -ing fallback) that duplicated a fraction of
+    what normalization_engine.py's real 6-layer pipeline already does.
+    Now delegates to that pipeline — slang mapping, numeric substitution,
+    repeated-letter stripping, and hyphenated-compound splitting all
+    actually apply to real CMU/g2p lookups now, not just to whatever
+    called normalization_engine directly.
+
+    Checked directly, not assumed: normalization_engine's own generic
+    apocope rule is actually BROADER than the one this function used to
+    have — it catches both "-in'" (with apostrophe) AND a bare "-in"
+    ending via a consonant-preceding heuristic (so "trippin" alone, no
+    apostrophe, already resolves to "tripping"; real -in words like "pin"
+    or "win" are correctly left alone). So no local fallback is needed
+    here anymore — confirmed empirically before removing it, not assumed
+    safe to drop.
+
+    normalization_engine.normalize() returns a dict, and 'normalized' can
+    be a LIST for a hyphenated compound (e.g. "top-notch" -> ["top",
+    "notch"]) since that function is built to split compounds into
+    separate tokens. get_phonemes() looks up ONE word's pronunciation, so
+    for a split compound this takes the LAST part — English compound
+    stress/rhyme typically lands on the final element. That's a real,
+    documented judgment call, not risk-free, but strictly better than the
+    previous behavior: the old regex just stripped the hyphen entirely
+    ("top-notch" -> "topnotch", a non-word CMU/g2p would mangle).
+    '''
+    result = normalization_engine.normalize(word)
+    normalized = result['normalized']
+    if isinstance(normalized, list):
+        normalized = normalized[-1] if normalized else word
+    return (normalized or '').lower().strip()
 
 # ── Core Lookup ──────────────────────────────────────────
 @lru_cache(maxsize=4096)
