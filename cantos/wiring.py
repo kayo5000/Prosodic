@@ -16,6 +16,7 @@ from analysis.bar_segmenter import segment
 from analysis.bar_feature_mapper import map_features
 from behavior.state_engine import classify as classify_state
 from feedback_engine import assemble_feedback
+from song_context import SongContext
 from cantos import notebooks
 
 
@@ -38,7 +39,7 @@ def record_state_snapshot(user_id, session_id, verse_text, bpm):
         raise ValueError('verse_text must contain at least one non-empty line')
 
     seg = segment(verse_text, bpm)
-    engine_outputs = assemble_feedback(verse_lines, bpm)
+    engine_outputs = assemble_feedback(verse_lines, SongContext(bpm=bpm))
     bar_features = map_features(seg, engine_outputs)
     state_result = classify_state({
         'snapshot_id': seg.get('segmentation_id'),
