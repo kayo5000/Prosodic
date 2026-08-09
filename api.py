@@ -603,7 +603,7 @@ def suggest_family():
     Returns top matches with scores >= 0.65 (includes slant bridges).
     '''
     from phoneme_engine import get_phonemes, get_rhyme_unit_from_phonemes, syllable_rhyme_score, classify_r_family
-    from rhyme_detection_engine import _r_family_compatible
+    from rhyme_detection_engine import r_family_compatible
     body = request.get_json(silent=True) or {}
     word = body.get('word', '').strip()
     families = body.get('families', [])
@@ -635,7 +635,7 @@ def suggest_family():
             sw_ru = get_rhyme_unit_from_phonemes(sw_phonemes)
             if not sw_ru:
                 continue
-            if not _r_family_compatible(target_r_class, classify_r_family(sw_ru)):
+            if not r_family_compatible(target_r_class, classify_r_family(sw_ru)):
                 continue
             score = syllable_rhyme_score(target_ru, sw_ru)
             if score > best:

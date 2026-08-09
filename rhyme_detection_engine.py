@@ -66,7 +66,7 @@ def extract_rhyme_candidates(stream):
     return candidates
 
 
-def _r_family_compatible(fam_i, fam_j):
+def r_family_compatible(fam_i, fam_j):
     '''
     Hard gate: returns True only if two R-family class codes may be compared.
 
@@ -96,7 +96,7 @@ def find_rhyme_groups(candidates):
     Groups candidates by rhyme family using Union-Find (connected components).
 
     Two syllables are connected if syllable_rhyme_score >= RHYME_THRESHOLD
-    AND their R-family classes are compatible (see _r_family_compatible).
+    AND their R-family classes are compatible (see r_family_compatible).
     Because Union-Find is transitive, if A-B and B-C are both connected,
     A, B, and C end up in the same family even if A-C never directly compared.
 
@@ -124,7 +124,7 @@ def find_rhyme_groups(candidates):
     # The R-family gate fires before any score is computed.
     for i in range(n):
         for j in range(i + 1, n):
-            if not _r_family_compatible(r_fams[i], r_fams[j]):
+            if not r_family_compatible(r_fams[i], r_fams[j]):
                 continue
             score = syllable_rhyme_score(candidates[i]['rhyme_unit'], candidates[j]['rhyme_unit'])
             if score >= RHYME_THRESHOLD:
@@ -140,7 +140,7 @@ def find_rhyme_groups(candidates):
             if find(i) == find(j):
                 continue
             # Hard gate: ER (1) never participates in the slant bridge
-            if not _r_family_compatible(r_fams[i], r_fams[j]):
+            if not r_family_compatible(r_fams[i], r_fams[j]):
                 continue
             score = syllable_rhyme_score(candidates[i]['rhyme_unit'], candidates[j]['rhyme_unit'])
             if score >= EH_SLANT_MIN_SCORE:
@@ -195,7 +195,7 @@ def build_compound_sequences(stream, window=2):
                 for sa, sb in zip(seq_a, seq_b):
                     fa = classify_r_family(sa['rhyme_unit'])
                     fb = classify_r_family(sb['rhyme_unit'])
-                    if not _r_family_compatible(fa, fb):
+                    if not r_family_compatible(fa, fb):
                         blocked = True
                         break
                     scores.append(syllable_rhyme_score(sa['rhyme_unit'], sb['rhyme_unit']))
