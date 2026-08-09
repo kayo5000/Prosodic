@@ -87,7 +87,3 @@ def search(query: str, limit: int = 30) -> list[str]:
         (query + '%', limit)
     ).fetchall()
     return [r['word'] for r in rows]
-
-
-def db_available() -> bool:
-    return os.path.exists(DB_PATH)

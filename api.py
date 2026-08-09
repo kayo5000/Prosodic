@@ -166,6 +166,7 @@ def add_cors(response):
 @app.route('/auth/update', methods=['OPTIONS'])
 @app.route('/mastery', methods=['OPTIONS'])
 @app.route('/thesaurus/bridge', methods=['OPTIONS'])
+@app.route('/thesaurus/reverse', methods=['OPTIONS'])
 @app.route('/suggest-motif-words', methods=['OPTIONS'])
 @app.route('/thesaurus/synonyms', methods=['OPTIONS'])
 @app.route('/thesaurus/related', methods=['OPTIONS'])
@@ -665,6 +666,27 @@ def thesaurus_bridge():
 
     result = find_bridge_words(word_a, word_b)
     return jsonify(result)
+
+
+@app.route('/thesaurus/reverse', methods=['POST'])
+def thesaurus_reverse():
+    '''
+    POST /thesaurus/reverse
+    Body: { word: str }
+    Finds root words for which `word` appears as a synonym — useful for
+    discovering what concepts cluster around a word (e.g. "spark" turns up
+    as a synonym under "ignite", "inspire", "flint"...). The inverse
+    direction of /thesaurus/synonyms.
+    '''
+    from thesaurus_engine import reverse_lookup
+
+    body = request.get_json(silent=True) or {}
+    word = (body.get('word') or '').strip()
+    if not word:
+        return jsonify({'error': 'word is required'}), 400
+
+    roots = reverse_lookup(word)
+    return jsonify({'word': word.lower(), 'roots': roots, 'count': len(roots)})
 
 
 @app.route('/thesaurus/synonyms', methods=['POST'])

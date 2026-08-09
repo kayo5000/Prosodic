@@ -47,18 +47,6 @@ def _nearest_strong_target(pos_mod16):
     delta = (best_target - pos_mod16 + 8) % 16 - 8
     return best_target, delta
 
-def get_syllable_window(bpm):
-    if bpm < 80:
-        return (1, 2)
-    elif bpm < 100:
-        return (2, 3)
-    elif bpm < 120:
-        return (2, 4)
-    elif bpm < 140:
-        return (3, 5)
-    else:
-        return (4, 8)
-
 def _assign_positions(syllables, start_position, total):
     '''
     Shared position assignment. Baseline is proportional distribution across
@@ -125,14 +113,6 @@ def enrich_stream_with_pocket(stream, bpm, start_position=0):
             _assign_positions(line_sylls, start_position, len(line_sylls))
     return stream
 
-
-def is_pocket_rhyme(word, line, bpm):
-    '''Returns True if this word lands on a pocket position.'''
-    mapped = map_line_to_pocket(line, bpm)
-    for s in mapped:
-        if s['word'].lower() == word.lower() and s['on_pocket']:
-            return True
-    return False
 
 def get_flow_signature(verse_lines, ctx):
     '''

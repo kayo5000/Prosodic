@@ -102,19 +102,6 @@ def get_top_signals(limit=50):
     return [dict(r) for r in rows]
 
 
-def get_word_history(word):
-    '''Returns all correction signals for a single word.'''
-    clean = normalize(word)
-    conn = _conn()
-    rows = conn.execute('''
-        SELECT word, phoneme_sequence, correction_type, color_id, count, last_seen
-        FROM global_correction_signals
-        WHERE word = ?
-        ORDER BY count DESC
-    ''', (clean,)).fetchall()
-    return [dict(r) for r in rows]
-
-
 # ── Test Block ───────────────────────────────────────────
 if __name__ == '__main__':
     # Simulate a few corrections
