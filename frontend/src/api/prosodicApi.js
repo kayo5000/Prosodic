@@ -38,3 +38,5 @@ export const autofill = (verse_lines, families, threshold = 0.75) =>
 export const recordCorrections = (signals) => {
   api.post('/corrections', { signals }).catch(() => {});
 };
+
+export const getMastery = () => wrap(() => api.get('/mastery'));

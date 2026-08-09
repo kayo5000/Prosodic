@@ -15,6 +15,8 @@ import ChatThreadPage from './ChatThreadPage';
 import FreewritePage from './FreewritePage';
 import ToolsPage from './ToolsPage';
 import NotepadPage from './NotepadPage';
+import MasteryPage from './MasteryPage';
+import ProfilePage from './ProfilePage';
 import { PinnableProvider } from '../state/PinnableContext';
 import { X } from 'lucide-react';
 
@@ -65,48 +67,31 @@ function FloatingTimer() {
             transition: 'border-color 1.5s ease, box-shadow 1.5s ease',
           }}
         >
-          {/* Progress bar along bottom edge */}
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 2, background: 'rgba(255,255,255,0.06)' }}>
             <div style={{
               height: '100%', width: `${pctElapsed * 100}%`,
-              background: color,
-              boxShadow: `0 0 6px ${color}`,
+              background: color, boxShadow: `0 0 6px ${color}`,
               transition: 'width 1s linear, background 1.5s ease',
             }} />
           </div>
-
-          {/* Clickable area → back to freewrite */}
           <button
             onClick={() => navigate('/freewrite')}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              padding: '8px 10px 10px 12px',
-              background: 'none', border: 'none', cursor: 'pointer',
-            }}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px 10px 12px', background: 'none', border: 'none', cursor: 'pointer' }}
           >
-            {/* Mini arc */}
             <div style={{ position: 'relative', width: 28, height: 28, flexShrink: 0 }}>
               <svg width={28} height={28} style={{ transform: 'rotate(-90deg)' }}>
                 <circle cx={14} cy={14} r={11} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={2.5} />
-                <circle
-                  cx={14} cy={14} r={11} fill="none"
-                  stroke={color} strokeWidth={2.5} strokeLinecap="round"
+                <circle cx={14} cy={14} r={11} fill="none" stroke={color} strokeWidth={2.5} strokeLinecap="round"
                   strokeDasharray={`${2 * Math.PI * 11}`}
                   strokeDashoffset={`${2 * Math.PI * 11 * pctElapsed}`}
                   style={{ transition: 'stroke-dashoffset 1s linear, stroke 1.5s ease' }}
                 />
               </svg>
             </div>
-            <span style={{
-              fontFamily: 'Outfit, sans-serif', fontSize: 15, fontWeight: 700,
-              color, letterSpacing: '0.05em',
-              transition: 'color 1.5s ease',
-            }}>
+            <span style={{ fontFamily: 'Outfit, sans-serif', fontSize: 15, fontWeight: 700, color, letterSpacing: '0.05em', transition: 'color 1.5s ease' }}>
               {expired ? 'Done' : formatTime(remaining)}
             </span>
           </button>
-
-          {/* X — end timer */}
           <button
             onClick={reset}
             style={{
@@ -128,15 +113,6 @@ function FloatingTimer() {
   );
 }
 
-function PlaceholderPage({ name }) {
-  return (
-    <div className="flex items-center justify-center min-h-screen">
-      <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 18, color: '#9B9B9B' }}>{name}</p>
-    </div>
-  );
-}
-
-// Wraps each page with enter/exit animation
 function Page({ children }) {
   return (
     <motion.div
@@ -153,21 +129,21 @@ function Page({ children }) {
 function AnimatedRoutes() {
   const location = useLocation();
   return (
-    // mode="wait" — old page fully exits before new one enters
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
         <Route path="/"          element={<Page><NewChatPage /></Page>} />
         <Route path="/search"    element={<Page><SearchPage /></Page>} />
         <Route path="/chats"     element={<Page><ChatsPage /></Page>} />
         <Route path="/projects"  element={<Page><ProjectsPage /></Page>} />
-        <Route path="/progress"  element={<Page><PlaceholderPage name="Progress" /></Page>} />
+        <Route path="/progress"  element={<Page><MasteryPage /></Page>} />
         <Route path="/notepad"   element={<Page><NotepadPage /></Page>} />
         <Route path="/songs"     element={<Page><SongsPage /></Page>} />
         <Route path="/chat/:id"  element={<Page><ChatThreadPage /></Page>} />
-        <Route path="/new-song"   element={<Page><SongViewPage /></Page>} />
-        <Route path="/song-view"  element={<Page><SongViewPage /></Page>} />
-        <Route path="/freewrite"  element={<Page><FreewritePage /></Page>} />
-        <Route path="/tools"      element={<Page><ToolsPage /></Page>} />
+        <Route path="/new-song"  element={<Page><SongViewPage /></Page>} />
+        <Route path="/song-view" element={<Page><SongViewPage /></Page>} />
+        <Route path="/freewrite" element={<Page><FreewritePage /></Page>} />
+        <Route path="/tools"     element={<Page><ToolsPage /></Page>} />
+        <Route path="/profile"   element={<Page><ProfilePage /></Page>} />
       </Routes>
     </AnimatePresence>
   );
@@ -177,14 +153,13 @@ export default function Dashboard() {
   return (
     <TimerProvider>
       <PinnableProvider>
-      <ShaderBackground>
-        <SideNav />
-        <FloatingTimer />
-        {/* Offset content so nothing hides behind the 60px icon rail */}
-        <div style={{ marginLeft: 60 }}>
-          <AnimatedRoutes />
-        </div>
-      </ShaderBackground>
+        <ShaderBackground>
+          <SideNav />
+          <FloatingTimer />
+          <div style={{ marginLeft: 60 }}>
+            <AnimatedRoutes />
+          </div>
+        </ShaderBackground>
       </PinnableProvider>
     </TimerProvider>
   );

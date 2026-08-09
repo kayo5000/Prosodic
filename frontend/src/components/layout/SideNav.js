@@ -1,12 +1,15 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   MessageSquarePlus, Search, MessageSquare, FolderKanban,
   BarChart3, Music, FileAudio, ChevronRight, PenLine, Wrench,
   Pin, X, NotebookPen, Zap,
+  LogOut, HelpCircle, CreditCard, User, Settings,
 } from 'lucide-react';
 import { usePins, MAX_PINS } from '../../state/PinnableContext';
+import { useAuth } from '../../state/AuthContext';
 
 const RAIL_W = 64;
 const OPEN_W = 260;
@@ -24,7 +27,6 @@ const NAV_ITEMS = [
   { label: 'Notepad',    icon: NotebookPen,       path: '/notepad' },
 ];
 
-// Type config — icon + color per pin type
 const PIN_TYPES = {
   song:       { icon: Music,         color: '#F5C518' },
   chat:       { icon: MessageSquare, color: '#38BDF8' },
@@ -34,25 +36,130 @@ const PIN_TYPES = {
   tool:       { icon: Wrench,        color: '#94A3B8' },
 };
 
+const USER_MENU_ITEMS = [
+  { label: 'Profile',        icon: User,        path: '/profile'  },
+  { label: 'Plan & Billing', icon: CreditCard,  path: '/billing'  },
+  { label: 'Settings',       icon: Settings,    path: '/settings' },
+  { label: 'Help',           icon: HelpCircle,  path: '/help'     },
+];
+
 function getPinType(type) {
   return PIN_TYPES[type] || PIN_TYPES.tool;
 }
 
-
 export default function SideNav() {
-  const [open, setOpen] = useState(false);
-  const navigate        = useNavigate();
-  const location        = useLocation();
-  const { pins, removePin } = usePins();
+  const [open, setOpen]         = useState(false);
+  const [userMenu, setUserMenu] = useState(false);
+  const [popupPos, setPopupPos] = useState({ bottom: 0, left: 0 });
+  const userBtnRef              = useRef(null);
+  const navigate                = useNavigate();
+  const location                = useLocation();
+  const { pins, removePin }     = usePins();
+  const { user, logout }        = useAuth();
+
+  useEffect(() => {
+    if (!userMenu) return;
+    const handler = (e) => {
+      const inBtn   = userBtnRef.current && userBtnRef.current.contains(e.target);
+      const inPopup = e.target.closest('[data-user-menu]');
+      if (!inBtn && !inPopup) setUserMenu(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [userMenu]);
 
   const go = (path) => {
     navigate(path);
     if (path.startsWith('/chat')) setOpen(false);
   };
 
+  const userInitial = (user?.username || user?.email || 'U')[0].toUpperCase();
+
+  const userMenuPortal = createPortal(
+    <AnimatePresence>
+      {userMenu && (
+        <motion.div
+          data-user-menu="true"
+          initial={{ opacity: 0, y: 8, scale: 0.96 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 8, scale: 0.96 }}
+          transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+          style={{
+            position: 'fixed',
+            bottom: popupPos.bottom,
+            left: popupPos.left,
+            width: 220, borderRadius: 14, zIndex: 9999,
+            background: 'rgba(14,14,18,0.97)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            backdropFilter: 'blur(24px)',
+            WebkitBackdropFilter: 'blur(24px)',
+            boxShadow: '0 16px 48px rgba(0,0,0,0.6)',
+            overflow: 'hidden', padding: '6px 0',
+          }}
+        >
+          <div style={{ padding: '10px 14px 8px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+            <div style={{
+              width: 32, height: 32, borderRadius: '50%', marginBottom: 8,
+              background: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <span style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 13, fontWeight: 700, color: '#fff' }}>
+                {userInitial}
+              </span>
+            </div>
+            <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 12, color: '#9B9B9B', margin: 0 }}>
+              {user?.email}
+            </p>
+          </div>
+
+          <div style={{ padding: '4px 0' }}>
+            {USER_MENU_ITEMS.map(({ label, icon: Icon, path }) => (
+              <button
+                key={path}
+                onClick={() => { setUserMenu(false); navigate(path); }}
+                style={{
+                  width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '8px 14px', background: 'none', border: 'none',
+                  cursor: 'pointer', color: '#9B9B9B',
+                  fontFamily: 'DM Sans, sans-serif', fontSize: 13,
+                  transition: 'color 120ms, background 120ms', textAlign: 'left',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.color = '#EDEDEC'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
+                onMouseLeave={e => { e.currentTarget.style.color = '#9B9B9B'; e.currentTarget.style.background = 'none'; }}
+              >
+                <Icon size={14} strokeWidth={1.8} />
+                {label}
+              </button>
+            ))}
+          </div>
+
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', padding: '4px 0' }}>
+            <button
+              onClick={() => { setUserMenu(false); logout(); }}
+              style={{
+                width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                padding: '8px 14px', background: 'none', border: 'none',
+                cursor: 'pointer', color: '#9B9B9B',
+                fontFamily: 'DM Sans, sans-serif', fontSize: 13,
+                transition: 'color 120ms, background 120ms', textAlign: 'left',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.color = '#EF4444'; e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; }}
+              onMouseLeave={e => { e.currentTarget.style.color = '#9B9B9B'; e.currentTarget.style.background = 'none'; }}
+            >
+              <LogOut size={14} strokeWidth={1.8} />
+              Log Out
+            </button>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>,
+    document.body
+  );
+
   return (
     <>
-      {/* Backdrop */}
+      {userMenuPortal}
+
       <AnimatePresence>
         {open && (
           <motion.div
@@ -71,7 +178,6 @@ export default function SideNav() {
         )}
       </AnimatePresence>
 
-      {/* ── Panel ─────────────────────────────────────────────────────── */}
       <motion.div
         animate={{ width: open ? OPEN_W : RAIL_W }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
@@ -83,7 +189,7 @@ export default function SideNav() {
           overflow: 'hidden',
         }}
       >
-        {/* Logo / toggle */}
+        {/* Logo */}
         <button
           onClick={() => setOpen(o => !o)}
           title={open ? 'Collapse' : 'Expand menu'}
@@ -116,7 +222,7 @@ export default function SideNav() {
           </AnimatePresence>
         </button>
 
-        {/* ── Nav items ─────────────────────────────────────────────── */}
+        {/* Nav items */}
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 2, padding: '4px 0', flexShrink: 0 }}>
           {NAV_ITEMS.map(({ label, icon: Icon, path }) => {
             const active = location.pathname === path;
@@ -174,188 +280,174 @@ export default function SideNav() {
           })}
         </nav>
 
-        {/* ── Collapsed rail: pin dots ───────────────────────────────── */}
-        {!open && pins.length > 0 && (
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', padding: '6px 0 4px' }}>
-            {pins.map(pin => {
-              const pt   = getPinType(pin.type);
-              const Icon = pt.icon;
-              return (
-                <button
-                  key={pin.id}
-                  title={`📌 ${pin.label}`}
-                  onClick={() => go(pin.path || '/')}
-                  style={{
-                    width: RAIL_W, height: 32,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    background: 'none', border: 'none', cursor: 'pointer',
-                    color: pt.color + 'AA', transition: 'color 130ms',
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.color = pt.color}
-                  onMouseLeave={e => e.currentTarget.style.color = pt.color + 'AA'}
-                >
-                  <Icon size={14} strokeWidth={1.8} />
-                </button>
-              );
-            })}
-          </div>
-        )}
+        {/* Flex filler + pins */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
 
-        {/* ── Expanded: Pins + Recents ───────────────────────────────── */}
-        <AnimatePresence>
-          {open && (
-            <motion.div
-              key="expanded-bottom"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.18, delay: 0.1 }}
-              style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', paddingBottom: 12 }}
-            >
-              <div style={{ margin: '8px 14px 0', height: 1, background: 'rgba(255,255,255,0.06)' }} />
-
-              {/* Pins header */}
-              <div style={{ padding: '8px 14px 4px', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <Pin size={10} color="#9B9B9B" strokeWidth={2} />
-                <span style={{
-                  fontFamily: 'DM Sans, sans-serif', fontSize: 10, fontWeight: 600,
-                  color: '#9B9B9B', letterSpacing: '0.1em', textTransform: 'uppercase',
-                  flex: 1,
-                }}>
-                  Pinned
-                </span>
-                {pins.length > 0 && (
-                  <span style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 9, color: 'rgba(155,155,155,0.4)' }}>
-                    {pins.length}/{MAX_PINS}
-                  </span>
-                )}
-              </div>
-
-              {/* Pin list */}
-              {pins.length === 0 ? (
-                <div style={{
-                  margin: '2px 14px 6px',
-                  padding: '10px 12px',
-                  borderRadius: 8,
-                  border: '1px dashed rgba(255,255,255,0.07)',
-                  display: 'flex', alignItems: 'center', gap: 8,
-                }}>
-                  <Pin size={11} color="rgba(155,155,155,0.3)" />
-                  <span style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 11, color: 'rgba(155,155,155,0.35)' }}>
-                    Pin items from any page
-                  </span>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 1, marginBottom: 4 }}>
-                  {pins.map(pin => {
-                    const pt   = getPinType(pin.type);
-                    const Icon = pt.icon;
-                    return (
-                      <div
-                        key={pin.id}
-                        style={{
-                          display: 'flex', alignItems: 'center',
-                          padding: '0 14px', height: 38,
-                          cursor: 'pointer', borderRadius: 6,
-                          transition: 'background 120ms',
-                        }}
-                        onClick={() => go(pin.path || '/')}
-                        onMouseEnter={e => {
-                          e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
-                          e.currentTarget.querySelector('.unpin-btn').style.opacity = '1';
-                        }}
-                        onMouseLeave={e => {
-                          e.currentTarget.style.background = 'transparent';
-                          e.currentTarget.querySelector('.unpin-btn').style.opacity = '0';
-                        }}
-                      >
-                        <div style={{
-                          width: 26, height: 26, borderRadius: 7, flexShrink: 0,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          background: pt.color + '14',
-                          border: `1px solid ${pt.color}28`,
-                          marginRight: 9,
-                        }}>
-                          <Icon size={12} strokeWidth={1.8} color={pt.color} />
-                        </div>
-
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{
-                            fontFamily: 'DM Sans, sans-serif', fontSize: 12, fontWeight: 500,
-                            color: '#EDEDEC',
-                            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                          }}>
-                            {pin.label}
-                          </div>
-                          {pin.subtitle && (
-                            <div style={{
-                              fontFamily: 'DM Sans, sans-serif', fontSize: 10,
-                              color: pt.color + '77',
-                              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                            }}>
-                              {pin.subtitle}
-                            </div>
-                          )}
-                        </div>
-
-                        <button
-                          className="unpin-btn"
-                          onClick={e => { e.stopPropagation(); removePin(pin.id); }}
-                          title="Remove pin"
-                          style={{
-                            opacity: 0, flexShrink: 0,
-                            width: 18, height: 18, borderRadius: 4,
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            background: 'rgba(255,255,255,0.06)',
-                            border: '1px solid rgba(255,255,255,0.1)',
-                            color: '#666', cursor: 'pointer',
-                            transition: 'opacity 120ms, color 120ms',
-                          }}
-                          onMouseEnter={e => e.currentTarget.style.color = '#FF6B6B'}
-                          onMouseLeave={e => e.currentTarget.style.color = '#666'}
-                        >
-                          <X size={9} strokeWidth={2.5} />
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* Recents */}
-              <div style={{ margin: '4px 14px 0', height: 1, background: 'rgba(255,255,255,0.05)' }} />
-              <p style={{
-                fontFamily: 'DM Sans, sans-serif', fontSize: 10, fontWeight: 600,
-                color: '#9B9B9B', letterSpacing: '0.1em', textTransform: 'uppercase',
-                padding: '8px 14px 4px',
-              }}>
-                Recents
-              </p>
-              {['Verse — "Made It Out"', 'Hook — "Echoes"', 'Verse — "No Cap"', 'Bridge — "Fade Away"'].map(item => (
-                <div
-                  key={item}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 10,
-                    padding: '6px 14px', cursor: 'pointer', color: '#555',
-                    transition: 'color 120ms',
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.color = '#9B9B9B'}
-                  onMouseLeave={e => e.currentTarget.style.color = '#555'}
-                >
-                  <FileAudio size={12} strokeWidth={1.5} style={{ flexShrink: 0 }} />
-                  <span style={{
-                    fontFamily: 'DM Sans, sans-serif', fontSize: 12,
-                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                  }}>
-                    {item}
-                  </span>
-                </div>
-              ))}
-            </motion.div>
+          {!open && pins.length > 0 && (
+            <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', padding: '6px 0 4px' }}>
+              {pins.map(pin => {
+                const pt = getPinType(pin.type);
+                const Icon = pt.icon;
+                return (
+                  <button
+                    key={pin.id}
+                    title={`📌 ${pin.label}`}
+                    onClick={() => go(pin.path || '/')}
+                    style={{
+                      width: RAIL_W, height: 32,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      color: pt.color + 'AA', transition: 'color 130ms',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.color = pt.color}
+                    onMouseLeave={e => e.currentTarget.style.color = pt.color + 'AA'}
+                  >
+                    <Icon size={14} strokeWidth={1.8} />
+                  </button>
+                );
+              })}
+            </div>
           )}
-        </AnimatePresence>
-      </motion.div>
 
+          <AnimatePresence>
+            {open && (
+              <motion.div
+                key="expanded-bottom"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.18, delay: 0.1 }}
+                style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', paddingBottom: 12 }}
+              >
+                <div style={{ margin: '8px 14px 0', height: 1, background: 'rgba(255,255,255,0.06)' }} />
+
+                <div style={{ padding: '8px 14px 4px', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Pin size={10} color="#9B9B9B" strokeWidth={2} />
+                  <span style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 10, fontWeight: 600, color: '#9B9B9B', letterSpacing: '0.1em', textTransform: 'uppercase', flex: 1 }}>
+                    Pinned
+                  </span>
+                  {pins.length > 0 && (
+                    <span style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 9, color: 'rgba(155,155,155,0.4)' }}>
+                      {pins.length}/{MAX_PINS}
+                    </span>
+                  )}
+                </div>
+
+                {pins.length === 0 ? (
+                  <div style={{ margin: '2px 14px 6px', padding: '10px 12px', borderRadius: 8, border: '1px dashed rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <Pin size={11} color="rgba(155,155,155,0.3)" />
+                    <span style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 11, color: 'rgba(155,155,155,0.35)' }}>Pin items from any page</span>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 1, marginBottom: 4 }}>
+                    {pins.map(pin => {
+                      const pt = getPinType(pin.type);
+                      const Icon = pt.icon;
+                      return (
+                        <div
+                          key={pin.id}
+                          style={{ display: 'flex', alignItems: 'center', padding: '0 14px', height: 38, cursor: 'pointer', borderRadius: 6, transition: 'background 120ms' }}
+                          onClick={() => go(pin.path || '/')}
+                          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.querySelector('.unpin-btn').style.opacity = '1'; }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.querySelector('.unpin-btn').style.opacity = '0'; }}
+                        >
+                          <div style={{ width: 26, height: 26, borderRadius: 7, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: pt.color + '14', border: `1px solid ${pt.color}28`, marginRight: 9 }}>
+                            <Icon size={12} strokeWidth={1.8} color={pt.color} />
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 12, fontWeight: 500, color: '#EDEDEC', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{pin.label}</div>
+                            {pin.subtitle && (
+                              <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 10, color: pt.color + '77', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{pin.subtitle}</div>
+                            )}
+                          </div>
+                          <button
+                            className="unpin-btn"
+                            onClick={e => { e.stopPropagation(); removePin(pin.id); }}
+                            style={{ opacity: 0, flexShrink: 0, width: 18, height: 18, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: '#666', cursor: 'pointer', transition: 'opacity 120ms, color 120ms' }}
+                            onMouseEnter={e => e.currentTarget.style.color = '#FF6B6B'}
+                            onMouseLeave={e => e.currentTarget.style.color = '#666'}
+                          >
+                            <X size={9} strokeWidth={2.5} />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                <div style={{ margin: '4px 14px 0', height: 1, background: 'rgba(255,255,255,0.05)' }} />
+                <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 10, fontWeight: 600, color: '#9B9B9B', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '8px 14px 4px' }}>
+                  Recents
+                </p>
+                {['Verse — "Made It Out"', 'Hook — "Echoes"', 'Verse — "No Cap"', 'Bridge — "Fade Away"'].map(item => (
+                  <div
+                    key={item}
+                    style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 14px', cursor: 'pointer', color: '#555', transition: 'color 120ms' }}
+                    onMouseEnter={e => e.currentTarget.style.color = '#9B9B9B'}
+                    onMouseLeave={e => e.currentTarget.style.color = '#555'}
+                  >
+                    <FileAudio size={12} strokeWidth={1.5} style={{ flexShrink: 0 }} />
+                    <span style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 12, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item}</span>
+                  </div>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* User button */}
+        <div ref={userBtnRef} style={{ borderTop: '1px solid rgba(255,255,255,0.06)', flexShrink: 0 }}>
+          <button
+            onClick={() => {
+              if (!userMenu && userBtnRef.current) {
+                const rect = userBtnRef.current.getBoundingClientRect();
+                setPopupPos({ bottom: window.innerHeight - rect.top + 8, left: rect.left + 8 });
+              }
+              setUserMenu(v => !v);
+            }}
+            title="Account"
+            style={{
+              display: 'flex', alignItems: 'center',
+              width: '100%', height: 48,
+              background: 'none', border: 'none', cursor: 'pointer',
+              transition: 'background 150ms',
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'none'}
+          >
+            <div style={{ width: RAIL_W, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <div style={{
+                width: 30, height: 30, borderRadius: '50%',
+                background: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <span style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 12, fontWeight: 600, color: '#fff' }}>
+                  {userInitial}
+                </span>
+              </div>
+            </div>
+            <AnimatePresence>
+              {open && (
+                <motion.div
+                  key="user-label"
+                  initial={{ opacity: 0, x: -4 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -4 }}
+                  transition={{ duration: 0.18, delay: 0.06 }}
+                  style={{ flex: 1, minWidth: 0, textAlign: 'left' }}
+                >
+                  <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 12, fontWeight: 500, color: '#EDEDEC', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', paddingRight: 10 }}>
+                    {user?.username || user?.email?.split('@')[0]}
+                  </p>
+                  <p style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, color: '#9B9B9B', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', paddingRight: 10 }}>
+                    Free plan
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </button>
+        </div>
+      </motion.div>
     </>
   );
 }

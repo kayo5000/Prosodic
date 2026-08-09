@@ -5,6 +5,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import GlassFilter from '../components/ui/GlassFilter';
 import ShaderLines from '../components/ui/ShaderLines';
 
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
 const MOCK_THREAD = [
   {
     id: 1,
@@ -356,7 +358,7 @@ export default function ChatThreadPage() {
     setMessages(nextMessages);
     setTyping(true);
     try {
-      const res = await fetch('http://localhost:5000/veil/chat', {
+      const res = await fetch(`${API_BASE}/veil/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
