@@ -847,16 +847,46 @@ def my_words():
 
 
 # ── Mastery ───────────────────────────────────────────────
+#
+# PULLED (not wired), decision made explicitly rather than left silently
+# broken. mastery_engine.py's compute_mastery() reads from 6 tables
+# (song_analyses, song_sections, rhyme_events, cadence_events,
+# motif_events, lyric_lines) that feature_store.py is the intended writer
+# for — but feature_store.py is not imported anywhere live, and more
+# fundamentally: writing those tables from /analyze needs a persistent
+# "song" identity to attach records to (song_id/section_label), and this
+# app has NO such concept anywhere today — /analyze takes verse_lines+bpm
+# per request with no stable identifier across edits (confirmed: zero
+# references to song_id anywhere in api.py or the frontend API client).
+#
+# That's real product design (what counts as "a song" vs. an in-progress
+# edit of the same song? when does a trackable record get created?), not
+# a wiring task — inventing an answer unilaterally here to make a number
+# go up would be exactly the "patch around it" outcome this was supposed
+# to avoid. mastery_engine.py's scoring logic itself is real, tested,
+# correct code — left completely untouched, ready to work the moment a
+# real song-identity concept + a mapping layer from assemble_feedback()'s
+# output into the prosodic_data_objects dataclasses exists.
+#
+# The route stays (frontend/src/pages/MasteryPage.js already calls it),
+# but returns an honest "not available yet" rather than
+# mastery_engine.py's own "Keep writing — mastery unlocks once you have
+# enough material" message — that message is false today: no amount of
+# writing unlocks it while nothing ever populates the tables it depends
+# on. Silently returning that indefinitely would be the misleading part.
 
 @app.route('/mastery', methods=['GET'])
 def mastery():
-    from mastery_engine import compute_mastery
-    try:
-        report = compute_mastery()
-        return jsonify(report)
-    except Exception as e:
-        log.exception('Error in /mastery')
-        return jsonify({'error': 'Mastery report failed', 'detail': str(e)}), 500
+    return jsonify({
+        'ready': False,
+        'reason': (
+            'Mastery tracking isn\'t wired up yet — it needs a persistent '
+            'song concept this app doesn\'t have yet, not just more usage. '
+            'Not a "keep writing" situation.'
+        ),
+        'missing': [],
+        'data_snapshot': None,
+    })
 
 # ── Entry point ───────────────────────────────────────────
 
