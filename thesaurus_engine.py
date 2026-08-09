@@ -49,14 +49,19 @@ def _conn():
             _schema_checked = True
             missing = thesaurus_schema.missing_indexes(_local.conn)
             if missing:
-                log.warning(
+                # The DB committed to git is deliberately UNindexed (~82MB —
+                # a pre-built index bloats it to ~172MB, over GitHub's 100MB
+                # per-file limit). So this isn't drift, it's expected on
+                # every fresh checkout/deploy — heal it here instead of just
+                # warning. Idempotent and one-time per process (guarded by
+                # _schema_checked), so later connections skip straight past
+                # this block once the indexes exist on disk.
+                log.info(
                     'moby_thesaurus.db is missing expected index(es): %s — '
-                    'affected lookups will silently fall back to full table '
-                    'scans instead of erroring, so this is easy to miss. Fix '
-                    'by running thesaurus_schema.create_indexes() against '
-                    'this DB, or rebuild via setup_thesaurus.py.',
+                    'building them now (one-time cost for this process).',
                     ', '.join(missing),
                 )
+                thesaurus_schema.create_indexes(_local.conn)
     return _local.conn
 
 
