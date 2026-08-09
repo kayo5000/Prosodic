@@ -134,13 +134,28 @@ def is_pocket_rhyme(word, line, bpm):
             return True
     return False
 
-def get_flow_signature(verse_lines, bpm):
+def get_flow_signature(verse_lines, ctx):
+    '''
+    BUILD SPEC 01: takes a SongContext instead of a bare bpm — this is the
+    function feedback_engine calls directly for flow signature, separate
+    from the bpm that also flows into build_motif_map/enrich_stream_with_pocket.
+    That was the exact "separate re-supply from the feedback orchestrator
+    to pocket" the spec's WHY section describes. Threading the same ctx
+    object through both paths closes it.
+
+    Internally still unwraps to ctx.bpm before calling map_line_to_pocket()
+    — that function's own bpm parameter is never actually read for any
+    position math (confirmed; same for _assign_positions underneath it),
+    so it stays a bare bpm parameter rather than being migrated too. Its
+    only live callers are this function and its own standalone/test use;
+    there's no cross-orchestrator drift risk at that leaf level to close.
+    '''
     on_beat_count = 0
     off_beat_count = 0
     pocket_count = 0
     total = 0
     for line in verse_lines:
-        mapped = map_line_to_pocket(line, bpm)
+        mapped = map_line_to_pocket(line, ctx.bpm)
         for s in mapped:
             if not s['is_stressed']:
                 continue
@@ -182,5 +197,6 @@ if __name__ == '__main__':
             strong = '[ BEAT ]' if s['on_strong_beat'] else ''
             stress = 'STRESSED' if s['is_stressed'] else 'unstressed'
             print(f'  {s["word"]:<14} beat {s["beat_number"]} pos {s["pocket_position"]:>2}  {stress}  {strong}{pocket}')
-    sig = get_flow_signature(verse, bpm)
+    from song_context import SongContext
+    sig = get_flow_signature(verse, SongContext(bpm=bpm))
     print(f'\nFlow Signature: {sig}')

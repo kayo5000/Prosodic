@@ -10,6 +10,8 @@ end-to-end assertions in test_api.py (POST /analyze cadence_signals).
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from song_context import SongContext
+
 import stress_signals as ss
 
 
@@ -184,7 +186,7 @@ def test_analyze_verse_stream_gates_on_missing_bpm():
 
 
 def test_analyze_verse_stream_empty_stream():
-    result = ss.analyze_verse_stream([], 90)
+    result = ss.analyze_verse_stream([], SongContext(bpm=90))
     assert result == {
         'signals': [], 'lines_analyzed': 0,
         'signal_counts': {t: 0 for t in ss.SIGNAL_TYPES},
@@ -196,5 +198,5 @@ def test_signal_counts_always_has_all_taxonomy_keys():
     checking cadence_signals['signal_counts']['syncopation'] should never
     KeyError just because this verse had none."""
     from feedback_engine import assemble_feedback
-    fb = assemble_feedback(['a a a'], 90)
+    fb = assemble_feedback(['a a a'], SongContext(bpm=90))
     assert set(fb['cadence_signals']['signal_counts'].keys()) == set(ss.SIGNAL_TYPES)

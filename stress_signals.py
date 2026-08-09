@@ -338,16 +338,18 @@ def detect_ambiguous_words(words):
 
 # ── Verse-level entry point (live pipeline) ─────────────────────────────
 
-def analyze_verse_stream(stream, bpm):
+def analyze_verse_stream(stream, ctx):
     '''
     Live-pipeline entry point. `stream` is motif_result['stream'] — the
     full syllable stream feedback_engine already built, enriched with real
     pocket positions by pocket_engine (via motif_engine.build_motif_map
-    when bpm is given).
+    when ctx.bpm is given).
 
-    Note on bpm: matches pocket_engine's own behavior — bpm gates WHETHER
-    this runs (no pocket positions exist without it) but its numeric value
-    does not change the grid math. Not pretending otherwise here.
+    BUILD SPEC 01: takes a SongContext instead of a bare bpm. Note on bpm
+    itself, unchanged from before: matches pocket_engine's own behavior —
+    bpm gates WHETHER this runs (no pocket positions exist without it) but
+    its numeric value does not change the grid math. Not pretending
+    otherwise here.
 
     Returns:
         {
@@ -364,7 +366,7 @@ def analyze_verse_stream(stream, bpm):
         'signal_counts': {t: 0 for t in SIGNAL_TYPES},
         'lines_analyzed': 0,
     }
-    if not stream or bpm is None:
+    if not stream or ctx is None or ctx.bpm is None:
         return empty
 
     lines = {}
@@ -413,15 +415,16 @@ def analyze_verse_stream(stream, bpm):
 # ── TEST ─────────────────────────────────────────────────
 if __name__ == '__main__':
     from motif_engine import build_motif_map
+    from song_context import SongContext
     verse = [
         "Getting to the money",
         "And I swear that it's turnt",
         "It all begins with encore cheers",
         "From those wearin' my merch",
     ]
-    bpm = 90
-    motif_result = build_motif_map(verse, bpm)
-    result = analyze_verse_stream(motif_result['stream'], bpm)
+    ctx = SongContext(bpm=90)
+    motif_result = build_motif_map(verse, ctx)
+    result = analyze_verse_stream(motif_result['stream'], ctx)
     print(f"\nLines analyzed: {result['lines_analyzed']}")
     print(f"Signal counts: {result['signal_counts']}\n")
     for sig in result['signals']:

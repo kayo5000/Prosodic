@@ -13,20 +13,26 @@ from stress_signals import analyze_verse_stream
 import perceptual_family_engine
 import pattern_reader_engine
 
-def assemble_feedback(verse_lines, bpm):
+def assemble_feedback(verse_lines, ctx):
     '''
-    Main function. Takes verse lines and a BPM number.
-    BPM is required. Will not run without it.
-    Returns complete feedback object ready for the UI.
+    Main function. Takes verse lines and a SongContext.
+
+    BUILD SPEC 01: bpm now arrives via ctx.bpm instead of a hand-passed
+    argument — ctx is minted once at the API boundary (api.py) and
+    threaded through every sub-engine call below, so there is exactly one
+    bpm value for this request, not a copy re-supplied to each engine.
+    ctx.bpm is still required for /analyze specifically — that's this
+    function's own contract (unchanged), not the context's job (the
+    context itself is bpm-optional; /suggest's chain accepts ctx.bpm=None).
     '''
-    if bpm is None or bpm <= 0:
+    if ctx is None or ctx.bpm is None or ctx.bpm <= 0:
         raise ValueError('BPM is required. Select a BPM before running analysis.')
 
-    motif_result = build_motif_map(verse_lines, bpm)
+    motif_result = build_motif_map(verse_lines, ctx)
     density_result = score_full_verse(verse_lines, motif_result=motif_result)
     containers = build_containers(verse_lines)
-    flow_signature = get_flow_signature(verse_lines, bpm)
-    cadence_signals = analyze_verse_stream(motif_result['stream'], bpm)
+    flow_signature = get_flow_signature(verse_lines, ctx)
+    cadence_signals = analyze_verse_stream(motif_result['stream'], ctx)
 
     rhyme_map = []
     for s in motif_result['stream']:
@@ -86,7 +92,7 @@ def assemble_feedback(verse_lines, bpm):
         'phrase_containers': containers,
         'flow_signature': flow_signature,
         'cadence_signals': cadence_signals,
-        'bpm': bpm,
+        'bpm': ctx.bpm,
         'line_count': len(verse_lines),
         'perceptual_pattern': pattern,
     }
@@ -122,6 +128,6 @@ if __name__ == '__main__':
         "And though I'm blessed I seen you stressin'",
         "From hearin' the chirps and naysayers",
     ]
-    bpm = 80
-    feedback = assemble_feedback(verse, bpm)
+    from song_context import SongContext
+    feedback = assemble_feedback(verse, SongContext(bpm=80))
     print_feedback_summary(feedback)

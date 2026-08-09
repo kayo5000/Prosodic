@@ -151,13 +151,16 @@ def find_sonic_motifs(verse_lines, threshold=0.6, min_recurrence=2):
     return clusters
 
 # ── Motif Map (used by density_engine) ──────────────────
-def build_motif_map(verse_lines, bpm=None):
+def build_motif_map(verse_lines, ctx=None):
     '''
     Builds a unified motif map over a verse combining rhyme groups
     and compound sequences. Each motif family gets a unique color_id.
 
-    When bpm is provided, pocket positions are computed and only syllables
-    landing on pocket positions (beat 2 or beat 4) receive a color_id.
+    BUILD SPEC 01: takes a SongContext instead of a bare bpm. When ctx is
+    given and ctx.bpm is not None, pocket positions are computed and only
+    syllables landing on pocket positions (beat 2 or beat 4) receive a
+    color_id — same gate as before, just sourced from ctx.bpm now instead
+    of a hand-passed bpm argument.
 
     Returns:
       stream       — flat syllable stream with line_index
@@ -166,8 +169,8 @@ def build_motif_map(verse_lines, bpm=None):
       total_colors — number of distinct motif families
     '''
     stream = build_verse_stream(verse_lines)
-    if bpm is not None:
-        enrich_stream_with_pocket(stream, bpm)
+    if ctx is not None and ctx.bpm is not None:
+        enrich_stream_with_pocket(stream, ctx.bpm)
     candidates = extract_rhyme_candidates(stream)
     rhyme_groups = find_rhyme_groups(candidates)
     compounds = build_compound_sequences(stream)
@@ -277,8 +280,9 @@ if __name__ == '__main__':
         "From hearin' the chirps and naysayers",
     ]
 
+    from song_context import SongContext
     result = analyze_motifs(verse)
-    motif_map_result = build_motif_map(verse, bpm=80)
+    motif_map_result = build_motif_map(verse, SongContext(bpm=80))
 
     print('=== STRESS MOTIFS ===')
     print(f'Lines: {result["line_count"]}')

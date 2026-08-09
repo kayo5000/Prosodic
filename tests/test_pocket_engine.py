@@ -17,6 +17,7 @@ from pocket_engine import (
     STRONG_POSITIONS, POCKET_POSITIONS,
 )
 from rhyme_detection_engine import build_verse_stream
+from song_context import SongContext
 
 
 def _old_proportional_position(i, total, start_position=0):
@@ -123,7 +124,7 @@ def test_flow_signature_still_returns_valid_label():
         "And I swear that it's turnt",
         "It all begins with encore cheers",
     ]
-    sig = get_flow_signature(verse, 90)
+    sig = get_flow_signature(verse, SongContext(bpm=90))
     assert sig in ('On-Grid', 'Syncopated', 'Floating', 'Pocket Jumper', 'Unknown')
 
 

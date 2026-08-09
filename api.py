@@ -356,12 +356,12 @@ def analyze():
     bpm, err = _parse_bpm(data, required=True)
     if err:
         return err
-    ctx = SongContext(bpm=bpm)  # BUILD SPEC 01 Step 2: minted in parallel, unused downstream for now
+    ctx = SongContext(bpm=bpm)  # BUILD SPEC 01 Step 3: /analyze chain now reads bpm from here
 
     log.info('POST /analyze  lines=%d  bpm=%s', len(verse), bpm)
 
     try:
-        feedback = assemble_feedback(verse, bpm)
+        feedback = assemble_feedback(verse, ctx)
         user_id = _optional_user_id()
         if user_id is not None:
             try:
