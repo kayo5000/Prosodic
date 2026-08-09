@@ -9,6 +9,7 @@ from motif_engine import build_motif_map
 from density_engine import score_full_verse
 from pocket_engine import get_flow_signature
 from phrase_container_engine import build_containers
+from stress_signals import analyze_verse_stream
 import perceptual_family_engine
 import pattern_reader_engine
 
@@ -25,6 +26,7 @@ def assemble_feedback(verse_lines, bpm):
     density_result = score_full_verse(verse_lines, motif_result=motif_result)
     containers = build_containers(verse_lines)
     flow_signature = get_flow_signature(verse_lines, bpm)
+    cadence_signals = analyze_verse_stream(motif_result['stream'], bpm)
 
     rhyme_map = []
     for s in motif_result['stream']:
@@ -83,6 +85,7 @@ def assemble_feedback(verse_lines, bpm):
         },
         'phrase_containers': containers,
         'flow_signature': flow_signature,
+        'cadence_signals': cadence_signals,
         'bpm': bpm,
         'line_count': len(verse_lines),
         'perceptual_pattern': pattern,

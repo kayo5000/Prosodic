@@ -12,12 +12,40 @@ from syllable_engine import syllabify_line
 STRONG_POSITIONS = {0, 4, 8, 12}
 POCKET_POSITIONS = {4, 12}
 POCKET_WINDOW = 1  # ±1 sixteenth note counts as on-pocket
+NUDGE_WINDOW = 2    # max positions a stressed syllable may be pulled toward
+                     # a strong/pocket beat — see _assign_positions
 
 def _is_near_pocket(pos):
     return any(abs(pos - p) <= POCKET_WINDOW for p in POCKET_POSITIONS)
 
 def _is_near_strong_beat(pos):
     return any(abs(pos - p) <= POCKET_WINDOW for p in STRONG_POSITIONS)
+
+
+def _nearest_strong_target(pos_mod16):
+    '''
+    Find the strong-beat/pocket position closest to pos_mod16 on the 16-step
+    circle, within NUDGE_WINDOW. Pocket positions (4, 12) win ties over the
+    other strong positions (0, 8) — consistent with this file's existing
+    "where hip hop rhymes live" framing of the pocket slots.
+
+    Returns (target, signed_delta) or (None, 0) if nothing qualifies within
+    NUDGE_WINDOW. signed_delta is the shortest signed hop (mod 16) from
+    pos_mod16 to target.
+    '''
+    best_target, best_dist = None, NUDGE_WINDOW + 1
+    for t in POCKET_POSITIONS:  # checked first so ties favor the pocket
+        d = min((t - pos_mod16) % 16, (pos_mod16 - t) % 16)
+        if d < best_dist:
+            best_dist, best_target = d, t
+    for t in STRONG_POSITIONS - POCKET_POSITIONS:  # {0, 8}
+        d = min((t - pos_mod16) % 16, (pos_mod16 - t) % 16)
+        if d < best_dist:
+            best_dist, best_target = d, t
+    if best_target is None:
+        return None, 0
+    delta = (best_target - pos_mod16 + 8) % 16 - 8
+    return best_target, delta
 
 def get_syllable_window(bpm):
     if bpm < 80:
@@ -32,10 +60,37 @@ def get_syllable_window(bpm):
         return (4, 8)
 
 def _assign_positions(syllables, start_position, total):
-    '''Shared position assignment — proportional distribution across 16 grid slots.'''
+    '''
+    Shared position assignment. Baseline is proportional distribution across
+    16 grid slots (unchanged from the original model — this still sets the
+    overall spacing). On top of that baseline, a linguistically stressed
+    syllable (is_stressed True, from syllable_engine's CMU-derived stress
+    digit) is nudged toward the nearest strong beat (0/4/8/12) or pocket
+    slot (4/12) when one sits within NUDGE_WINDOW positions — modeling a
+    rapper naturally landing emphasis on the beat rather than every
+    syllable being spread with pure mechanical evenness regardless of
+    stress. Previously this function ignored is_stressed entirely.
+
+    Order is preserved: a nudge is never allowed to place a syllable before
+    the one preceding it in the line.
+    '''
+    prev_final = start_position
     for i, s in enumerate(syllables):
-        raw_pos = start_position + (i * 16) // total
-        s['pocket_position'] = raw_pos % 16
+        base = start_position + (i * 16) // total
+        final = base
+
+        if s.get('is_stressed'):
+            target, delta = _nearest_strong_target(base % 16)
+            if target is not None:
+                nudged = base + delta
+                if nudged >= prev_final:
+                    final = nudged
+
+        if final < prev_final:
+            final = prev_final
+        prev_final = final
+
+        s['pocket_position'] = final % 16
         s['beat_number'] = (s['pocket_position'] // 4) + 1
         s['on_strong_beat'] = _is_near_strong_beat(s['pocket_position'])
         s['on_pocket'] = _is_near_pocket(s['pocket_position'])
