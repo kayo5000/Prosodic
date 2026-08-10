@@ -1,0 +1,15 @@
+# Railway's builder (Railpack) uses mise to install the pinned Python version
+# (see runtime.txt / .python-version). Starting with mise 2026.3.18, GitHub
+# artifact attestation verification for Python is on by default — but the
+# python-build-standalone build behind our pinned 3.11.9 predates that
+# requirement and has no attestation to check, so the install fails outright:
+#   "No GitHub artifact attestations found for ... python@3.11.9"
+# Checked for a newer 3.11.x patch that has one instead: none confirmed
+# (even 3.11.15, the newest 3.11 release, predates mise's attestation
+# rollout and likely has the same gap — "most of the 3.11 versions won't
+# install" per mise's own GitHub discussion #8843). The download itself is
+# still HTTPS from GitHub's own release CDN either way; this only drops the
+# extra build-provenance signature check on top of that, for an artifact
+# GitHub's own attestation coverage hasn't backfilled yet.
+[settings]
+python.github_attestations = false
