@@ -25,7 +25,7 @@ import threading
 from datetime import datetime, timezone
 from phoneme_engine import get_phonemes, normalize
 
-DB_PATH = os.path.join(os.path.dirname(__file__), 'learning_signals.db')
+DB_PATH = os.environ.get('LEARNING_SIGNALS_DB_PATH') or os.path.join(os.path.dirname(__file__), 'learning_signals.db')
 
 _local = threading.local()
 

@@ -18,7 +18,14 @@ from functools import lru_cache
 
 log = logging.getLogger(__name__)
 
-DB_PATH = os.path.join(os.path.dirname(__file__), 'concreteness.db')
+# Unlike PROSODIC_FEATURES_DB_PATH/LEARNING_SIGNALS_DB_PATH, this is
+# read-only reference data (Brysbaert et al. norms) that ships bundled in
+# the repo and is never written to at runtime — nothing here will
+# self-create the file the way the others do. Only point
+# CONCRETENESS_DB_PATH at the volume if that path already has a real copy
+# of concreteness.db on it; otherwise leave it unset and let it use the
+# bundled file.
+DB_PATH = os.environ.get('CONCRETENESS_DB_PATH') or os.path.join(os.path.dirname(__file__), 'concreteness.db')
 CACHE_SIZE = 5000
 
 _local = threading.local()

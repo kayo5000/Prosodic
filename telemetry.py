@@ -36,10 +36,13 @@ from enum import Enum
 from typing import Any, Dict, Optional
 
 # ---------------------------------------------------------------------------
-# Configuration — shares the same DB as feature_store
+# Configuration — shares the same DB as feature_store (and
+# device_detection_engine.py/mastery_engine.py/usage_history.py). Same
+# PROSODIC_FEATURES_DB_PATH override must stay identical across all five
+# or they silently split onto different files.
 # ---------------------------------------------------------------------------
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "prosodic_features.db")
+DB_PATH = os.environ.get('PROSODIC_FEATURES_DB_PATH') or os.path.join(os.path.dirname(__file__), "prosodic_features.db")
 ERROR_LOG_PATH = os.path.join(os.path.dirname(__file__), "prosodic_errors.log")
 
 _local = threading.local()

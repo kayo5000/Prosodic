@@ -26,7 +26,10 @@ from collections import Counter
 
 from device_detection_engine import compute_device_usage
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "prosodic_features.db")
+# Same physical DB as feature_store.py/device_detection_engine.py/telemetry.py/
+# usage_history.py — PROSODIC_FEATURES_DB_PATH must stay identical across
+# all five or they silently split onto different files.
+DB_PATH = os.environ.get('PROSODIC_FEATURES_DB_PATH') or os.path.join(os.path.dirname(__file__), "prosodic_features.db")
 
 # ── Trigger thresholds ────────────────────────────────────────────────────────
 TRIGGER_MIN_SONGS          = 3

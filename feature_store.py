@@ -37,7 +37,10 @@ from prosodic_data_objects import (
 # Configuration
 # ---------------------------------------------------------------------------
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "prosodic_features.db")
+# Same physical DB as device_detection_engine.py/mastery_engine.py/telemetry.py/
+# usage_history.py — PROSODIC_FEATURES_DB_PATH must stay identical across
+# all five or they silently split onto different files.
+DB_PATH = os.environ.get('PROSODIC_FEATURES_DB_PATH') or os.path.join(os.path.dirname(__file__), "prosodic_features.db")
 ERROR_LOG_PATH = os.path.join(os.path.dirname(__file__), "prosodic_errors.log")
 
 # Thread-local storage ensures each thread gets its own connection.

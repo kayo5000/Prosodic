@@ -20,7 +20,10 @@ import sqlite3
 import os
 from collections import Counter
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "prosodic_features.db")
+# Same physical DB as feature_store.py/mastery_engine.py/telemetry.py/
+# usage_history.py — PROSODIC_FEATURES_DB_PATH must stay identical across
+# all five or they silently split onto different files.
+DB_PATH = os.environ.get('PROSODIC_FEATURES_DB_PATH') or os.path.join(os.path.dirname(__file__), "prosodic_features.db")
 
 STOP_WORDS = {
     'a','an','the','and','but','or','for','nor','so','yet','in','on',
