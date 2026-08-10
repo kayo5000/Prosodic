@@ -9,6 +9,20 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import tempfile
 import pytest
 
+# _HAS_API_KEY (below) needs ANTHROPIC_API_KEY in os.environ before this
+# module's own import finishes — but nothing guarantees .env has been
+# loaded yet at this point (only api.py calls load_dotenv(), and whether
+# THAT has already run depends entirely on which test file pytest happens
+# to import first during collection). Found via a real, order-dependent
+# failure: this test skipped when run alone, but ran (and then failed on
+# live-LLM non-determinism, the same class as the known
+# test_cantos_direct_live_safety flake) inside the full suite, purely
+# because some other test file's import of api.py happened to run first
+# and load .env as a side effect. Loading it explicitly here makes this
+# module's own skip/run decision independent of import order.
+from dotenv import load_dotenv
+load_dotenv()
+
 # Override label_capture DB to a temp file
 import behavior.label_capture as lc
 _tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
