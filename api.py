@@ -40,6 +40,9 @@ import usage_history
 from song_context import SongContext
 from prosodic_config import NEAR_RHYME_SAME_VOWEL_SCORE
 import users_repository
+import feature_flags
+if feature_flags.CANTOS_ENABLED:
+    from cantos import wiring as cantos_wiring
 
 logging.basicConfig(
     level=logging.INFO,
@@ -153,6 +156,7 @@ def add_cors(response):
 @app.route('/thesaurus/related', methods=['OPTIONS'])
 @app.route('/my-words', methods=['OPTIONS'])
 @app.route('/wordforms', methods=['OPTIONS'])
+@app.route('/cantos/state-snapshot', methods=['OPTIONS'])
 def options():
     return '', 204
 
@@ -872,6 +876,51 @@ def mastery():
         'missing': [],
         'data_snapshot': None,
     })
+
+
+@app.route('/cantos/state-snapshot', methods=['POST'])
+def cantos_state_snapshot():
+    '''
+    Runs the real Cantos/Behavioral-Layer chain (bar_segmenter ->
+    feedback_engine -> bar_feature_mapper -> state_engine.classify(),
+    written as a real Notebook Entry) and returns the result.
+
+    Gated behind FEATURE_CANTOS_ENABLED (see feature_flags.py) — built and
+    tested, not yet load-bearing for anything a user hits by default.
+    Returns 404 with an honest reason when the flag is off, same "say
+    what's actually true" pattern as /mastery above, rather than a
+    generic Flask 404 that looks like the route doesn't exist at all.
+    '''
+    if not feature_flags.CANTOS_ENABLED:
+        return jsonify({
+            'ready': False,
+            'reason': 'Cantos is built and tested but not enabled on this deployment yet.',
+        }), 404
+
+    data, err = _parse_json()
+    if err:
+        return err
+    verse_text = data.get('verse_text')
+    bpm, err = _parse_bpm(data, required=True)
+    if err:
+        return err
+    if not verse_text or not isinstance(verse_text, str):
+        return jsonify({'error': 'verse_text is required (newline-separated string)'}), 400
+
+    user_id, err = _auth_required()
+    if err:
+        return err
+    session_id = data.get('session_id') or 'default'
+
+    try:
+        state_result, entry = cantos_wiring.record_state_snapshot(
+            user_id[0], session_id, verse_text, bpm,
+        )
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+
+    log.info('POST /cantos/state-snapshot  user_id=%s  bpm=%s', user_id[0], bpm)
+    return jsonify({'ready': True, 'state': state_result, 'notebook_entry': entry})
 
 # ── Entry point ───────────────────────────────────────────
 
