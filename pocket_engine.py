@@ -3,13 +3,51 @@ Pocket Engine
 Maps syllables to a 16-position sixteenth-note grid, detects flow signatures,
 and enriches syllable streams with beat position data.
 
+TEMPO-AWARE PLACEMENT: syllables are no longer spread blindly across all 16
+grid slots regardless of song speed. A real 4/4 bar always HAS 16 sixteenth-
+note slots, but how many syllables a performer can clearly land one-per-slot
+shrinks as tempo rises — the same 16 slots take less real time at 160 BPM
+than at 80 BPM. See _tempo_adjusted_span() for the model (reused from
+syllable_compression.py, not reinvented — see its own docstring for why).
+
 Part of the Prosodic hip-hop lyric analysis suite.
 '''
 from collections import defaultdict
 from syllable_engine import syllabify_line
+from syllable_compression import available_syllable_slots
 from prosodic_config import (
     GRID_SIZE, STRONG_POSITIONS, POCKET_POSITIONS, POCKET_WINDOW, NUDGE_WINDOW,
 )
+
+
+def _tempo_adjusted_span(bpm):
+    '''
+    Real syllable capacity for one bar at this bpm — how many sixteenth-note
+    slots a performer can comfortably land one syllable on before they start
+    compressing (cramming multiple syllables into the same slot) or
+    stretching (spreading with gaps).
+
+    Reuses syllable_compression.available_syllable_slots() — an already-
+    built, already-documented tempo model that existed in this codebase
+    before this fix, just unreachable from the live pipeline (only
+    imported by the also-dormant aspiration_gap.py). Reused as-is rather
+    than reimplemented, so there's exactly one tempo formula in this
+    codebase, not two that could drift apart. `line=''` because that
+    function's own `line` argument is documented as unused for the actual
+    math (context/logging only) — bpm and bar_count are the real inputs.
+
+    At the model's own 90 BPM reference point this returns exactly
+    GRID_SIZE (16) — the same number _assign_positions always used before
+    this fix — so nothing changes at 90 BPM or anywhere the tempo caps out
+    at the model's maximum (any BPM <= 90). The difference only shows up
+    above 90 BPM, where real compression starts.
+
+    No bpm (None or <= 0, e.g. /suggest's optional bpm) falls back to the
+    old always-16 behavior — can't be tempo-aware about a tempo nobody gave us.
+    '''
+    if bpm is None or bpm <= 0:
+        return GRID_SIZE
+    return available_syllable_slots('', bpm, bar_count=1)
 
 def _is_near_pocket(pos):
     return any(abs(pos - p) <= POCKET_WINDOW for p in POCKET_POSITIONS)
@@ -44,24 +82,38 @@ def _nearest_strong_target(pos_mod16):
     delta = (best_target - pos_mod16 + half_grid) % GRID_SIZE - half_grid
     return best_target, delta
 
-def _assign_positions(syllables, start_position, total):
+def _assign_positions(syllables, start_position, total, span=GRID_SIZE):
     '''
     Shared position assignment. Baseline is proportional distribution across
-    16 grid slots (unchanged from the original model — this still sets the
-    overall spacing). On top of that baseline, a linguistically stressed
-    syllable (is_stressed True, from syllable_engine's CMU-derived stress
-    digit) is nudged toward the nearest strong beat (0/4/8/12) or pocket
-    slot (4/12) when one sits within NUDGE_WINDOW positions — modeling a
-    rapper naturally landing emphasis on the beat rather than every
-    syllable being spread with pure mechanical evenness regardless of
-    stress. Previously this function ignored is_stressed entirely.
+    `span` conceptual slots (defaults to GRID_SIZE=16 for any caller that
+    doesn't pass a tempo-adjusted one — see _tempo_adjusted_span). At the
+    reference tempo span == GRID_SIZE and this is identical to the old
+    always-16 model. Below the reference tempo (more comfortable room),
+    span can also exceed the actual number of syllables, which is normal —
+    it's the SAME behavior as before whenever a line already has fewer
+    syllables than slots. Above the reference tempo, span shrinks below 16,
+    which is the real fix: when a line's syllable count exceeds span, the
+    integer-division spread naturally lands multiple syllables on the same
+    base position instead of spreading them across the full bar as if there
+    were room for each — that clustering IS what compressed, rushed
+    delivery looks like on the grid. The final wrap to a real grid position
+    (`% GRID_SIZE` below) is unchanged — span only affects the spacing
+    calculation, never how many real positions exist in a bar.
+
+    On top of that baseline, a linguistically stressed syllable (is_stressed
+    True, from syllable_engine's CMU-derived stress digit) is nudged toward
+    the nearest strong beat (0/4/8/12) or pocket slot (4/12) when one sits
+    within NUDGE_WINDOW positions — modeling a rapper naturally landing
+    emphasis on the beat rather than every syllable being spread with pure
+    mechanical evenness regardless of stress. Previously this function
+    ignored is_stressed entirely.
 
     Order is preserved: a nudge is never allowed to place a syllable before
     the one preceding it in the line.
     '''
     prev_final = start_position
     for i, s in enumerate(syllables):
-        base = start_position + (i * GRID_SIZE) // total
+        base = start_position + (i * span) // total
         final = base
 
         if s.get('is_stressed'):
@@ -85,13 +137,18 @@ def map_line_to_pocket(line, bpm, start_position=0):
     '''
     Maps every syllable in a line to a beat position.
     start_position is which sixteenth note this line starts on.
-    Syllables are distributed proportionally across 16 positions so every
-    part of the bar is reachable regardless of syllable count.
+    Syllables are distributed proportionally across a tempo-adjusted span
+    (see _tempo_adjusted_span) — 16 slots at or below the model's 90 BPM
+    reference point, fewer above it, so a faster song's syllables land
+    measurably closer together than the same lyrics at a slower tempo.
+    bpm is real, load-bearing here now — not the dead parameter it used
+    to be (see the file docstring and _tempo_adjusted_span).
     '''
     syllables = syllabify_line(line)
     if not syllables:
         return []
-    _assign_positions(syllables, start_position, len(syllables))
+    span = _tempo_adjusted_span(bpm)
+    _assign_positions(syllables, start_position, len(syllables), span=span)
     return syllables
 
 
@@ -99,15 +156,17 @@ def enrich_stream_with_pocket(stream, bpm, start_position=0):
     '''
     Adds pocket_position, beat_number, on_strong_beat, on_pocket to each
     syllable in a stream built by build_verse_stream.
-    Each line is mapped independently starting at start_position.
+    Each line is mapped independently starting at start_position, using a
+    shared tempo-adjusted span for the whole stream — see map_line_to_pocket.
     '''
     lines = defaultdict(list)
     for s in stream:
         lines[s['line_index']].append(s)
+    span = _tempo_adjusted_span(bpm)
     for li in sorted(lines):
         line_sylls = lines[li]
         if line_sylls:
-            _assign_positions(line_sylls, start_position, len(line_sylls))
+            _assign_positions(line_sylls, start_position, len(line_sylls), span=span)
     return stream
 
 
@@ -121,11 +180,14 @@ def get_flow_signature(verse_lines, ctx):
     object through both paths closes it.
 
     Internally still unwraps to ctx.bpm before calling map_line_to_pocket()
-    — that function's own bpm parameter is never actually read for any
-    position math (confirmed; same for _assign_positions underneath it),
-    so it stays a bare bpm parameter rather than being migrated too. Its
-    only live callers are this function and its own standalone/test use;
-    there's no cross-orchestrator drift risk at that leaf level to close.
+    — that function's own bpm parameter stays a bare parameter rather than
+    being migrated to ctx too (its only live callers are this function and
+    its own standalone/test use, so there's no cross-orchestrator drift
+    risk at that leaf level to close). UPDATE: unlike when this note was
+    first written, that bpm parameter is no longer dead — it now drives
+    real tempo-adjusted syllable spacing (see _tempo_adjusted_span), so
+    get_flow_signature's own classification is itself now tempo-sensitive,
+    not just gated by whether bpm exists.
     '''
     on_beat_count = 0
     off_beat_count = 0
