@@ -5,20 +5,76 @@ Produces the flat syllable stream consumed by all downstream engines.
 
 Part of the Prosodic hip-hop lyric analysis suite.
 '''
+import re
 from phoneme_engine import get_phonemes
+
+_VOWEL_GROUP = re.compile(r'[aeiou]+')
+
+
+def _estimate_syllable_count_from_letters(word):
+    '''
+    Last-resort syllable-count estimate from spelling alone — the third
+    fallback tier below CMU dict lookup and G2P (see get_syllables): a
+    word neither can handle (out-of-vocabulary AND g2p_en unavailable or
+    failed) previously made get_syllables() return None, which
+    syllabify_line() then treated as "skip this word entirely" — not just
+    undercounting its syllables, but silently erasing it from the whole
+    syllable stream (wrong word_index/stream_index for everything after
+    it, invisible to every downstream engine). A rough count is a much
+    smaller error than a word that quietly stops existing.
+
+    Vowel-group heuristic — same vowel set (aeiou, no 'y') already used by
+    syllable_char_ranges() below, for consistency with this file's
+    existing convention rather than introducing a second one. Not a
+    phonetic result: it cannot produce real ARPABET phonemes, so rhyme
+    detection is correctly still blind to these syllables (empty
+    'phonemes' list — get_rhyme_unit_from_phonemes() already treats that
+    as "no rhyme data" rather than guessing). This function only protects
+    syllable count / density / pocket placement from an OOV word going
+    silently missing, not rhyme quality.
+    '''
+    w = word.lower().strip()
+    if not w:
+        return 0  # nothing here at all (e.g. a token that was pure punctuation)
+    if not w.isalpha():
+        return 1  # has content but no letters to group (e.g. a number) — one best guess
+    if w.endswith('e') and not w.endswith('le') and len(w) > 1:
+        w = w[:-1]
+    groups = _VOWEL_GROUP.findall(w)
+    return max(1, len(groups))
+
 
 def get_syllables(word):
     '''
     Returns list of syllables.
     Each syllable is a dict:
-      index     — position in word (0-based)
-      phonemes  — list of phonemes in this syllable
-      stress    — 0, 1, or 2
+      index       — position in word (0-based)
+      phonemes    — list of phonemes in this syllable (empty if estimated)
+      stress      — 0, 1, or 2 (always 0 if estimated — no real basis to
+                    guess stress from spelling alone)
       is_stressed — True if stress >= 1
+      estimated   — True only when CMU and G2P both had nothing and this
+                    is a letters-based fallback count instead of a real
+                    phonetic breakdown (see
+                    _estimate_syllable_count_from_letters). Absent
+                    (falsy via .get()) on normal syllables — downstream
+                    code that cares about degraded confidence can check
+                    for it; code that doesn't can ignore it exactly as
+                    before.
     '''
     phonemes = get_phonemes(word)
     if not phonemes:
-        return None
+        count = _estimate_syllable_count_from_letters(word)
+        return [
+            {
+                'index': i,
+                'phonemes': [],
+                'stress': 0,
+                'is_stressed': False,
+                'estimated': True,
+            }
+            for i in range(count)
+        ]
     syllables = []
     current = []
     for p in phonemes:
