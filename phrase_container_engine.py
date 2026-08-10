@@ -8,20 +8,15 @@ Part of the Prosodic hip-hop lyric analysis suite.
 from rhyme_detection_engine import analyze_verse
 from density_engine import score_full_verse
 from syllable_engine import get_syllable_count
-
-BOUNDARY_THRESHOLD = 1.5
-
-SIGNALS = {
-    'rhyme_resolution': 0.8,
-    'density_drop': 0.6,
-    'syllable_reset': 0.5,
-    'line_length_shift': 0.4,
-    'rest_bar': 0.7,
-}
+from prosodic_config import (
+    BOUNDARY_THRESHOLD, MIN_SIGNALS_FIRED, BOUNDARY_SIGNAL_WEIGHTS as SIGNALS,
+    DENSITY_DROP_MIN_PREV, DENSITY_DROP_RATIO, SYLLABLE_RESET_RATIO,
+    LINE_LENGTH_SHIFT_WORD_DIFF, REST_BAR_MAX_WORDS,
+)
 
 def detect_rest_bar(line):
     words = line.split()
-    return len(words) <= 3
+    return len(words) <= REST_BAR_MAX_WORDS
 
 def _line_syllable_count(line):
     total = 0
@@ -56,13 +51,13 @@ def detect_boundaries(verse_lines):
 
         prev_d = density_scores[i-1]['scores']['internal']
         curr_d = density_scores[i]['scores']['internal']
-        if prev_d > 40 and curr_d < prev_d * 0.6:
+        if prev_d > DENSITY_DROP_MIN_PREV and curr_d < prev_d * DENSITY_DROP_RATIO:
             weight += SIGNALS['density_drop']
             signals_fired.append('density_drop')
 
         prev_sylls = _line_syllable_count(verse_lines[i-1])
         curr_sylls = _line_syllable_count(verse_lines[i])
-        if prev_sylls > 0 and curr_sylls < prev_sylls * 0.6:
+        if prev_sylls > 0 and curr_sylls < prev_sylls * SYLLABLE_RESET_RATIO:
             weight += SIGNALS['syllable_reset']
             signals_fired.append('syllable_reset')
 
@@ -72,11 +67,11 @@ def detect_boundaries(verse_lines):
 
         prev_len = len(verse_lines[i-1].split())
         curr_len = len(verse_lines[i].split())
-        if abs(prev_len - curr_len) > 4:
+        if abs(prev_len - curr_len) > LINE_LENGTH_SHIFT_WORD_DIFF:
             weight += SIGNALS['line_length_shift']
             signals_fired.append('line_length_shift')
 
-        if weight >= BOUNDARY_THRESHOLD and len(signals_fired) >= 2:
+        if weight >= BOUNDARY_THRESHOLD and len(signals_fired) >= MIN_SIGNALS_FIRED:
             boundaries.append(i)
     return boundaries
 

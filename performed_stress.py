@@ -49,6 +49,8 @@ from __future__ import annotations
 import re
 from typing import Dict, List, Optional, Tuple
 
+from prosodic_config import GRID_SIZE
+
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
@@ -256,7 +258,7 @@ def _grid_position_to_stress(grid_pos: int) -> int:
     Returns:
         Stress level: 2 (primary downbeat), 1 (backbeat), or 0 (unstressed).
     """
-    return _GRID_STRESS.get(grid_pos % 16, 0)
+    return _GRID_STRESS.get(grid_pos % GRID_SIZE, 0)
 
 
 # ---------------------------------------------------------------------------
@@ -321,7 +323,7 @@ def infer_performed_stress(
 
     result = []
     for gi, (word, wi, si, lex_stress) in enumerate(syllables):
-        grid_pos = (bar_start_offset + (gi * 16) // total) % 16
+        grid_pos = (bar_start_offset + (gi * GRID_SIZE) // total) % GRID_SIZE
         beat_num = (grid_pos // 4) + 1
         perf_stress = _grid_position_to_stress(grid_pos)
 

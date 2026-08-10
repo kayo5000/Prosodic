@@ -22,6 +22,7 @@ from motif_engine import build_motif_map
 from semantics_engine import semantic_similarity, SPACY_AVAILABLE
 from thesaurus_engine import lookup as thesaurus_lookup
 from final_result_converter import normalize as fr_normalize
+from prosodic_config import NEAR_RHYME_SAME_VOWEL_SCORE
 
 CMU = cmudict.dict()
 
@@ -60,13 +61,13 @@ def _scan_phonetic_candidates(target_rhyme):
     for word, ru in NUCLEUS_INDEX.get(target_nucleus, []):
         if ru != target_rhyme:
             results.append((word, 0.88, ru))
-    # Same vowel base, different stress marker (0.75)
+    # Same vowel base, different stress marker (NEAR_RHYME_SAME_VOWEL_SCORE)
     target_vowel = target_nucleus[:-1] if target_nucleus[-1].isdigit() else target_nucleus
     for nucleus, entries in NUCLEUS_INDEX.items():
         nuc_vowel = nucleus[:-1] if nucleus[-1].isdigit() else nucleus
         if nuc_vowel == target_vowel and nucleus != target_nucleus:
             for word, ru in entries:
-                results.append((word, 0.75, ru))
+                results.append((word, NEAR_RHYME_SAME_VOWEL_SCORE, ru))
     return results
 
 
@@ -81,7 +82,7 @@ def _fast_score(rhyme_a, rhyme_b):
     vow_a = nuc_a[:-1] if nuc_a[-1].isdigit() else nuc_a
     vow_b = nuc_b[:-1] if nuc_b[-1].isdigit() else nuc_b
     if vow_a == vow_b:
-        return 0.75
+        return NEAR_RHYME_SAME_VOWEL_SCORE
     return 0.0
 
 # ── Layer 1 helpers ───────────────────────────────────────────────────────────
@@ -184,12 +185,12 @@ def _layer1(verse_lines, ctx=None):
 
         # Step 6 — Quality threshold
         strong_phonetic = r_score >= 0.88
-        passes = (r_score >= 0.75 and sem_score >= 0.15) or strong_phonetic
+        passes = (r_score >= NEAR_RHYME_SAME_VOWEL_SCORE and sem_score >= 0.15) or strong_phonetic
         if not passes:
             continue
 
         # Step 5 — Motif label
-        extends = any(_fast_score(rhyme_unit, fu) >= 0.75 for fu in family_units)
+        extends = any(_fast_score(rhyme_unit, fu) >= NEAR_RHYME_SAME_VOWEL_SCORE for fu in family_units)
         motif_fit = 'extends existing family' if extends else 'starts new family'
 
         candidates.append({
@@ -401,7 +402,7 @@ def get_suggestions(verse_lines, ctx=None, trigger_mode='auto', target_word=None
                     continue
                 syll_count = get_syllable_count(word) or 1
                 syll_priority = _syllable_priority(syll_count, target_sylls)
-                extends = any(_fast_score(rhyme_unit, fu) >= 0.75 for fu in family_units)
+                extends = any(_fast_score(rhyme_unit, fu) >= NEAR_RHYME_SAME_VOWEL_SCORE for fu in family_units)
                 override_candidates.append({
                     'word': word,
                     'rhyme_score': round(r_score * 100),

@@ -38,6 +38,7 @@ from learning_engine import record_signals_batch, get_top_signals
 from veil_revival_routes import veil_revival_bp
 import usage_history
 from song_context import SongContext
+from prosodic_config import NEAR_RHYME_SAME_VOWEL_SCORE
 
 logging.basicConfig(
     level=logging.INFO,
@@ -770,7 +771,7 @@ def thesaurus_related():
     for syn in result['synonyms']:
         syn_ru = get_rhyme_unit(syn)
         also_rhymes = bool(syn_ru) and any(
-            syllable_rhyme_score(syn_ru, fu) >= 0.75 for fu in family_units
+            syllable_rhyme_score(syn_ru, fu) >= NEAR_RHYME_SAME_VOWEL_SCORE for fu in family_units
         )
         tagged.append({'word': syn, 'also_rhymes': also_rhymes, 'concreteness': get_concreteness(syn)})
 

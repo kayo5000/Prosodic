@@ -112,6 +112,7 @@ from performed_stress import (
     get_lexical_stress_variants,
 )
 from phoneme_engine import FUNCTION_WORDS
+from prosodic_config import LAPSE_RUN_LENGTH, RECURRENCE_MIN
 
 log = logging.getLogger(__name__)
 
@@ -135,8 +136,6 @@ DELIBERATE_UNCERTAIN = 'uncertain'
 DELIBERATE_AUTOMATIC = 'likely_automatic'
 DELIBERATE_POSSIBLE  = 'possible_deliberate'
 
-LAPSE_RUN_LENGTH = 3        # 3+ consecutive unstressed syllables = a lapse
-RECURRENCE_MIN   = 2        # word must appear on 2+ lines to earn 'possible_deliberate'
 _STRONG_OR_POCKET = STRONG_POSITIONS | POCKET_POSITIONS
 
 

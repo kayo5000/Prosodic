@@ -7,13 +7,9 @@ Part of the Prosodic hip-hop lyric analysis suite.
 '''
 from collections import defaultdict
 from syllable_engine import syllabify_line
-
-# Beat 2 and Beat 4 are the pocket positions --- where hip hop rhymes live
-STRONG_POSITIONS = {0, 4, 8, 12}
-POCKET_POSITIONS = {4, 12}
-POCKET_WINDOW = 1  # ±1 sixteenth note counts as on-pocket
-NUDGE_WINDOW = 2    # max positions a stressed syllable may be pulled toward
-                     # a strong/pocket beat — see _assign_positions
+from prosodic_config import (
+    GRID_SIZE, STRONG_POSITIONS, POCKET_POSITIONS, POCKET_WINDOW, NUDGE_WINDOW,
+)
 
 def _is_near_pocket(pos):
     return any(abs(pos - p) <= POCKET_WINDOW for p in POCKET_POSITIONS)
@@ -35,16 +31,17 @@ def _nearest_strong_target(pos_mod16):
     '''
     best_target, best_dist = None, NUDGE_WINDOW + 1
     for t in POCKET_POSITIONS:  # checked first so ties favor the pocket
-        d = min((t - pos_mod16) % 16, (pos_mod16 - t) % 16)
+        d = min((t - pos_mod16) % GRID_SIZE, (pos_mod16 - t) % GRID_SIZE)
         if d < best_dist:
             best_dist, best_target = d, t
     for t in STRONG_POSITIONS - POCKET_POSITIONS:  # {0, 8}
-        d = min((t - pos_mod16) % 16, (pos_mod16 - t) % 16)
+        d = min((t - pos_mod16) % GRID_SIZE, (pos_mod16 - t) % GRID_SIZE)
         if d < best_dist:
             best_dist, best_target = d, t
     if best_target is None:
         return None, 0
-    delta = (best_target - pos_mod16 + 8) % 16 - 8
+    half_grid = GRID_SIZE // 2
+    delta = (best_target - pos_mod16 + half_grid) % GRID_SIZE - half_grid
     return best_target, delta
 
 def _assign_positions(syllables, start_position, total):
@@ -64,11 +61,11 @@ def _assign_positions(syllables, start_position, total):
     '''
     prev_final = start_position
     for i, s in enumerate(syllables):
-        base = start_position + (i * 16) // total
+        base = start_position + (i * GRID_SIZE) // total
         final = base
 
         if s.get('is_stressed'):
-            target, delta = _nearest_strong_target(base % 16)
+            target, delta = _nearest_strong_target(base % GRID_SIZE)
             if target is not None:
                 nudged = base + delta
                 if nudged >= prev_final:
@@ -78,7 +75,7 @@ def _assign_positions(syllables, start_position, total):
             final = prev_final
         prev_final = final
 
-        s['pocket_position'] = final % 16
+        s['pocket_position'] = final % GRID_SIZE
         s['beat_number'] = (s['pocket_position'] // 4) + 1
         s['on_strong_beat'] = _is_near_strong_beat(s['pocket_position'])
         s['on_pocket'] = _is_near_pocket(s['pocket_position'])

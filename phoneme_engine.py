@@ -16,6 +16,7 @@ nltk.download('averaged_perceptron_tagger_eng', quiet=True)
 from nltk.corpus import cmudict
 import normalization_engine
 from normalization_engine import CONTRACTIONS
+from prosodic_config import NEAR_RHYME_SAME_VOWEL_SCORE
 
 # Pre-warm the NLTK perceptron tagger so it loads once at import time
 # rather than on the first g2p call during a live analysis
@@ -240,11 +241,12 @@ def syllable_rhyme_score(rhyme_unit_a, rhyme_unit_b):
         # Coda mismatch (e.g. "thirst" ER+ST vs "adhere" IH+R) — never a real rhyme
         return 0.50
 
-    # Same vowel base — only 0.75 if both share the same R-context
+    # Same vowel base — only NEAR_RHYME_SAME_VOWEL_SCORE if both share the
+    # same R-context
     if vow_a == vow_b:
         same_r_context = (a_r == b_r) and (a_ehr == b_ehr)
         if same_r_context:
-            return 0.75
+            return NEAR_RHYME_SAME_VOWEL_SCORE
         return 0.35
 
     # EH+R ↔ ER family slant bridge (rare/curse, stare/hurt, parent/birth)
@@ -283,7 +285,7 @@ def rhyme_score(word_a, word_b):
     vow_a = nuc_a[:-1] if nuc_a[-1].isdigit() else nuc_a
     vow_b = nuc_b[:-1] if nuc_b[-1].isdigit() else nuc_b
     if vow_a == vow_b:
-        return 0.75
+        return NEAR_RHYME_SAME_VOWEL_SCORE
     if len(rhyme_a) > 1 and len(rhyme_b) > 1:
         if rhyme_a[-1] == rhyme_b[-1]:
             return 0.35

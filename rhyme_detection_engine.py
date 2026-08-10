@@ -12,8 +12,7 @@ Part of the Prosodic hip-hop lyric analysis suite.
 from collections import defaultdict
 from phoneme_engine import get_rhyme_unit_from_phonemes, syllable_rhyme_score, classify_r_family, FUNCTION_WORDS
 from syllable_engine import syllabify_line
-
-RHYME_THRESHOLD = 0.78  # Tight enough to block noise, R-bridge at 0.80 passes this
+from prosodic_config import RHYME_THRESHOLD
 
 def build_verse_stream(verse_lines):
     '''
