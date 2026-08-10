@@ -20,6 +20,7 @@ import json
 import logging
 import os
 import threading
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from typing import List, Optional, Dict, Any
 
@@ -43,9 +44,15 @@ from prosodic_data_objects import (
 DB_PATH = os.environ.get('PROSODIC_FEATURES_DB_PATH') or os.path.join(os.path.dirname(__file__), "prosodic_features.db")
 ERROR_LOG_PATH = os.path.join(os.path.dirname(__file__), "prosodic_errors.log")
 
-# Thread-local storage ensures each thread gets its own connection.
-# This is required for SQLite in multi-threaded Flask environments.
-_local = threading.local()
+# Guards _init_schema (and the one-time WAL switch below) so they only
+# actually run once per process even though connections themselves are
+# no longer cached (see _connection() below) — CREATE TABLE IF NOT
+# EXISTS is idempotent either way, this just avoids paying for it on
+# every single call. _schema_lock protects the check-then-set on
+# _schema_ready itself against a concurrent-startup race (see
+# journal_mode note in _connection()).
+_schema_ready = False
+_schema_lock = threading.Lock()
 
 # ---------------------------------------------------------------------------
 # Error logger (file only — never raises to caller)
@@ -73,20 +80,44 @@ def _log_error(context: str, exc: Exception) -> None:
 # Connection management
 # ---------------------------------------------------------------------------
 
-def _get_connection() -> sqlite3.Connection:
+@contextmanager
+def _connection() -> sqlite3.Connection:
     """
-    Return a thread-local SQLite connection to prosodic_features.db.
+    One connection per call, always closed — not a thread-local one reused
+    (and never closed) for the life of the thread. This is the busiest of
+    the shared-DB engines (14 call sites, every /analyze that has a
+    song_id ends up here), so it's also the one where a long-lived
+    per-thread connection under gunicorn --threads N>1 was the most
+    likely to actually collide with a concurrent write. Still WAL mode +
+    foreign_keys, now paired with a real busy_timeout so concurrent
+    writers wait briefly for each other instead of immediately raising
+    "database is locked". Verified safe under real concurrent load in
+    tests/test_thread_local_connections_concurrency.py.
 
-    Creates the connection and initializes the schema on first access per thread.
-    Uses WAL journal mode for better concurrent read performance.
+    busy_timeout is set FIRST, before anything else — a real
+    concurrent-load test caught that setting journal_mode=WAL before
+    busy_timeout let many threads race to switch mode on a brand new DB
+    file with no lock-wait protection active yet, occasionally losing
+    with "database is locked". journal_mode is a database-file property,
+    not a per-connection one, so it only needs to be switched once,
+    ever — done here inside _schema_lock alongside schema creation, not
+    reissued on every call.
     """
-    if not hasattr(_local, "conn") or _local.conn is None:
-        _local.conn = sqlite3.connect(DB_PATH, check_same_thread=False)
-        _local.conn.row_factory = sqlite3.Row
-        _local.conn.execute("PRAGMA journal_mode=WAL")
-        _local.conn.execute("PRAGMA foreign_keys=ON")
-        _init_schema(_local.conn)
-    return _local.conn
+    global _schema_ready
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA busy_timeout=5000")
+    conn.execute("PRAGMA foreign_keys=ON")
+    try:
+        if not _schema_ready:
+            with _schema_lock:
+                if not _schema_ready:
+                    conn.execute("PRAGMA journal_mode=WAL")
+                    _init_schema(conn)
+                    _schema_ready = True
+        yield conn
+    finally:
+        conn.close()
 
 
 # ---------------------------------------------------------------------------
@@ -257,26 +288,26 @@ def write_phoneme_sequence(ps: PhonemeSequence) -> None:
     Silent on failure — errors logged to prosodic_errors.log.
     """
     try:
-        conn = _get_connection()
-        conn.execute(
-            """
-            INSERT OR REPLACE INTO phoneme_sequences
-                (word, phonemes, syllable_count, stress_pattern,
-                 source, low_confidence, is_aave_variant, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                ps.word,
-                json.dumps(ps.phonemes),
-                ps.syllable_count,
-                json.dumps(ps.stress_pattern),
-                ps.source,
-                int(ps.low_confidence),
-                int(ps.is_aave_variant),
-                _now(),
-            ),
-        )
-        conn.commit()
+        with _connection() as conn:
+            conn.execute(
+                """
+                INSERT OR REPLACE INTO phoneme_sequences
+                    (word, phonemes, syllable_count, stress_pattern,
+                     source, low_confidence, is_aave_variant, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    ps.word,
+                    json.dumps(ps.phonemes),
+                    ps.syllable_count,
+                    json.dumps(ps.stress_pattern),
+                    ps.source,
+                    int(ps.low_confidence),
+                    int(ps.is_aave_variant),
+                    _now(),
+                ),
+            )
+            conn.commit()
     except Exception as exc:
         _log_error("write_phoneme_sequence", exc)
 
@@ -291,27 +322,27 @@ def write_lyric_line(ll: LyricLine, song_id: str = "") -> None:
     """
     try:
         line_id = ll.line_id or f"{song_id}_{ll.bar_index}_{hash(ll.text) & 0xFFFFFFFF}"
-        conn = _get_connection()
-        conn.execute(
-            """
-            INSERT OR REPLACE INTO lyric_lines
-                (line_id, song_id, section_label, text, bar_index, bpm,
-                 total_syllables, performed_stress_inversions, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                line_id,
-                song_id,
-                ll.section_label or "",
-                ll.text,
-                ll.bar_index,
-                ll.bpm,
-                ll.total_syllables,
-                json.dumps(ll.performed_stress_inversions),
-                _now(),
-            ),
-        )
-        conn.commit()
+        with _connection() as conn:
+            conn.execute(
+                """
+                INSERT OR REPLACE INTO lyric_lines
+                    (line_id, song_id, section_label, text, bar_index, bpm,
+                     total_syllables, performed_stress_inversions, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    line_id,
+                    song_id,
+                    ll.section_label or "",
+                    ll.text,
+                    ll.bar_index,
+                    ll.bpm,
+                    ll.total_syllables,
+                    json.dumps(ll.performed_stress_inversions),
+                    _now(),
+                ),
+            )
+            conn.commit()
     except Exception as exc:
         _log_error("write_lyric_line", exc)
 
@@ -324,32 +355,32 @@ def write_rhyme_event(re: RhymeEvent, song_id: str = "", section_label: str = ""
     Silent on failure — errors logged to prosodic_errors.log.
     """
     try:
-        conn = _get_connection()
-        conn.execute(
-            """
-            INSERT OR REPLACE INTO rhyme_events
-                (song_id, section_label, word_a, word_b, phonemes_a, phonemes_b,
-                 rhyme_type, similarity_score, line_index_a, line_index_b,
-                 aave_bridge, engine_confidence, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                song_id,
-                section_label,
-                re.word_a,
-                re.word_b,
-                json.dumps(re.phonemes_a),
-                json.dumps(re.phonemes_b),
-                re.rhyme_type.value,
-                re.similarity_score,
-                re.line_index_a,
-                re.line_index_b,
-                int(re.aave_bridge),
-                re.engine_confidence,
-                _now(),
-            ),
-        )
-        conn.commit()
+        with _connection() as conn:
+            conn.execute(
+                """
+                INSERT OR REPLACE INTO rhyme_events
+                    (song_id, section_label, word_a, word_b, phonemes_a, phonemes_b,
+                     rhyme_type, similarity_score, line_index_a, line_index_b,
+                     aave_bridge, engine_confidence, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    song_id,
+                    section_label,
+                    re.word_a,
+                    re.word_b,
+                    json.dumps(re.phonemes_a),
+                    json.dumps(re.phonemes_b),
+                    re.rhyme_type.value,
+                    re.similarity_score,
+                    re.line_index_a,
+                    re.line_index_b,
+                    int(re.aave_bridge),
+                    re.engine_confidence,
+                    _now(),
+                ),
+            )
+            conn.commit()
     except Exception as exc:
         _log_error("write_rhyme_event", exc)
 
@@ -362,31 +393,31 @@ def write_cadence_event(ce: CadenceEvent, song_id: str = "", section_label: str 
     Silent on failure — errors logged to prosodic_errors.log.
     """
     try:
-        conn = _get_connection()
-        conn.execute(
-            """
-            INSERT OR REPLACE INTO cadence_events
-                (song_id, section_label, line_index, bpm, syllables_per_beat,
-                 stress_pattern, cadence_class, inversion_count, inversion_rate,
-                 compression_flag, cadence_variance, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                song_id,
-                section_label,
-                ce.line_index,
-                ce.bpm,
-                ce.syllables_per_beat,
-                json.dumps(ce.stress_pattern),
-                ce.cadence_class.value,
-                ce.inversion_count,
-                ce.inversion_rate,
-                int(ce.compression_flag),
-                ce.cadence_variance,
-                _now(),
-            ),
-        )
-        conn.commit()
+        with _connection() as conn:
+            conn.execute(
+                """
+                INSERT OR REPLACE INTO cadence_events
+                    (song_id, section_label, line_index, bpm, syllables_per_beat,
+                     stress_pattern, cadence_class, inversion_count, inversion_rate,
+                     compression_flag, cadence_variance, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    song_id,
+                    section_label,
+                    ce.line_index,
+                    ce.bpm,
+                    ce.syllables_per_beat,
+                    json.dumps(ce.stress_pattern),
+                    ce.cadence_class.value,
+                    ce.inversion_count,
+                    ce.inversion_rate,
+                    int(ce.compression_flag),
+                    ce.cadence_variance,
+                    _now(),
+                ),
+            )
+            conn.commit()
     except Exception as exc:
         _log_error("write_cadence_event", exc)
 
@@ -399,27 +430,27 @@ def write_motif_event(me: MotifEvent, song_id: str = "", section_label: str = ""
     Silent on failure — errors logged to prosodic_errors.log.
     """
     try:
-        conn = _get_connection()
-        conn.execute(
-            """
-            INSERT OR REPLACE INTO motif_events
-                (song_id, section_label, anchor_word, related_words, semantic_field,
-                 line_indices, cluster_strength, first_appearance, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                song_id,
-                section_label,
-                me.anchor_word,
-                json.dumps(me.related_words),
-                me.semantic_field,
-                json.dumps(me.line_indices),
-                me.cluster_strength,
-                me.first_appearance,
-                _now(),
-            ),
-        )
-        conn.commit()
+        with _connection() as conn:
+            conn.execute(
+                """
+                INSERT OR REPLACE INTO motif_events
+                    (song_id, section_label, anchor_word, related_words, semantic_field,
+                     line_indices, cluster_strength, first_appearance, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    song_id,
+                    section_label,
+                    me.anchor_word,
+                    json.dumps(me.related_words),
+                    me.semantic_field,
+                    json.dumps(me.line_indices),
+                    me.cluster_strength,
+                    me.first_appearance,
+                    _now(),
+                ),
+            )
+            conn.commit()
     except Exception as exc:
         _log_error("write_motif_event", exc)
 
@@ -433,27 +464,27 @@ def write_song_section(ss: SongSection, song_id: str) -> None:
     Silent on failure — errors logged to prosodic_errors.log.
     """
     try:
-        conn = _get_connection()
-        conn.execute(
-            """
-            INSERT OR REPLACE INTO song_sections
-                (song_id, label, bar_count, bpm, density_gradient,
-                 arc_type, average_syllables_per_bar, line_count, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                song_id,
-                ss.label,
-                ss.bar_count,
-                ss.bpm,
-                json.dumps(ss.density_gradient),
-                ss.arc_type.value,
-                ss.average_syllables_per_bar,
-                len(ss.lines),
-                _now(),
-            ),
-        )
-        conn.commit()
+        with _connection() as conn:
+            conn.execute(
+                """
+                INSERT OR REPLACE INTO song_sections
+                    (song_id, label, bar_count, bpm, density_gradient,
+                     arc_type, average_syllables_per_bar, line_count, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    song_id,
+                    ss.label,
+                    ss.bar_count,
+                    ss.bpm,
+                    json.dumps(ss.density_gradient),
+                    ss.arc_type.value,
+                    ss.average_syllables_per_bar,
+                    len(ss.lines),
+                    _now(),
+                ),
+            )
+            conn.commit()
     except Exception as exc:
         _log_error("write_song_section", exc)
         return
@@ -479,27 +510,27 @@ def write_song_analysis(sa: SongAnalysis) -> None:
     """
     try:
         now = _now()
-        conn = _get_connection()
-        conn.execute(
-            """
-            INSERT OR REPLACE INTO song_analyses
-                (song_id, title, total_bars, bpm, emotional_signature,
-                 aspiration_gap_score, metadata, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                sa.song_id,
-                sa.title,
-                sa.total_bars,
-                sa.bpm,
-                json.dumps(sa.emotional_signature),
-                sa.aspiration_gap_score,
-                json.dumps(sa.metadata),
-                now,
-                now,
-            ),
-        )
-        conn.commit()
+        with _connection() as conn:
+            conn.execute(
+                """
+                INSERT OR REPLACE INTO song_analyses
+                    (song_id, title, total_bars, bpm, emotional_signature,
+                     aspiration_gap_score, metadata, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    sa.song_id,
+                    sa.title,
+                    sa.total_bars,
+                    sa.bpm,
+                    json.dumps(sa.emotional_signature),
+                    sa.aspiration_gap_score,
+                    json.dumps(sa.metadata),
+                    now,
+                    now,
+                ),
+            )
+            conn.commit()
     except Exception as exc:
         _log_error("write_song_analysis", exc)
         return
@@ -525,11 +556,11 @@ def get_rhyme_events_for_song(song_id: str) -> List[Dict[str, Any]]:
     Returns empty list on failure.
     """
     try:
-        conn = _get_connection()
-        rows = conn.execute(
-            "SELECT * FROM rhyme_events WHERE song_id = ?", (song_id,)
-        ).fetchall()
-        return [dict(row) for row in rows]
+        with _connection() as conn:
+            rows = conn.execute(
+                "SELECT * FROM rhyme_events WHERE song_id = ?", (song_id,)
+            ).fetchall()
+            return [dict(row) for row in rows]
     except Exception as exc:
         _log_error("get_rhyme_events_for_song", exc)
         return []
@@ -543,9 +574,9 @@ def get_all_phoneme_sequences() -> List[Dict[str, Any]]:
     Returns empty list on failure.
     """
     try:
-        conn = _get_connection()
-        rows = conn.execute("SELECT * FROM phoneme_sequences").fetchall()
-        return [dict(row) for row in rows]
+        with _connection() as conn:
+            rows = conn.execute("SELECT * FROM phoneme_sequences").fetchall()
+            return [dict(row) for row in rows]
     except Exception as exc:
         _log_error("get_all_phoneme_sequences", exc)
         return []
@@ -559,9 +590,9 @@ def get_all_cadence_events() -> List[Dict[str, Any]]:
     Returns empty list on failure.
     """
     try:
-        conn = _get_connection()
-        rows = conn.execute("SELECT * FROM cadence_events").fetchall()
-        return [dict(row) for row in rows]
+        with _connection() as conn:
+            rows = conn.execute("SELECT * FROM cadence_events").fetchall()
+            return [dict(row) for row in rows]
     except Exception as exc:
         _log_error("get_all_cadence_events", exc)
         return []
@@ -575,9 +606,9 @@ def get_all_motif_events() -> List[Dict[str, Any]]:
     Returns empty list on failure.
     """
     try:
-        conn = _get_connection()
-        rows = conn.execute("SELECT * FROM motif_events").fetchall()
-        return [dict(row) for row in rows]
+        with _connection() as conn:
+            rows = conn.execute("SELECT * FROM motif_events").fetchall()
+            return [dict(row) for row in rows]
     except Exception as exc:
         _log_error("get_all_motif_events", exc)
         return []
@@ -614,18 +645,18 @@ def export_training_data(output_path: Optional[str] = None) -> Dict[str, Any]:
     try:
         rhyme_rows = []
         try:
-            conn = _get_connection()
-            rows = conn.execute("SELECT * FROM rhyme_events").fetchall()
-            for row in rows:
-                rhyme_rows.append({
-                    "word_a": row["word_a"],
-                    "phonemes_a": json.loads(row["phonemes_a"]),
-                    "word_b": row["word_b"],
-                    "phonemes_b": json.loads(row["phonemes_b"]),
-                    "rhyme_type": row["rhyme_type"],
-                    "similarity_score": row["similarity_score"],
-                    "aave_bridge": bool(row["aave_bridge"]),
-                })
+            with _connection() as conn:
+                rows = conn.execute("SELECT * FROM rhyme_events").fetchall()
+                for row in rows:
+                    rhyme_rows.append({
+                        "word_a": row["word_a"],
+                        "phonemes_a": json.loads(row["phonemes_a"]),
+                        "word_b": row["word_b"],
+                        "phonemes_b": json.loads(row["phonemes_b"]),
+                        "rhyme_type": row["rhyme_type"],
+                        "similarity_score": row["similarity_score"],
+                        "aave_bridge": bool(row["aave_bridge"]),
+                    })
         except Exception as exc:
             _log_error("export_training_data:rhyme_pairs", exc)
 
@@ -710,7 +741,8 @@ def _ensure_db_initialized() -> None:
     exist before any write function is called. Silent on failure.
     """
     try:
-        _get_connection()
+        with _connection():
+            pass
     except Exception as exc:
         _log_error("_ensure_db_initialized", exc)
 

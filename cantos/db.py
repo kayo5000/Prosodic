@@ -143,21 +143,73 @@ CREATE INDEX IF NOT EXISTS idx_notes_session
 def get_connection():
     '''
     The one function to change for a Postgres migration. Thread-local
-    connection, same pattern as thesaurus_engine.py / concreteness_engine.py
-    elsewhere in this codebase.
+    connection, reused across every Cantos call within the SAME request
+    (board.py/disposition.py/meetings.py/notebooks.py/notes.py all call
+    this directly, 14 call sites total — deliberately kept as a plain
+    function returning a connection, not a context manager, rather than
+    changing that established calling convention across 5 files) —
+    but no longer held open forever under real concurrency.
+
+    Previously: opened once per THREAD and never closed for the life of
+    the thread — safe only because Cantos is off by default and, even
+    when on, this process has always run as a single gunicorn thread. Under
+    gunicorn --threads N>1, a thread's connection would persist across
+    completely unrelated requests indefinitely, the same class of risk
+    fixed elsewhere in this session (thesaurus_engine.py,
+    concreteness_engine.py, feature_store.py, telemetry.py,
+    learning_engine.py, usage_history.py).
+
+    The actual fix here is different from those six on purpose: api.py
+    registers close_connection() as a Flask app.teardown_appcontext hook,
+    so the thread-local connection is guaranteed closed at the end of
+    EVERY request (Cantos-touching or not) instead of never — bounding
+    its lifetime to one request rather than the life of the thread,
+    without needing to touch 14 external call sites' calling convention.
+    Verified safe under real concurrent load in
+    tests/test_thread_local_connections_concurrency.py.
     '''
     global _schema_ready_for_path
     if not hasattr(_local, 'conn') or _local.conn is None or getattr(_local, 'conn_path', None) != DB_PATH:
         os.makedirs(os.path.dirname(DB_PATH) or '.', exist_ok=True)
         _local.conn = sqlite3.connect(DB_PATH, check_same_thread=False)
         _local.conn.row_factory = sqlite3.Row
+        # busy_timeout FIRST, before any other statement on this connection —
+        # including the journal_mode switch below. Found via a real concurrent-
+        # load test (25 threads hitting a brand-new DB file at once): with
+        # journal_mode=WAL issued per-connection before busy_timeout was set,
+        # many threads raced to switch mode on the same fresh file with no
+        # lock-wait protection active yet, and some lost with "database is
+        # locked". busy_timeout has to be live before anything that can block.
+        _local.conn.execute('PRAGMA busy_timeout=5000')
         _local.conn_path = DB_PATH
         with _schema_lock:
             if _schema_ready_for_path != DB_PATH:
+                # journal_mode is a database-file property, not a
+                # per-connection one — once switched, every later connection
+                # (this thread's future reconnects, every other thread) sees
+                # WAL automatically. Issuing it here, once, inside the lock,
+                # instead of once per thread outside it, is what actually
+                # eliminates the race above rather than just adding a timeout
+                # on top of it.
+                _local.conn.execute('PRAGMA journal_mode=WAL')
                 _local.conn.executescript(SCHEMA_SQL)
                 _local.conn.commit()
                 _schema_ready_for_path = DB_PATH
     return _local.conn
+
+
+def close_connection():
+    '''
+    Closes and clears this thread's connection, if one exists. Registered
+    in api.py as a Flask teardown_appcontext hook so it runs after every
+    request, guaranteeing no Cantos connection outlives the request that
+    created it. Safe to call when no connection was ever opened for this
+    thread (the common case when Cantos is disabled, or the request never
+    touched Cantos) — a plain no-op, not an error.
+    '''
+    if hasattr(_local, 'conn') and _local.conn is not None:
+        _local.conn.close()
+        _local.conn = None
 
 
 def reset_schema_cache():
@@ -166,8 +218,7 @@ def reset_schema_cache():
     tmp file.'''
     global _schema_ready_for_path
     _schema_ready_for_path = None
-    if hasattr(_local, 'conn'):
-        _local.conn = None
+    close_connection()
 
 
 def new_id():

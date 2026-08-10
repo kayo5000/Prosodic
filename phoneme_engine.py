@@ -34,6 +34,19 @@ except ImportError:
     G2P_AVAILABLE = False
     log.warning('g2p_en not installed; unknown words will return None instead of a fallback pronunciation')
 
+# Loaded once per OS process at import time — every request in this
+# process shares this one dict. Cheap today because Railway runs exactly
+# one gunicorn worker/one thread (see Procfile — no --workers/--threads
+# flags). If this ever moves to `gunicorn --workers N>1`, each worker is
+# a separate process with its own Python memory: this dict (and the
+# @lru_cache below, and the equivalent caches in thesaurus_engine.py /
+# concreteness_engine.py) would NOT be shared across workers — each
+# worker pays this ~full load cost independently on its own first
+# request, not once for the whole deployment. Not a correctness bug,
+# just a real warm-up-cost multiplier to know about before scaling out.
+# A shared cache (e.g. Redis) would fix it, but that's real
+# infrastructure, not something to build speculatively ahead of need —
+# flag it as a "when we actually add workers" item.
 CMU = cmudict.dict()
 
 # ── Shared Constants ─────────────────────────────────────
@@ -85,6 +98,9 @@ def normalize(word):
     return (normalized or '').lower().strip()
 
 # ── Core Lookup ──────────────────────────────────────────
+# In-process cache, shared by every request within ONE OS process —
+# not shared across gunicorn workers if this ever scales past one. See
+# the CMU dict load note above; same caveat applies here.
 @lru_cache(maxsize=4096)
 def get_phonemes(word):
     clean = normalize(word)

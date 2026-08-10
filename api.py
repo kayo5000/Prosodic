@@ -26,6 +26,7 @@ import sqlite3
 import datetime
 import jwt
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.middleware.proxy_fix import ProxyFix
 from flask import Flask, request, jsonify
 import anthropic
 from dotenv import load_dotenv
@@ -43,6 +44,13 @@ import users_repository
 import feature_flags
 if feature_flags.CANTOS_ENABLED:
     from cantos import wiring as cantos_wiring
+# Imported unconditionally (lightweight, stdlib-only) so the teardown hook
+# below can close a Cantos connection if one was ever opened, regardless
+# of whether CANTOS_ENABLED is on — see cantos/db.py's close_connection().
+from cantos import db as cantos_db
+from rate_limiter import limiter, ANTHROPIC_ROUTE_LIMITS
+import anthropic_circuit_breaker
+from flask_limiter.errors import RateLimitExceeded
 
 logging.basicConfig(
     level=logging.INFO,
@@ -62,6 +70,35 @@ JWT_ALGO   = 'HS256'
 DB_PATH    = os.environ.get('PROSODIC_DB_PATH') or os.path.join(os.path.expanduser('~'), 'prosodic_data', 'prosodic.db')
 
 app = Flask(__name__)
+
+# Railway (like most PaaS) terminates TLS at a reverse proxy and forwards
+# requests with the real client IP in X-Forwarded-For — without this,
+# request.remote_addr (and therefore every IP-keyed rate limit below)
+# would see only the proxy's own address, putting every single caller in
+# the same bucket. x_for=1 trusts exactly one proxy hop, matching
+# Railway's setup — not a wildcard trust of arbitrary forwarded headers.
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+
+limiter.init_app(app)
+
+@app.errorhandler(RateLimitExceeded)
+def _rate_limited(e):
+    # Flask-Limiter already attaches Retry-After / X-RateLimit-* response
+    # headers automatically — not duplicated into the JSON body here
+    # since guessing at this exception's exact attributes across versions
+    # is more likely to be wrong than reading the real headers.
+    return jsonify({'error': 'Too many requests. Please wait before trying again.'}), 429
+
+@app.teardown_appcontext
+def _close_cantos_connection(exception=None):
+    # Bounds cantos/db.py's thread-local connection to one request's
+    # lifetime instead of the life of the thread — see get_connection()'s
+    # own docstring for why this is the right fix for that file
+    # specifically (14 external call sites across 5 modules, kept as a
+    # plain function rather than converting every caller to a context
+    # manager). A no-op on every request that never touches Cantos.
+    cantos_db.close_connection()
+
 app.register_blueprint(veil_revival_bp)
 
 _anthropic = anthropic.Anthropic(api_key=os.environ.get('ANTHROPIC_API_KEY'))
@@ -420,6 +457,7 @@ def suggest_more():
 # ── VEIL ──────────────────────────────────────────────────
 
 @app.route('/veil/chat', methods=['POST'])
+@limiter.limit(ANTHROPIC_ROUTE_LIMITS)
 def veil_chat():
     data, err = _parse_json()
     if err:
@@ -465,14 +503,20 @@ def veil_chat():
     log.info('POST /veil/chat  turns=%d', len(messages))
 
     try:
-        response = _anthropic.messages.create(
-            model='claude-sonnet-4-6',
-            max_tokens=2048,
-            system=system,
-            messages=[{'role': m['role'], 'content': m['content']} for m in messages],
-        )
+        with anthropic_circuit_breaker.guard():
+            response = _anthropic.messages.create(
+                model='claude-sonnet-4-6',
+                max_tokens=2048,
+                system=system,
+                messages=[{'role': m['role'], 'content': m['content']} for m in messages],
+            )
         reply = response.content[0].text
         return jsonify({'reply': reply})
+    except anthropic_circuit_breaker.CircuitOpenError as e:
+        log.warning('VEIL circuit breaker open, rejecting without calling Anthropic: %s', e)
+        return jsonify({
+            'error': 'VEIL is temporarily unavailable — the AI service has been failing repeatedly. Please try again shortly.',
+        }), 503
     except anthropic.APIError as e:
         log.exception('Anthropic API error in /veil/chat')
         return jsonify({'error': 'VEIL unavailable', 'detail': str(e)}), 502

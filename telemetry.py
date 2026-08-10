@@ -31,6 +31,7 @@ import json
 import logging
 import os
 import threading
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, Optional
@@ -45,7 +46,15 @@ from typing import Any, Dict, Optional
 DB_PATH = os.environ.get('PROSODIC_FEATURES_DB_PATH') or os.path.join(os.path.dirname(__file__), "prosodic_features.db")
 ERROR_LOG_PATH = os.path.join(os.path.dirname(__file__), "prosodic_errors.log")
 
-_local = threading.local()
+# Guards _init_schema (and the one-time WAL switch below) so they only
+# actually run once per process even though connections themselves are
+# no longer cached (see _connection() below) — CREATE TABLE IF NOT
+# EXISTS is idempotent either way, this just avoids paying for it on
+# every single call. _schema_lock protects the check-then-set on
+# _schema_ready itself against a concurrent-startup race (see
+# journal_mode note in _connection()).
+_schema_ready = False
+_schema_lock = threading.Lock()
 
 # ---------------------------------------------------------------------------
 # Error logger
@@ -94,19 +103,41 @@ class TelemetryEvent(str, Enum):
 # Connection management
 # ---------------------------------------------------------------------------
 
-def _get_connection() -> sqlite3.Connection:
+@contextmanager
+def _connection():
     """
-    Return a thread-local SQLite connection to prosodic_features.db.
+    One connection per call, always closed — not a thread-local one
+    reused (and never closed) for the life of the thread. Still WAL mode
+    for concurrent read performance, now paired with a real busy_timeout
+    so concurrent writers to this shared file (also written by
+    feature_store.py/usage_history.py) wait briefly for each other
+    instead of immediately raising "database is locked" under gunicorn
+    --threads N>1. Verified safe under real concurrent load in
+    tests/test_thread_local_connections_concurrency.py.
 
-    Creates the connection and initializes the user_signals table on first
-    access per thread. Uses WAL journal mode for concurrent read performance.
+    busy_timeout is set FIRST, before anything else — a real
+    concurrent-load test caught that setting journal_mode=WAL before
+    busy_timeout let many threads race to switch mode on a brand new DB
+    file with no lock-wait protection active yet, occasionally losing
+    with "database is locked". journal_mode is a database-file property,
+    not a per-connection one, so it only needs to be switched once,
+    ever — done here inside _schema_lock alongside schema creation, not
+    reissued on every call.
     """
-    if not hasattr(_local, "conn") or _local.conn is None:
-        _local.conn = sqlite3.connect(DB_PATH, check_same_thread=False)
-        _local.conn.row_factory = sqlite3.Row
-        _local.conn.execute("PRAGMA journal_mode=WAL")
-        _init_schema(_local.conn)
-    return _local.conn
+    global _schema_ready
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA busy_timeout=5000")
+    try:
+        if not _schema_ready:
+            with _schema_lock:
+                if not _schema_ready:
+                    conn.execute("PRAGMA journal_mode=WAL")
+                    _init_schema(conn)
+                    _schema_ready = True
+        yield conn
+    finally:
+        conn.close()
 
 
 # ---------------------------------------------------------------------------
@@ -204,30 +235,30 @@ def log_event(
     Silent on failure — errors logged to prosodic_errors.log.
     """
     try:
-        conn = _get_connection()
-        conn.execute(
-            """
-            INSERT INTO user_signals
-                (event_type, song_id, section_label, line_index, word_index,
-                 before_state, after_state, engine_confidence,
-                 session_id, metadata, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                event_type.value if isinstance(event_type, TelemetryEvent) else str(event_type),
-                song_id,
-                section_label,
-                line_index,
-                word_index,
-                json.dumps(before_state),
-                json.dumps(after_state),
-                max(0.0, min(1.0, engine_confidence)),
-                session_id,
-                json.dumps(metadata or {}),
-                _now(),
-            ),
-        )
-        conn.commit()
+        with _connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO user_signals
+                    (event_type, song_id, section_label, line_index, word_index,
+                     before_state, after_state, engine_confidence,
+                     session_id, metadata, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    event_type.value if isinstance(event_type, TelemetryEvent) else str(event_type),
+                    song_id,
+                    section_label,
+                    line_index,
+                    word_index,
+                    json.dumps(before_state),
+                    json.dumps(after_state),
+                    max(0.0, min(1.0, engine_confidence)),
+                    session_id,
+                    json.dumps(metadata or {}),
+                    _now(),
+                ),
+            )
+            conn.commit()
     except Exception as exc:
         _log_error("log_event", exc)
 
@@ -529,17 +560,17 @@ def get_signals_by_event_type(event_type: TelemetryEvent, limit: int = 500) -> l
         List of dicts. Returns empty list on failure.
     """
     try:
-        conn = _get_connection()
-        rows = conn.execute(
-            """
-            SELECT * FROM user_signals
-            WHERE event_type = ?
-            ORDER BY created_at DESC
-            LIMIT ?
-            """,
-            (event_type.value, limit),
-        ).fetchall()
-        return [dict(row) for row in rows]
+        with _connection() as conn:
+            rows = conn.execute(
+                """
+                SELECT * FROM user_signals
+                WHERE event_type = ?
+                ORDER BY created_at DESC
+                LIMIT ?
+                """,
+                (event_type.value, limit),
+            ).fetchall()
+            return [dict(row) for row in rows]
     except Exception as exc:
         _log_error("get_signals_by_event_type", exc)
         return []
@@ -559,23 +590,23 @@ def get_high_confidence_overrides(min_confidence: float = 0.8, limit: int = 200)
         above the confidence threshold. Returns empty list on failure.
     """
     try:
-        conn = _get_connection()
-        rows = conn.execute(
-            """
-            SELECT * FROM user_signals
-            WHERE event_type IN (?, ?)
-              AND engine_confidence >= ?
-            ORDER BY engine_confidence DESC, created_at DESC
-            LIMIT ?
-            """,
-            (
-                TelemetryEvent.RHYME_GROUP_OVERRIDE.value,
-                TelemetryEvent.STRESS_OVERRIDE.value,
-                min_confidence,
-                limit,
-            ),
-        ).fetchall()
-        return [dict(row) for row in rows]
+        with _connection() as conn:
+            rows = conn.execute(
+                """
+                SELECT * FROM user_signals
+                WHERE event_type IN (?, ?)
+                  AND engine_confidence >= ?
+                ORDER BY engine_confidence DESC, created_at DESC
+                LIMIT ?
+                """,
+                (
+                    TelemetryEvent.RHYME_GROUP_OVERRIDE.value,
+                    TelemetryEvent.STRESS_OVERRIDE.value,
+                    min_confidence,
+                    limit,
+                ),
+            ).fetchall()
+            return [dict(row) for row in rows]
     except Exception as exc:
         _log_error("get_high_confidence_overrides", exc)
         return []
@@ -592,16 +623,16 @@ def get_signal_summary() -> Dict[str, int]:
         Dict mapping event_type string to count. Returns empty dict on failure.
     """
     try:
-        conn = _get_connection()
-        rows = conn.execute(
-            """
-            SELECT event_type, COUNT(*) as count
-            FROM user_signals
-            GROUP BY event_type
-            ORDER BY count DESC
-            """
-        ).fetchall()
-        return {row["event_type"]: row["count"] for row in rows}
+        with _connection() as conn:
+            rows = conn.execute(
+                """
+                SELECT event_type, COUNT(*) as count
+                FROM user_signals
+                GROUP BY event_type
+                ORDER BY count DESC
+                """
+            ).fetchall()
+            return {row["event_type"]: row["count"] for row in rows}
     except Exception as exc:
         _log_error("get_signal_summary", exc)
         return {}
@@ -614,7 +645,8 @@ def get_signal_summary() -> Dict[str, int]:
 def _ensure_schema() -> None:
     """Trigger schema initialization on module load. Silent on failure."""
     try:
-        _get_connection()
+        with _connection():
+            pass
     except Exception as exc:
         _log_error("_ensure_schema", exc)
 

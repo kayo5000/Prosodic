@@ -22,6 +22,10 @@ Registration:
 
 Design rules:
 - New file only. No existing files modified.
+  (UPDATE: this file itself was later modified once, deliberately — to add
+  rate limiting and the shared Anthropic circuit breaker, since this route
+  makes the same real, billed Anthropic calls /veil/chat does and had the
+  same open cost/abuse gap. See rate_limiter.py / anthropic_circuit_breaker.py.)
 - Silent failures — never 500 the client on model errors.
 - Docstrings on everything.
 """
@@ -33,6 +37,9 @@ import logging
 from typing import List, Dict, Any
 
 from flask import Blueprint, request, jsonify  # type: ignore
+
+from rate_limiter import limiter, ANTHROPIC_ROUTE_LIMITS
+import anthropic_circuit_breaker
 
 _log = logging.getLogger(__name__)
 
@@ -129,6 +136,7 @@ def _build_system_prompt(title: str, body: str) -> str:
 # ---------------------------------------------------------------------------
 
 @veil_revival_bp.route("/veil/revival/chat", methods=["POST"])
+@limiter.limit(ANTHROPIC_ROUTE_LIMITS)
 def revival_chat():
     """
     Continue or begin a VEIL Revival conversation for an abandoned note.
@@ -181,18 +189,23 @@ def revival_chat():
         if client is None:
             return jsonify({"error": "VEIL service unavailable"}), 503
 
-        response = client.messages.create(
-            model="claude-sonnet-4-6",
-            max_tokens=512,
-            system=system_prompt,
-            messages=clean_messages if clean_messages else [
-                {"role": "user", "content": "Please begin the revival session."}
-            ],
-        )
+        with anthropic_circuit_breaker.guard():
+            response = client.messages.create(
+                model="claude-sonnet-4-6",
+                max_tokens=512,
+                system=system_prompt,
+                messages=clean_messages if clean_messages else [
+                    {"role": "user", "content": "Please begin the revival session."}
+                ],
+            )
 
         reply = response.content[0].text if response.content else ""
 
         return jsonify({"reply": reply, "note_type": None})
+
+    except anthropic_circuit_breaker.CircuitOpenError as exc:
+        _log.warning(f"revival_chat: circuit breaker open, rejecting without calling Anthropic: {exc}")
+        return jsonify({"error": "Revival is temporarily unavailable — the AI service has been failing repeatedly. Please try again shortly."}), 503
 
     except Exception as exc:
         _log.error(f"revival_chat error: {exc}")

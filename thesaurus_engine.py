@@ -8,7 +8,7 @@ Part of the Prosodic hip-hop lyric analysis suite.
 import os
 import logging
 import sqlite3
-import threading
+from contextlib import contextmanager
 from functools import lru_cache
 
 import thesaurus_schema
@@ -24,45 +24,54 @@ CACHE_SIZE = 5000
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "moby_thesaurus.db")
 
-# Thread-local connections so Flask threads don't share a single connection
-_local = threading.local()
-
-# Set once, process-wide, the first time any thread opens a connection — the
+# Set once, process-wide, the first time ANY call opens a connection — the
 # schema either matches thesaurus_schema.py or it doesn't, no need to check
-# more than once per process. See thesaurus_schema.py for why this exists:
-# it's what would have caught idx_syn_synonym silently going missing instead
-# of that only surfacing via a manual audit.
+# more than once per process even though connections themselves are no
+# longer cached (see _connection() below). See thesaurus_schema.py for why
+# this exists: it's what would have caught idx_syn_synonym silently going
+# missing instead of that only surfacing via a manual audit.
 _schema_checked = False
 
-def _conn():
-    global _schema_checked
-    if not hasattr(_local, 'conn') or _local.conn is None:
-        if not os.path.exists(DB_PATH):
-            # sqlite3.connect() silently creates an empty file if the path is
-            # missing, which turns into a confusing "no such table" error later.
-            # Fail the same clear way every time instead.
-            raise FileNotFoundError(f'Thesaurus database not found at {DB_PATH}')
-        _local.conn = sqlite3.connect(DB_PATH, check_same_thread=False)
-        _local.conn.row_factory = sqlite3.Row
 
+@contextmanager
+def _connection():
+    '''
+    One connection per call, always closed — not a thread-local one
+    reused (and never closed) for the life of the thread. Previously
+    unsafe to reason about under real concurrency (gunicorn --threads
+    N>1 would give each thread its own long-lived connection to this
+    file, held forever). Verified safe under real concurrent load in
+    tests/test_thread_local_connections_concurrency.py.
+    '''
+    global _schema_checked
+    if not os.path.exists(DB_PATH):
+        # sqlite3.connect() silently creates an empty file if the path is
+        # missing, which turns into a confusing "no such table" error later.
+        # Fail the same clear way every time instead.
+        raise FileNotFoundError(f'Thesaurus database not found at {DB_PATH}')
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+    try:
         if not _schema_checked:
             _schema_checked = True
-            missing = thesaurus_schema.missing_indexes(_local.conn)
+            missing = thesaurus_schema.missing_indexes(conn)
             if missing:
                 # The DB committed to git is deliberately UNindexed (~82MB —
                 # a pre-built index bloats it to ~172MB, over GitHub's 100MB
                 # per-file limit). So this isn't drift, it's expected on
                 # every fresh checkout/deploy — heal it here instead of just
                 # warning. Idempotent and one-time per process (guarded by
-                # _schema_checked), so later connections skip straight past
-                # this block once the indexes exist on disk.
+                # _schema_checked), so later calls skip straight past this
+                # block once the indexes exist on disk.
                 log.info(
                     'moby_thesaurus.db is missing expected index(es): %s — '
                     'building them now (one-time cost for this process).',
                     ', '.join(missing),
                 )
-                thesaurus_schema.create_indexes(_local.conn)
-    return _local.conn
+                thesaurus_schema.create_indexes(conn)
+        yield conn
+    finally:
+        conn.close()
 
 
 def lookup(word: str) -> dict:
@@ -82,32 +91,40 @@ def lookup(word: str) -> dict:
     return _cached_lookup(word.strip().lower())
 
 
+# In-process cache, shared by every request within ONE OS process. If
+# this ever scales to `gunicorn --workers N>1`, each worker is a
+# separate process with its own memory — this cache would NOT be shared
+# across workers, and each pays its own warm-up cost independently
+# rather than once for the whole deployment. Not a correctness issue,
+# just a real cost multiplier to know about before scaling out; a
+# shared cache (e.g. Redis) is a real infrastructure decision for when
+# that's actually needed, not something to build speculatively now.
 @lru_cache(maxsize=CACHE_SIZE)
 def _cached_lookup(word: str) -> dict:
     try:
-        c = _conn().cursor()
+        with _connection() as conn:
+            c = conn.cursor()
+            row = c.execute(
+                "SELECT word_id FROM words WHERE LOWER(word) = ?", (word,)
+            ).fetchone()
+
+            if not row:
+                return {'word': word, 'found': False, 'synonyms': []}
+
+            word_id = row['word_id']
+            rows = c.execute(
+                "SELECT synonym FROM synonyms WHERE word_id = ? ORDER BY synonym LIMIT 500",
+                (word_id,)
+            ).fetchall()
+
+            return {
+                'word':     word,
+                'found':    True,
+                'synonyms': [r['synonym'] for r in rows],
+            }
     except (FileNotFoundError, sqlite3.Error):
         log.warning('Thesaurus DB unavailable — lookup("%s") degraded to not-found', word)
         return {'word': word, 'found': False, 'synonyms': []}
-
-    row = c.execute(
-        "SELECT word_id FROM words WHERE LOWER(word) = ?", (word,)
-    ).fetchone()
-
-    if not row:
-        return {'word': word, 'found': False, 'synonyms': []}
-
-    word_id = row['word_id']
-    rows = c.execute(
-        "SELECT synonym FROM synonyms WHERE word_id = ? ORDER BY synonym LIMIT 500",
-        (word_id,)
-    ).fetchall()
-
-    return {
-        'word':     word,
-        'found':    True,
-        'synonyms': [r['synonym'] for r in rows],
-    }
 
 
 def reverse_lookup(word: str) -> list[str]:
@@ -118,21 +135,21 @@ def reverse_lookup(word: str) -> list[str]:
     """
     word = word.strip().lower()
     try:
-        c = _conn().cursor()
+        with _connection() as conn:
+            rows = conn.execute(
+                """
+                SELECT w.word FROM synonyms s
+                JOIN words w ON w.word_id = s.word_id
+                WHERE LOWER(s.synonym) = ?
+                ORDER BY w.word
+                LIMIT 50
+                """,
+                (word,)
+            ).fetchall()
+            return [r['word'] for r in rows]
     except (FileNotFoundError, sqlite3.Error):
         log.warning('Thesaurus DB unavailable — reverse_lookup("%s") degraded to empty', word)
         return []
-    rows = c.execute(
-        """
-        SELECT w.word FROM synonyms s
-        JOIN words w ON w.word_id = s.word_id
-        WHERE LOWER(s.synonym) = ?
-        ORDER BY w.word
-        LIMIT 50
-        """,
-        (word,)
-    ).fetchall()
-    return [r['word'] for r in rows]
 
 
 def search(query: str, limit: int = 30) -> list[str]:
@@ -141,15 +158,15 @@ def search(query: str, limit: int = 30) -> list[str]:
     """
     query = query.strip().lower()
     try:
-        c = _conn().cursor()
+        with _connection() as conn:
+            rows = conn.execute(
+                "SELECT word FROM words WHERE LOWER(word) LIKE ? ORDER BY word LIMIT ?",
+                (query + '%', limit)
+            ).fetchall()
+            return [r['word'] for r in rows]
     except (FileNotFoundError, sqlite3.Error):
         log.warning('Thesaurus DB unavailable — search("%s") degraded to empty', query)
         return []
-    rows = c.execute(
-        "SELECT word FROM words WHERE LOWER(word) LIKE ? ORDER BY word LIMIT ?",
-        (query + '%', limit)
-    ).fetchall()
-    return [r['word'] for r in rows]
 
 
 def find_bridge_words(word_a: str, word_b: str, limit: int = 10) -> dict:
