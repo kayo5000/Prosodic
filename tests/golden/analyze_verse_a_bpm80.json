@@ -1867,6 +1867,8 @@
   "phrase_containers": [
     {
       "bar_count": 8,
+      "confidence": 1.0,
+      "confidence_basis": [],
       "end_line": 7,
       "lines": [
         "And I swear that it's turnt",

@@ -1181,6 +1181,8 @@
   "phrase_containers": [
     {
       "bar_count": 4,
+      "confidence": 1.0,
+      "confidence_basis": [],
       "end_line": 3,
       "lines": [
         "Woke up early, sun ain't even out yet",

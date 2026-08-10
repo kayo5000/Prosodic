@@ -93,6 +93,8 @@ reverse-engineering it.
 Part of the Prosodic hip-hop lyric analysis suite.
 '''
 
+from prosodic_config import BOUNDARY_THRESHOLD, BOUNDARY_SIGNAL_WEIGHTS
+
 # ── Per-source scale + polarity registry ────────────────────────────────
 # (raw_min, raw_max, polarity). polarity is 'normal' (higher raw = stronger)
 # or 'inverted' (lower raw = stronger). See the audit above for how each
@@ -109,6 +111,15 @@ SCALES = {
     'suggestion_thesaurus_score':   (0.0, 100.0, 'normal'),
     'suggestion_syllable_priority': (0.0, 2.0,   'normal'),
     'stress_signal_confidence':     (0.0, 1.0,   'normal'),
+    # phrase_container_engine's per-boundary signal weight. Floor is
+    # BOUNDARY_THRESHOLD itself (not 0) — a weight below that never
+    # becomes an accepted boundary at all, so anchoring the confidence
+    # scale there (rather than 0) means a just-barely-accepted boundary
+    # reads as low-but-real confidence instead of wasting the whole top
+    # half of the scale on weights that could never occur. Ceiling is
+    # every signal firing at once — derived from BOUNDARY_SIGNAL_WEIGHTS
+    # itself so it can't drift out of sync if a weight ever changes.
+    'phrase_boundary_weight':       (BOUNDARY_THRESHOLD, sum(BOUNDARY_SIGNAL_WEIGHTS.values()), 'normal'),
 }
 
 
