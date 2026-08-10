@@ -84,27 +84,26 @@ _cmudict_cache: Optional[Dict[str, List[List[str]]]] = None
 
 def _load_cmudict() -> Dict[str, List[List[str]]]:
     """
-    Load NLTK cmudict on first call and cache it module-level.
+    Returns phoneme_engine's single shared CMU dictionary load, cached
+    module-level on first call.
 
-    Returns empty dict if NLTK is unavailable.
+    Previously built its own independent copy via cmudict.entries() —
+    verified byte-for-byte identical to phoneme_engine.CMU (same word
+    count, same structure, `==` true) before switching to just reusing
+    it. One less ~125k-word dict held in memory per process, and one
+    less place a future change to how CMU is loaded could quietly drift
+    out of sync with everywhere else.
+
+    Returns empty dict if phoneme_engine (and therefore NLTK/cmudict)
+    is unavailable — same degrade-gracefully contract as before.
     """
     global _cmudict_cache
     if _cmudict_cache is not None:
         return _cmudict_cache
 
     try:
-        import nltk
-        from nltk.corpus import cmudict
-        try:
-            cmudict.entries()
-        except LookupError:
-            nltk.download("cmudict", quiet=True)
-            from nltk.corpus import cmudict  # noqa: F811
-        from collections import defaultdict
-        raw: Dict[str, List[List[str]]] = defaultdict(list)
-        for word, phones in cmudict.entries():
-            raw[word.lower()].append(phones)
-        _cmudict_cache = dict(raw)
+        from phoneme_engine import CMU
+        _cmudict_cache = CMU
     except Exception:
         _cmudict_cache = {}
 

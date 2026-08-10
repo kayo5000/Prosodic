@@ -11,11 +11,9 @@ from collections import defaultdict
 
 log = logging.getLogger(__name__)
 
-import nltk
-nltk.download('cmudict', quiet=True)
-from nltk.corpus import cmudict
-
-from phoneme_engine import get_rhyme_unit, rhyme_score, get_phonemes, FUNCTION_WORDS
+from phoneme_engine import (
+    get_rhyme_unit, rhyme_score, get_phonemes, FUNCTION_WORDS, CMU,
+)
 from syllable_engine import get_syllable_count, syllabify_line
 from rhyme_detection_engine import analyze_verse
 from motif_engine import build_motif_map
@@ -24,7 +22,12 @@ from thesaurus_engine import lookup as thesaurus_lookup
 from final_result_converter import normalize as fr_normalize
 from prosodic_config import NEAR_RHYME_SAME_VOWEL_SCORE
 
-CMU = cmudict.dict()
+# CMU is phoneme_engine's single load of the ~125k-word CMU Pronouncing
+# Dictionary — imported, not reloaded, so this process holds exactly one
+# copy instead of a second independent one. Previously this module called
+# cmudict.dict() itself (a real, if quiet, duplicate — same fix applied to
+# wordform_engine.py and performed_stress.py, which each had their own
+# separate copy too).
 
 # ── Startup index — built once, replaces O(125k) scan with O(1) lookup ────────
 
