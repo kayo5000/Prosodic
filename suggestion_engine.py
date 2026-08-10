@@ -21,6 +21,7 @@ from rhyme_detection_engine import analyze_verse
 from motif_engine import build_motif_map
 from semantics_engine import semantic_similarity, SPACY_AVAILABLE
 from thesaurus_engine import lookup as thesaurus_lookup
+from final_result_converter import normalize as fr_normalize
 
 CMU = cmudict.dict()
 
@@ -214,10 +215,15 @@ def _layer2(verse_lines, candidates, dominant_word, content_words, trigger_mode,
     word associations (domain words, imagery, recurring concepts) that the thesaurus
     wouldn't know about (e.g. ocean → [jellyfish, tide, reef, coral, current]).
 
-    Composite score (0-100):
-      rhyme_score      × 0.55   — phonetic match quality
-      thesaurus_score  × 0.30   — synonym overlap with verse content words
-      syllable_priority × 7.5  — syllable count match to verse target
+    Composite score (0-100) — each input is normalized to 0.0-1.0 via
+    final_result_converter first (rhyme_score and thesaurus_score are
+    already 0-100, syllable_priority is a 0-2 ordinal — different scales,
+    which is exactly what the converter exists to reconcile before they
+    get blended), then scaled by each one's max contribution to the
+    100-point composite:
+      rhyme_score       → max contribution 55  — phonetic match quality
+      thesaurus_score   → max contribution 30  — synonym overlap with verse content words
+      syllable_priority → max contribution 15  — syllable count match to verse target
 
     No external API calls. Fully local.
     '''
@@ -292,10 +298,17 @@ def _layer2(verse_lines, candidates, dominant_word, content_words, trigger_mode,
             thesaurus_score = 0
 
         # ── Composite ────────────────────────────────────────────────────────
+        # Each input normalized to 0.0-1.0 before blending (see module
+        # docstring above) — not a behavior change from the old hand-tuned
+        # multipliers (0.55 == 55/100, 0.30 == 30/100, 7.5 == 15/2), just
+        # making the scale conversion explicit and registered instead of
+        # implicit in a magic number. See
+        # tests/test_final_result_converter.py for the byte-for-byte
+        # regression proof.
         composite = (
-            c['rhyme_score']       * 0.55 +
-            thesaurus_score        * 0.30 +
-            c['syllable_priority'] * 7.5
+            fr_normalize(c['rhyme_score'], 'suggestion_rhyme_score')       * 55 +
+            fr_normalize(thesaurus_score,  'suggestion_thesaurus_score')   * 30 +
+            fr_normalize(c['syllable_priority'], 'suggestion_syllable_priority') * 15
         )
 
         # ── Star rating ───────────────────────────────────────────────────────
