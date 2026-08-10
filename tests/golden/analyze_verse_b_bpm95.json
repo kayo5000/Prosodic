@@ -1,0 +1,1750 @@
+{
+  "bpm": 95,
+  "cadence_signals": {
+    "lines_analyzed": 4,
+    "signal_counts": {
+      "demotion": 0,
+      "level_stress_ambiguity": 0,
+      "promotion": 7,
+      "secondary_recruitment": 0,
+      "stress_clash": 15,
+      "stress_lapse": 1,
+      "syncopation": 2,
+      "trochaic_inversion": 1
+    },
+    "signals": [
+      {
+        "confidence": 0.9,
+        "deliberateness": "uncertain",
+        "global_syll_idx": 5,
+        "grid_position": 8,
+        "lexical_stress": 1,
+        "line_index": 0,
+        "performed_stress": 2,
+        "syllable_index": 0,
+        "type": "stress_clash",
+        "word": "sun/ain't",
+        "word_index": 4
+      },
+      {
+        "confidence": 0.9,
+        "deliberateness": "uncertain",
+        "global_syll_idx": 6,
+        "grid_position": 8,
+        "lexical_stress": 1,
+        "line_index": 0,
+        "performed_stress": 2,
+        "syllable_index": 0,
+        "type": "stress_clash",
+        "word": "ain't/even",
+        "word_index": 5
+      },
+      {
+        "confidence": 0.9,
+        "deliberateness": "uncertain",
+        "global_syll_idx": 9,
+        "grid_position": 12,
+        "lexical_stress": 1,
+        "line_index": 0,
+        "performed_stress": 1,
+        "syllable_index": 0,
+        "type": "stress_clash",
+        "word": "out/yet",
+        "word_index": 7
+      },
+      {
+        "confidence": 0.3,
+        "deliberateness": "uncertain",
+        "global_syll_idx": 1,
+        "grid_position": 0,
+        "lexical_stress": 1,
+        "line_index": 0,
+        "performed_stress": 2,
+        "syllable_index": 0,
+        "type": "promotion",
+        "word": "up",
+        "word_index": 1
+      },
+      {
+        "confidence": 0.3,
+        "deliberateness": "uncertain",
+        "global_syll_idx": 3,
+        "grid_position": 4,
+        "lexical_stress": 0,
+        "line_index": 0,
+        "performed_stress": 1,
+        "syllable_index": 1,
+        "type": "promotion",
+        "word": "early",
+        "word_index": 2
+      },
+      {
+        "confidence": 0.9,
+        "deliberateness": "uncertain",
+        "global_syll_idx": 5,
+        "grid_position": 4,
+        "lexical_stress": 1,
+        "line_index": 1,
+        "performed_stress": 1,
+        "syllable_index": 0,
+        "type": "stress_clash",
+        "word": "low/ain't",
+        "word_index": 4
+      },
+      {
+        "confidence": 0.9,
+        "deliberateness": "uncertain",
+        "global_syll_idx": 6,
+        "grid_position": 8,
+        "lexical_stress": 1,
+        "line_index": 1,
+        "performed_stress": 2,
+        "syllable_index": 0,
+        "type": "stress_clash",
+        "word": "ain't/nobody",
+        "word_index": 5
+      },
+      {
+        "confidence": 0.9,
+        "deliberateness": "uncertain",
+        "global_syll_idx": 7,
+        "grid_position": 8,
+        "lexical_stress": 2,
+        "line_index": 1,
+        "performed_stress": 2,
+        "syllable_index": 1,
+        "type": "stress_clash",
+        "word": "nobody",
+        "word_index": 5
+      },
+      {
+        "confidence": 0.9,
+        "deliberateness": "uncertain",
+        "global_syll_idx": 8,
+        "grid_position": 8,
+        "lexical_stress": 2,
+        "line_index": 1,
+        "performed_stress": 2,
+        "syllable_index": 2,
+        "type": "stress_clash",
+        "word": "nobody",
+        "word_index": 5
+      },
+      {
+        "confidence": 0.9,
+        "deliberateness": "uncertain",
+        "global_syll_idx": 9,
+        "grid_position": 12,
+        "lexical_stress": 1,
+        "line_index": 1,
+        "performed_stress": 1,
+        "syllable_index": 0,
+        "type": "stress_clash",
+        "word": "nobody/gotta",
+        "word_index": 6
+      },
+      {
+        "confidence": 0.9,
+        "deliberateness": "uncertain",
+        "global_syll_idx": 10,
+        "grid_position": 12,
+        "lexical_stress": 1,
+        "line_index": 1,
+        "performed_stress": 1,
+        "syllable_index": 1,
+        "type": "stress_clash",
+        "word": "gotta",
+        "word_index": 6
+      },
+      {
+        "confidence": 0.9,
+        "deliberateness": "uncertain",
+        "global_syll_idx": 11,
+        "grid_position": 12,
+        "lexical_stress": 1,
+        "line_index": 1,
+        "performed_stress": 1,
+        "syllable_index": 0,
+        "type": "stress_clash",
+        "word": "gotta/doubt",
+        "word_index": 7
+      },
+      {
+        "confidence": 0.9,
+        "deliberateness": "uncertain",
+        "global_syll_idx": 12,
+        "grid_position": 12,
+        "lexical_stress": 1,
+        "line_index": 1,
+        "performed_stress": 1,
+        "syllable_index": 0,
+        "type": "stress_clash",
+        "word": "doubt/it",
+        "word_index": 8
+      },
+      {
+        "confidence": 0.55,
+        "deliberateness": "possible_deliberate",
+        "global_syll_idx": 3,
+        "grid_position": 4,
+        "lexical_stress": 0,
+        "line_index": 1,
+        "performed_stress": 1,
+        "syllable_index": 0,
+        "type": "promotion",
+        "word": "the",
+        "word_index": 2
+      },
+      {
+        "confidence": 0.9,
+        "deliberateness": "uncertain",
+        "global_syll_idx": 3,
+        "grid_position": 4,
+        "lexical_stress": 1,
+        "line_index": 2,
+        "performed_stress": 1,
+        "syllable_index": 0,
+        "type": "stress_clash",
+        "word": "lights/fading",
+        "word_index": 2
+      },
+      {
+        "confidence": 0.9,
+        "deliberateness": "uncertain",
+        "global_syll_idx": 10,
+        "grid_position": 12,
+        "lexical_stress": 1,
+        "line_index": 2,
+        "performed_stress": 1,
+        "syllable_index": 0,
+        "type": "stress_clash",
+        "word": "breaks/through",
+        "word_index": 7
+      },
+      {
+        "confidence": 0.7,
+        "deliberateness": "uncertain",
+        "global_syll_idx": 4,
+        "grid_position": 5,
+        "lexical_stress": 0,
+        "line_index": 2,
+        "performed_stress": 0,
+        "run_length": 3,
+        "syllable_index": 1,
+        "type": "stress_lapse",
+        "word": "fading as the",
+        "word_index": 2
+      },
+      {
+        "confidence": 0.3,
+        "deliberateness": "uncertain",
+        "global_syll_idx": 5,
+        "grid_position": 8,
+        "lexical_stress": 1,
+        "line_index": 2,
+        "performed_stress": 2,
+        "syllable_index": 0,
+        "type": "promotion",
+        "word": "as",
+        "word_index": 3
+      },
+      {
+        "confidence": 0.55,
+        "deliberateness": "possible_deliberate",
+        "global_syll_idx": 6,
+        "grid_position": 8,
+        "lexical_stress": 0,
+        "line_index": 2,
+        "performed_stress": 2,
+        "syllable_index": 0,
+        "type": "promotion",
+        "word": "the",
+        "word_index": 4
+      },
+      {
+        "confidence": 0.3,
+        "deliberateness": "uncertain",
+        "global_syll_idx": 8,
+        "grid_position": 12,
+        "lexical_stress": 0,
+        "line_index": 2,
+        "performed_stress": 1,
+        "syllable_index": 1,
+        "type": "promotion",
+        "word": "morning",
+        "word_index": 5
+      },
+      {
+        "confidence": 0.9,
+        "deliberateness": "uncertain",
+        "global_syll_idx": 8,
+        "grid_position": 12,
+        "lexical_stress": 1,
+        "line_index": 3,
+        "performed_stress": 1,
+        "syllable_index": 0,
+        "type": "stress_clash",
+        "word": "take/is",
+        "word_index": 5
+      },
+      {
+        "confidence": 0.9,
+        "deliberateness": "uncertain",
+        "global_syll_idx": 9,
+        "grid_position": 12,
+        "lexical_stress": 1,
+        "line_index": 3,
+        "performed_stress": 1,
+        "syllable_index": 0,
+        "type": "stress_clash",
+        "word": "is/something",
+        "word_index": 6
+      },
+      {
+        "confidence": 0.3,
+        "deliberateness": "uncertain",
+        "global_syll_idx": 5,
+        "grid_position": 6,
+        "lexical_stress": 1,
+        "line_index": 3,
+        "performed_stress": 0,
+        "syllable_index": 0,
+        "type": "syncopation",
+        "word": "step",
+        "word_index": 2
+      },
+      {
+        "confidence": 0.3,
+        "deliberateness": "uncertain",
+        "global_syll_idx": 6,
+        "grid_position": 8,
+        "lexical_stress": 1,
+        "line_index": 3,
+        "performed_stress": 2,
+        "syllable_index": 0,
+        "type": "promotion",
+        "word": "I",
+        "word_index": 3
+      },
+      {
+        "confidence": 0.3,
+        "deliberateness": "uncertain",
+        "global_syll_idx": 11,
+        "grid_position": 14,
+        "lexical_stress": 1,
+        "line_index": 3,
+        "performed_stress": 0,
+        "syllable_index": 0,
+        "type": "syncopation",
+        "word": "new",
+        "word_index": 7
+      },
+      {
+        "confidence": 0.3,
+        "deliberateness": "uncertain",
+        "global_syll_idx": 5,
+        "grid_position": 6,
+        "lexical_stress": 1,
+        "line_index": 3,
+        "performed_stress": 0,
+        "second_grid_position": 8,
+        "second_syllable_index": 0,
+        "syllable_index": 0,
+        "type": "trochaic_inversion",
+        "word": "step I",
+        "word_index": 2
+      }
+    ]
+  },
+  "density_per_line": [
+    {
+      "index": 0,
+      "line": "Woke up early, sun ain't even out yet",
+      "scores": {
+        "internal": 40.0,
+        "motif": 57.1,
+        "multisyllabic": 0.0
+      }
+    },
+    {
+      "index": 1,
+      "line": "Grinding on the low, ain't nobody gotta doubt it",
+      "scores": {
+        "internal": 46.2,
+        "motif": 57.1,
+        "multisyllabic": 0.0
+      }
+    },
+    {
+      "index": 2,
+      "line": "City lights fading as the morning breaks through",
+      "scores": {
+        "internal": 63.6,
+        "motif": 57.1,
+        "multisyllabic": 0.0
+      }
+    },
+    {
+      "index": 3,
+      "line": "Every single step I take is something new",
+      "scores": {
+        "internal": 83.3,
+        "motif": 71.4,
+        "multisyllabic": 0.0
+      }
+    }
+  ],
+  "density_summary": {
+    "internal": 58.3,
+    "motif": 60.7,
+    "multisyllabic": 0.0
+  },
+  "flow_signature": "On-Grid",
+  "line_count": 4,
+  "motif_groups": [
+    {
+      "color_id": 1,
+      "members": [
+        {
+          "beat_number": 1,
+          "char_end": 4,
+          "char_start": 0,
+          "index": 0,
+          "is_stressed": true,
+          "line_index": 0,
+          "on_pocket": false,
+          "on_strong_beat": true,
+          "phonemes": [
+            "W",
+            "OW1",
+            "K"
+          ],
+          "pocket_position": 0,
+          "rhyme_unit": [
+            "OW1",
+            "K"
+          ],
+          "stream_index": 0,
+          "stress": 1,
+          "word": "Woke",
+          "word_index": 0
+        },
+        {
+          "beat_number": 2,
+          "char_end": 3,
+          "char_start": 0,
+          "index": 0,
+          "is_stressed": true,
+          "line_index": 1,
+          "on_pocket": true,
+          "on_strong_beat": true,
+          "phonemes": [
+            "L",
+            "OW1"
+          ],
+          "pocket_position": 4,
+          "rhyme_unit": [
+            "OW1"
+          ],
+          "stream_index": 14,
+          "stress": 1,
+          "word": "low",
+          "word_index": 3
+        }
+      ],
+      "type": "rhyme"
+    },
+    {
+      "color_id": 2,
+      "members": [
+        {
+          "beat_number": 2,
+          "char_end": 3,
+          "char_start": 0,
+          "index": 0,
+          "is_stressed": true,
+          "line_index": 0,
+          "on_pocket": true,
+          "on_strong_beat": true,
+          "phonemes": [
+            "S",
+            "AH1",
+            "N"
+          ],
+          "pocket_position": 4,
+          "rhyme_unit": [
+            "AH1",
+            "N"
+          ],
+          "stream_index": 4,
+          "stress": 1,
+          "word": "sun",
+          "word_index": 3
+        },
+        {
+          "beat_number": 4,
+          "char_end": 3,
+          "char_start": 0,
+          "index": 0,
+          "is_stressed": true,
+          "line_index": 3,
+          "on_pocket": true,
+          "on_strong_beat": true,
+          "phonemes": [
+            "S",
+            "AH1"
+          ],
+          "pocket_position": 12,
+          "rhyme_unit": [
+            "AH1"
+          ],
+          "stream_index": 43,
+          "stress": 1,
+          "word": "something",
+          "word_index": 6
+        }
+      ],
+      "type": "rhyme"
+    },
+    {
+      "color_id": 3,
+      "members": [
+        {
+          "beat_number": 3,
+          "char_end": 5,
+          "char_start": 0,
+          "index": 0,
+          "is_stressed": true,
+          "line_index": 0,
+          "on_pocket": false,
+          "on_strong_beat": true,
+          "phonemes": [
+            "EY1",
+            "N",
+            "T"
+          ],
+          "pocket_position": 8,
+          "rhyme_unit": [
+            "EY1",
+            "N",
+            "T"
+          ],
+          "stream_index": 5,
+          "stress": 1,
+          "word": "ain't",
+          "word_index": 4
+        },
+        {
+          "beat_number": 2,
+          "char_end": 5,
+          "char_start": 0,
+          "index": 0,
+          "is_stressed": true,
+          "line_index": 1,
+          "on_pocket": true,
+          "on_strong_beat": true,
+          "phonemes": [
+            "EY1",
+            "N",
+            "T"
+          ],
+          "pocket_position": 4,
+          "rhyme_unit": [
+            "EY1",
+            "N",
+            "T"
+          ],
+          "stream_index": 15,
+          "stress": 1,
+          "word": "ain't",
+          "word_index": 4
+        },
+        {
+          "beat_number": 2,
+          "char_end": 3,
+          "char_start": 0,
+          "index": 0,
+          "is_stressed": true,
+          "line_index": 2,
+          "on_pocket": true,
+          "on_strong_beat": true,
+          "phonemes": [
+            "F",
+            "EY1"
+          ],
+          "pocket_position": 4,
+          "rhyme_unit": [
+            "EY1"
+          ],
+          "stream_index": 26,
+          "stress": 1,
+          "word": "fading",
+          "word_index": 2
+        },
+        {
+          "beat_number": 4,
+          "char_end": 6,
+          "char_start": 0,
+          "index": 0,
+          "is_stressed": true,
+          "line_index": 2,
+          "on_pocket": true,
+          "on_strong_beat": true,
+          "phonemes": [
+            "B",
+            "R",
+            "EY1",
+            "K",
+            "S"
+          ],
+          "pocket_position": 12,
+          "rhyme_unit": [
+            "EY1",
+            "K",
+            "S"
+          ],
+          "stream_index": 32,
+          "stress": 1,
+          "word": "breaks",
+          "word_index": 6
+        },
+        {
+          "beat_number": 3,
+          "char_end": 4,
+          "char_start": 0,
+          "index": 0,
+          "is_stressed": true,
+          "line_index": 3,
+          "on_pocket": false,
+          "on_strong_beat": true,
+          "phonemes": [
+            "T",
+            "EY1",
+            "K"
+          ],
+          "pocket_position": 8,
+          "rhyme_unit": [
+            "EY1",
+            "K"
+          ],
+          "stream_index": 41,
+          "stress": 1,
+          "word": "take",
+          "word_index": 4
+        }
+      ],
+      "type": "rhyme"
+    },
+    {
+      "color_id": 4,
+      "members": [
+        {
+          "beat_number": 4,
+          "char_end": 3,
+          "char_start": 0,
+          "index": 0,
+          "is_stressed": true,
+          "line_index": 0,
+          "on_pocket": true,
+          "on_strong_beat": true,
+          "phonemes": [
+            "Y",
+            "EH1",
+            "T"
+          ],
+          "pocket_position": 12,
+          "rhyme_unit": [
+            "EH1",
+            "T"
+          ],
+          "stream_index": 9,
+          "stress": 1,
+          "word": "yet",
+          "word_index": 7
+        },
+        {
+          "beat_number": 1,
+          "char_end": 1,
+          "char_start": 0,
+          "index": 0,
+          "is_stressed": true,
+          "line_index": 3,
+          "on_pocket": false,
+          "on_strong_beat": true,
+          "phonemes": [
+            "EH1"
+          ],
+          "pocket_position": 0,
+          "rhyme_unit": [
+            "EH1"
+          ],
+          "stream_index": 34,
+          "stress": 1,
+          "word": "Every",
+          "word_index": 0
+        },
+        {
+          "beat_number": 2,
+          "char_end": 4,
+          "char_start": 0,
+          "index": 0,
+          "is_stressed": true,
+          "line_index": 3,
+          "on_pocket": false,
+          "on_strong_beat": false,
+          "phonemes": [
+            "S",
+            "T",
+            "EH1",
+            "P"
+          ],
+          "pocket_position": 6,
+          "rhyme_unit": [
+            "EH1",
+            "P"
+          ],
+          "stream_index": 39,
+          "stress": 1,
+          "word": "step",
+          "word_index": 2
+        }
+      ],
+      "type": "rhyme"
+    },
+    {
+      "color_id": 5,
+      "members": [
+        {
+          "beat_number": 1,
+          "char_end": 4,
+          "char_start": 0,
+          "index": 0,
+          "is_stressed": true,
+          "line_index": 1,
+          "on_pocket": false,
+          "on_strong_beat": true,
+          "phonemes": [
+            "G",
+            "R",
+            "AY1"
+          ],
+          "pocket_position": 0,
+          "rhyme_unit": [
+            "AY1"
+          ],
+          "stream_index": 10,
+          "stress": 1,
+          "word": "Grinding",
+          "word_index": 0
+        },
+        {
+          "beat_number": 2,
+          "char_end": 6,
+          "char_start": 0,
+          "index": 0,
+          "is_stressed": true,
+          "line_index": 2,
+          "on_pocket": true,
+          "on_strong_beat": true,
+          "phonemes": [
+            "L",
+            "AY1",
+            "T",
+            "S"
+          ],
+          "pocket_position": 4,
+          "rhyme_unit": [
+            "AY1",
+            "T",
+            "S"
+          ],
+          "stream_index": 25,
+          "stress": 1,
+          "word": "lights",
+          "word_index": 1
+        }
+      ],
+      "type": "rhyme"
+    },
+    {
+      "color_id": 6,
+      "members": [
+        {
+          "beat_number": 4,
+          "char_end": 5,
+          "char_start": 3,
+          "index": 1,
+          "is_stressed": true,
+          "line_index": 1,
+          "on_pocket": true,
+          "on_strong_beat": true,
+          "phonemes": [
+            "T",
+            " ",
+            "T",
+            "UW1"
+          ],
+          "pocket_position": 12,
+          "rhyme_unit": [
+            "UW1"
+          ],
+          "stream_index": 20,
+          "stress": 1,
+          "word": "gotta",
+          "word_index": 6
+        },
+        {
+          "beat_number": 4,
+          "char_end": 7,
+          "char_start": 0,
+          "index": 0,
+          "is_stressed": true,
+          "line_index": 2,
+          "on_pocket": true,
+          "on_strong_beat": true,
+          "phonemes": [
+            "TH",
+            "R",
+            "UW1"
+          ],
+          "pocket_position": 12,
+          "rhyme_unit": [
+            "UW1"
+          ],
+          "stream_index": 33,
+          "stress": 1,
+          "word": "through",
+          "word_index": 7
+        },
+        {
+          "beat_number": 4,
+          "char_end": 3,
+          "char_start": 0,
+          "index": 0,
+          "is_stressed": true,
+          "line_index": 3,
+          "on_pocket": false,
+          "on_strong_beat": false,
+          "phonemes": [
+            "N",
+            "UW1"
+          ],
+          "pocket_position": 14,
+          "rhyme_unit": [
+            "UW1"
+          ],
+          "stream_index": 45,
+          "stress": 1,
+          "word": "new",
+          "word_index": 7
+        }
+      ],
+      "type": "rhyme"
+    },
+    {
+      "color_id": 7,
+      "members": [
+        {
+          "beat_number": 1,
+          "char_end": 2,
+          "char_start": 0,
+          "index": 0,
+          "is_stressed": true,
+          "line_index": 2,
+          "on_pocket": false,
+          "on_strong_beat": true,
+          "phonemes": [
+            "S",
+            "IH1"
+          ],
+          "pocket_position": 0,
+          "rhyme_unit": [
+            "IH1"
+          ],
+          "stream_index": 23,
+          "stress": 1,
+          "word": "City",
+          "word_index": 0
+        },
+        {
+          "beat_number": 2,
+          "char_end": 4,
+          "char_start": 0,
+          "index": 0,
+          "is_stressed": true,
+          "line_index": 3,
+          "on_pocket": true,
+          "on_strong_beat": true,
+          "phonemes": [
+            "S",
+            "IH1"
+          ],
+          "pocket_position": 4,
+          "rhyme_unit": [
+            "IH1"
+          ],
+          "stream_index": 37,
+          "stress": 1,
+          "word": "single",
+          "word_index": 1
+        }
+      ],
+      "type": "rhyme"
+    }
+  ],
+  "perceptual_pattern": {
+    "active_families": [
+      "AY_FAMILY",
+      "OW_FAMILY",
+      "OO_FAMILY",
+      "AH_FAMILY",
+      "EE_FAMILY",
+      "AY2_FAMILY",
+      "IH_FAMILY",
+      "R_FAMILY",
+      "AW_FAMILY",
+      "OH_FAMILY",
+      "EH_FAMILY"
+    ],
+    "dominant_families": [
+      "AY_FAMILY"
+    ],
+    "family_map": {
+      "AH_FAMILY": {
+        "activity_score": 0.505,
+        "boundary_words_found": [],
+        "line_distribution": [
+          0,
+          3
+        ],
+        "members": [
+          {
+            "line_index": 0,
+            "syllable_text": "sun",
+            "word": "sun",
+            "word_index": 3
+          },
+          {
+            "line_index": 3,
+            "syllable_text": "som",
+            "word": "something",
+            "word_index": 6
+          }
+        ],
+        "stress_hits": 2
+      },
+      "AW_FAMILY": {
+        "activity_score": 0.3775,
+        "boundary_words_found": [],
+        "line_distribution": [
+          1
+        ],
+        "members": [
+          {
+            "line_index": 1,
+            "syllable_text": "doubt",
+            "word": "doubt",
+            "word_index": 7
+          }
+        ],
+        "stress_hits": 1
+      },
+      "AY2_FAMILY": {
+        "activity_score": 0.505,
+        "boundary_words_found": [],
+        "line_distribution": [
+          1,
+          2
+        ],
+        "members": [
+          {
+            "line_index": 1,
+            "syllable_text": "Grin",
+            "word": "grinding",
+            "word_index": 0
+          },
+          {
+            "line_index": 2,
+            "syllable_text": "lights",
+            "word": "lights",
+            "word_index": 1
+          }
+        ],
+        "stress_hits": 2
+      },
+      "AY_FAMILY": {
+        "activity_score": 0.8,
+        "boundary_words_found": [],
+        "line_distribution": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "members": [
+          {
+            "line_index": 0,
+            "syllable_text": "ain't",
+            "word": "ain't",
+            "word_index": 4
+          },
+          {
+            "line_index": 1,
+            "syllable_text": "ain't",
+            "word": "ain't",
+            "word_index": 4
+          },
+          {
+            "line_index": 2,
+            "syllable_text": "fad",
+            "word": "fading",
+            "word_index": 2
+          },
+          {
+            "line_index": 2,
+            "syllable_text": "breaks",
+            "word": "breaks",
+            "word_index": 6
+          },
+          {
+            "line_index": 3,
+            "syllable_text": "take",
+            "word": "take",
+            "word_index": 4
+          }
+        ],
+        "stress_hits": 5
+      },
+      "EE_FAMILY": {
+        "activity_score": 0.505,
+        "boundary_words_found": [],
+        "line_distribution": [
+          0,
+          1
+        ],
+        "members": [
+          {
+            "line_index": 0,
+            "syllable_text": "ev",
+            "word": "even",
+            "word_index": 5
+          },
+          {
+            "line_index": 1,
+            "syllable_text": "no",
+            "word": "nobody",
+            "word_index": 5
+          }
+        ],
+        "stress_hits": 2
+      },
+      "EH_FAMILY": {
+        "activity_score": 0.3775,
+        "boundary_words_found": [],
+        "line_distribution": [
+          3
+        ],
+        "members": [
+          {
+            "line_index": 3,
+            "syllable_text": "step",
+            "word": "step",
+            "word_index": 2
+          }
+        ],
+        "stress_hits": 1
+      },
+      "IH_FAMILY": {
+        "activity_score": 0.505,
+        "boundary_words_found": [],
+        "line_distribution": [
+          2,
+          3
+        ],
+        "members": [
+          {
+            "line_index": 2,
+            "syllable_text": "Ci",
+            "word": "city",
+            "word_index": 0
+          },
+          {
+            "line_index": 3,
+            "syllable_text": "sing",
+            "word": "single",
+            "word_index": 1
+          }
+        ],
+        "stress_hits": 2
+      },
+      "OH_FAMILY": {
+        "activity_score": 0.3775,
+        "boundary_words_found": [],
+        "line_distribution": [
+          2
+        ],
+        "members": [
+          {
+            "line_index": 2,
+            "syllable_text": "mor",
+            "word": "morning",
+            "word_index": 5
+          }
+        ],
+        "stress_hits": 1
+      },
+      "OO_FAMILY": {
+        "activity_score": 0.6325,
+        "boundary_words_found": [],
+        "line_distribution": [
+          1,
+          2,
+          3
+        ],
+        "members": [
+          {
+            "line_index": 1,
+            "syllable_text": "got",
+            "word": "gotta",
+            "word_index": 6
+          },
+          {
+            "line_index": 2,
+            "syllable_text": "through",
+            "word": "through",
+            "word_index": 7
+          },
+          {
+            "line_index": 3,
+            "syllable_text": "new",
+            "word": "new",
+            "word_index": 7
+          }
+        ],
+        "stress_hits": 3
+      },
+      "OW_FAMILY": {
+        "activity_score": 0.6725,
+        "boundary_words_found": [],
+        "line_distribution": [
+          0,
+          1,
+          3
+        ],
+        "members": [
+          {
+            "line_index": 0,
+            "syllable_text": "Woke",
+            "word": "woke",
+            "word_index": 0
+          },
+          {
+            "line_index": 0,
+            "syllable_text": "yet",
+            "word": "yet",
+            "word_index": 7
+          },
+          {
+            "line_index": 1,
+            "syllable_text": "low",
+            "word": "low",
+            "word_index": 3
+          },
+          {
+            "line_index": 3,
+            "syllable_text": "E",
+            "word": "every",
+            "word_index": 0
+          }
+        ],
+        "stress_hits": 4
+      },
+      "R_FAMILY": {
+        "activity_score": 0.3775,
+        "boundary_words_found": [],
+        "line_distribution": [
+          0
+        ],
+        "members": [
+          {
+            "line_index": 0,
+            "syllable_text": "ea",
+            "word": "early",
+            "word_index": 2
+          }
+        ],
+        "stress_hits": 1
+      }
+    },
+    "parallel_pocketing": false
+  },
+  "phrase_containers": [
+    {
+      "bar_count": 4,
+      "end_line": 3,
+      "lines": [
+        "Woke up early, sun ain't even out yet",
+        "Grinding on the low, ain't nobody gotta doubt it",
+        "City lights fading as the morning breaks through",
+        "Every single step I take is something new"
+      ],
+      "start_line": 0,
+      "type": "4-bar"
+    }
+  ],
+  "rhyme_map": [
+    {
+      "char_end": 4,
+      "char_start": 0,
+      "color_id": 1,
+      "is_stressed": true,
+      "line_index": 0,
+      "on_pocket": false,
+      "stream_index": 0,
+      "syllable_index": 0,
+      "word": "Woke",
+      "word_index": 0
+    },
+    {
+      "char_end": 2,
+      "char_start": 0,
+      "color_id": 0,
+      "is_stressed": true,
+      "line_index": 0,
+      "on_pocket": false,
+      "stream_index": 1,
+      "syllable_index": 0,
+      "word": "up",
+      "word_index": 1
+    },
+    {
+      "char_end": 2,
+      "char_start": 0,
+      "color_id": 0,
+      "is_stressed": true,
+      "line_index": 0,
+      "on_pocket": true,
+      "stream_index": 2,
+      "syllable_index": 0,
+      "word": "early",
+      "word_index": 2
+    },
+    {
+      "char_end": 5,
+      "char_start": 2,
+      "color_id": 0,
+      "is_stressed": false,
+      "line_index": 0,
+      "on_pocket": true,
+      "stream_index": 3,
+      "syllable_index": 1,
+      "word": "early",
+      "word_index": 2
+    },
+    {
+      "char_end": 3,
+      "char_start": 0,
+      "color_id": 2,
+      "is_stressed": true,
+      "line_index": 0,
+      "on_pocket": true,
+      "stream_index": 4,
+      "syllable_index": 0,
+      "word": "sun",
+      "word_index": 3
+    },
+    {
+      "char_end": 5,
+      "char_start": 0,
+      "color_id": 3,
+      "is_stressed": true,
+      "line_index": 0,
+      "on_pocket": false,
+      "stream_index": 5,
+      "syllable_index": 0,
+      "word": "ain't",
+      "word_index": 4
+    },
+    {
+      "char_end": 2,
+      "char_start": 0,
+      "color_id": 0,
+      "is_stressed": true,
+      "line_index": 0,
+      "on_pocket": false,
+      "stream_index": 6,
+      "syllable_index": 0,
+      "word": "even",
+      "word_index": 5
+    },
+    {
+      "char_end": 4,
+      "char_start": 2,
+      "color_id": 0,
+      "is_stressed": false,
+      "line_index": 0,
+      "on_pocket": true,
+      "stream_index": 7,
+      "syllable_index": 1,
+      "word": "even",
+      "word_index": 5
+    },
+    {
+      "char_end": 3,
+      "char_start": 0,
+      "color_id": 0,
+      "is_stressed": true,
+      "line_index": 0,
+      "on_pocket": true,
+      "stream_index": 8,
+      "syllable_index": 0,
+      "word": "out",
+      "word_index": 6
+    },
+    {
+      "char_end": 3,
+      "char_start": 0,
+      "color_id": 4,
+      "is_stressed": true,
+      "line_index": 0,
+      "on_pocket": true,
+      "stream_index": 9,
+      "syllable_index": 0,
+      "word": "yet",
+      "word_index": 7
+    },
+    {
+      "char_end": 4,
+      "char_start": 0,
+      "color_id": 5,
+      "is_stressed": true,
+      "line_index": 1,
+      "on_pocket": false,
+      "stream_index": 10,
+      "syllable_index": 0,
+      "word": "Grinding",
+      "word_index": 0
+    },
+    {
+      "char_end": 8,
+      "char_start": 4,
+      "color_id": 5,
+      "is_stressed": false,
+      "line_index": 1,
+      "on_pocket": false,
+      "stream_index": 11,
+      "syllable_index": 1,
+      "word": "Grinding",
+      "word_index": 0
+    },
+    {
+      "char_end": 2,
+      "char_start": 0,
+      "color_id": 0,
+      "is_stressed": true,
+      "line_index": 1,
+      "on_pocket": true,
+      "stream_index": 12,
+      "syllable_index": 0,
+      "word": "on",
+      "word_index": 1
+    },
+    {
+      "char_end": 3,
+      "char_start": 0,
+      "color_id": 0,
+      "is_stressed": false,
+      "line_index": 1,
+      "on_pocket": true,
+      "stream_index": 13,
+      "syllable_index": 0,
+      "word": "the",
+      "word_index": 2
+    },
+    {
+      "char_end": 3,
+      "char_start": 0,
+      "color_id": 1,
+      "is_stressed": true,
+      "line_index": 1,
+      "on_pocket": true,
+      "stream_index": 14,
+      "syllable_index": 0,
+      "word": "low",
+      "word_index": 3
+    },
+    {
+      "char_end": 5,
+      "char_start": 0,
+      "color_id": 3,
+      "is_stressed": true,
+      "line_index": 1,
+      "on_pocket": true,
+      "stream_index": 15,
+      "syllable_index": 0,
+      "word": "ain't",
+      "word_index": 4
+    },
+    {
+      "char_end": 2,
+      "char_start": 0,
+      "color_id": 0,
+      "is_stressed": true,
+      "line_index": 1,
+      "on_pocket": false,
+      "stream_index": 16,
+      "syllable_index": 0,
+      "word": "nobody",
+      "word_index": 5
+    },
+    {
+      "char_end": 4,
+      "char_start": 2,
+      "color_id": 0,
+      "is_stressed": true,
+      "line_index": 1,
+      "on_pocket": false,
+      "stream_index": 17,
+      "syllable_index": 1,
+      "word": "nobody",
+      "word_index": 5
+    },
+    {
+      "char_end": 6,
+      "char_start": 4,
+      "color_id": 0,
+      "is_stressed": true,
+      "line_index": 1,
+      "on_pocket": false,
+      "stream_index": 18,
+      "syllable_index": 2,
+      "word": "nobody",
+      "word_index": 5
+    },
+    {
+      "char_end": 3,
+      "char_start": 0,
+      "color_id": 6,
+      "is_stressed": true,
+      "line_index": 1,
+      "on_pocket": true,
+      "stream_index": 19,
+      "syllable_index": 0,
+      "word": "gotta",
+      "word_index": 6
+    },
+    {
+      "char_end": 5,
+      "char_start": 3,
+      "color_id": 6,
+      "is_stressed": true,
+      "line_index": 1,
+      "on_pocket": true,
+      "stream_index": 20,
+      "syllable_index": 1,
+      "word": "gotta",
+      "word_index": 6
+    },
+    {
+      "char_end": 5,
+      "char_start": 0,
+      "color_id": 0,
+      "is_stressed": true,
+      "line_index": 1,
+      "on_pocket": true,
+      "stream_index": 21,
+      "syllable_index": 0,
+      "word": "doubt",
+      "word_index": 7
+    },
+    {
+      "char_end": 2,
+      "char_start": 0,
+      "color_id": 0,
+      "is_stressed": true,
+      "line_index": 1,
+      "on_pocket": true,
+      "stream_index": 22,
+      "syllable_index": 0,
+      "word": "it",
+      "word_index": 8
+    },
+    {
+      "char_end": 2,
+      "char_start": 0,
+      "color_id": 7,
+      "is_stressed": true,
+      "line_index": 2,
+      "on_pocket": false,
+      "stream_index": 23,
+      "syllable_index": 0,
+      "word": "City",
+      "word_index": 0
+    },
+    {
+      "char_end": 4,
+      "char_start": 2,
+      "color_id": 7,
+      "is_stressed": false,
+      "line_index": 2,
+      "on_pocket": false,
+      "stream_index": 24,
+      "syllable_index": 1,
+      "word": "City",
+      "word_index": 0
+    },
+    {
+      "char_end": 6,
+      "char_start": 0,
+      "color_id": 5,
+      "is_stressed": true,
+      "line_index": 2,
+      "on_pocket": true,
+      "stream_index": 25,
+      "syllable_index": 0,
+      "word": "lights",
+      "word_index": 1
+    },
+    {
+      "char_end": 3,
+      "char_start": 0,
+      "color_id": 3,
+      "is_stressed": true,
+      "line_index": 2,
+      "on_pocket": true,
+      "stream_index": 26,
+      "syllable_index": 0,
+      "word": "fading",
+      "word_index": 2
+    },
+    {
+      "char_end": 6,
+      "char_start": 3,
+      "color_id": 3,
+      "is_stressed": false,
+      "line_index": 2,
+      "on_pocket": true,
+      "stream_index": 27,
+      "syllable_index": 1,
+      "word": "fading",
+      "word_index": 2
+    },
+    {
+      "char_end": 2,
+      "char_start": 0,
+      "color_id": 0,
+      "is_stressed": true,
+      "line_index": 2,
+      "on_pocket": false,
+      "stream_index": 28,
+      "syllable_index": 0,
+      "word": "as",
+      "word_index": 3
+    },
+    {
+      "char_end": 3,
+      "char_start": 0,
+      "color_id": 0,
+      "is_stressed": false,
+      "line_index": 2,
+      "on_pocket": false,
+      "stream_index": 29,
+      "syllable_index": 0,
+      "word": "the",
+      "word_index": 4
+    },
+    {
+      "char_end": 3,
+      "char_start": 0,
+      "color_id": 0,
+      "is_stressed": true,
+      "line_index": 2,
+      "on_pocket": true,
+      "stream_index": 30,
+      "syllable_index": 0,
+      "word": "morning",
+      "word_index": 5
+    },
+    {
+      "char_end": 7,
+      "char_start": 3,
+      "color_id": 0,
+      "is_stressed": false,
+      "line_index": 2,
+      "on_pocket": true,
+      "stream_index": 31,
+      "syllable_index": 1,
+      "word": "morning",
+      "word_index": 5
+    },
+    {
+      "char_end": 6,
+      "char_start": 0,
+      "color_id": 3,
+      "is_stressed": true,
+      "line_index": 2,
+      "on_pocket": true,
+      "stream_index": 32,
+      "syllable_index": 0,
+      "word": "breaks",
+      "word_index": 6
+    },
+    {
+      "char_end": 7,
+      "char_start": 0,
+      "color_id": 6,
+      "is_stressed": true,
+      "line_index": 2,
+      "on_pocket": true,
+      "stream_index": 33,
+      "syllable_index": 0,
+      "word": "through",
+      "word_index": 7
+    },
+    {
+      "char_end": 1,
+      "char_start": 0,
+      "color_id": 4,
+      "is_stressed": true,
+      "line_index": 3,
+      "on_pocket": false,
+      "stream_index": 34,
+      "syllable_index": 0,
+      "word": "Every",
+      "word_index": 0
+    },
+    {
+      "char_end": 3,
+      "char_start": 1,
+      "color_id": 4,
+      "is_stressed": false,
+      "line_index": 3,
+      "on_pocket": false,
+      "stream_index": 35,
+      "syllable_index": 1,
+      "word": "Every",
+      "word_index": 0
+    },
+    {
+      "char_end": 5,
+      "char_start": 3,
+      "color_id": 4,
+      "is_stressed": false,
+      "line_index": 3,
+      "on_pocket": false,
+      "stream_index": 36,
+      "syllable_index": 2,
+      "word": "Every",
+      "word_index": 0
+    },
+    {
+      "char_end": 4,
+      "char_start": 0,
+      "color_id": 7,
+      "is_stressed": true,
+      "line_index": 3,
+      "on_pocket": true,
+      "stream_index": 37,
+      "syllable_index": 0,
+      "word": "single",
+      "word_index": 1
+    },
+    {
+      "char_end": 6,
+      "char_start": 4,
+      "color_id": 7,
+      "is_stressed": false,
+      "line_index": 3,
+      "on_pocket": true,
+      "stream_index": 38,
+      "syllable_index": 1,
+      "word": "single",
+      "word_index": 1
+    },
+    {
+      "char_end": 4,
+      "char_start": 0,
+      "color_id": 4,
+      "is_stressed": true,
+      "line_index": 3,
+      "on_pocket": false,
+      "stream_index": 39,
+      "syllable_index": 0,
+      "word": "step",
+      "word_index": 2
+    },
+    {
+      "char_end": 1,
+      "char_start": 0,
+      "color_id": 0,
+      "is_stressed": true,
+      "line_index": 3,
+      "on_pocket": false,
+      "stream_index": 40,
+      "syllable_index": 0,
+      "word": "I",
+      "word_index": 3
+    },
+    {
+      "char_end": 4,
+      "char_start": 0,
+      "color_id": 3,
+      "is_stressed": true,
+      "line_index": 3,
+      "on_pocket": false,
+      "stream_index": 41,
+      "syllable_index": 0,
+      "word": "take",
+      "word_index": 4
+    },
+    {
+      "char_end": 2,
+      "char_start": 0,
+      "color_id": 0,
+      "is_stressed": true,
+      "line_index": 3,
+      "on_pocket": true,
+      "stream_index": 42,
+      "syllable_index": 0,
+      "word": "is",
+      "word_index": 5
+    },
+    {
+      "char_end": 3,
+      "char_start": 0,
+      "color_id": 2,
+      "is_stressed": true,
+      "line_index": 3,
+      "on_pocket": true,
+      "stream_index": 43,
+      "syllable_index": 0,
+      "word": "something",
+      "word_index": 6
+    },
+    {
+      "char_end": 9,
+      "char_start": 3,
+      "color_id": 2,
+      "is_stressed": false,
+      "line_index": 3,
+      "on_pocket": true,
+      "stream_index": 44,
+      "syllable_index": 1,
+      "word": "something",
+      "word_index": 6
+    },
+    {
+      "char_end": 3,
+      "char_start": 0,
+      "color_id": 6,
+      "is_stressed": true,
+      "line_index": 3,
+      "on_pocket": false,
+      "stream_index": 45,
+      "syllable_index": 0,
+      "word": "new",
+      "word_index": 7
+    }
+  ],
+  "total_color_families": 7
+}
