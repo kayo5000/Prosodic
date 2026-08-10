@@ -39,6 +39,7 @@ from veil_revival_routes import veil_revival_bp
 import usage_history
 from song_context import SongContext
 from prosodic_config import NEAR_RHYME_SAME_VOWEL_SCORE
+import users_repository
 
 logging.basicConfig(
     level=logging.INFO,
@@ -64,27 +65,8 @@ _anthropic = anthropic.Anthropic(api_key=os.environ.get('ANTHROPIC_API_KEY'))
 
 # ── Users DB ──────────────────────────────────────────────
 
-def _init_users_table():
-    con = sqlite3.connect(DB_PATH)
-    con.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            id              INTEGER PRIMARY KEY AUTOINCREMENT,
-            email           TEXT    UNIQUE NOT NULL,
-            username        TEXT    UNIQUE NOT NULL,
-            password_hash   TEXT    NOT NULL,
-            veil_name       TEXT    DEFAULT '',
-            gradient_index  INTEGER DEFAULT 0,
-            phone           TEXT    DEFAULT '',
-            hometown        TEXT    DEFAULT '',
-            geo_influences  TEXT    DEFAULT '',
-            created_at      TEXT    DEFAULT (datetime('now'))
-        )
-    ''')
-    con.commit()
-    con.close()
-
 os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
-_init_users_table()
+users_repository.create_table(DB_PATH)
 usage_history.init_table()
 
 def _make_token(user_id):
@@ -126,9 +108,7 @@ def _auth_required():
     user_id, err = _verify_token(token)
     if err:
         return None, (jsonify({'error': err}), 401)
-    con = sqlite3.connect(DB_PATH)
-    row = con.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
-    con.close()
+    row = users_repository.get_by_id(DB_PATH, user_id)
     if not row:
         return None, (jsonify({'error': 'User not found'}), 401)
     return row, None
@@ -192,17 +172,10 @@ def auth_register():
         return jsonify({'error': 'Password must be at least 6 characters'}), 400
     pw_hash = generate_password_hash(password)
     try:
-        con = sqlite3.connect(DB_PATH)
-        cur = con.execute(
-            'INSERT INTO users (email, username, password_hash) VALUES (?, ?, ?)',
-            (email, username, pw_hash)
-        )
-        user_id = cur.lastrowid
-        con.commit()
-        row = con.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
-        con.close()
-    except sqlite3.IntegrityError as e:
+        row = users_repository.create_user(DB_PATH, email, username, pw_hash)
+    except sqlite3.IntegrityError:
         return jsonify({'error': 'Email or username already taken'}), 409
+    user_id = row[0]
     token = _make_token(user_id)
     log.info('POST /auth/register  user=%s  id=%d', username, user_id)
     return jsonify({'token': token, 'user': _user_dict(row)}), 201
@@ -217,12 +190,7 @@ def auth_login():
     password   = data.get('password') or ''
     if not identifier or not password:
         return jsonify({'error': 'email/username and password are required'}), 400
-    con = sqlite3.connect(DB_PATH)
-    row = con.execute(
-        'SELECT * FROM users WHERE email = ? OR username = ?',
-        (identifier.lower(), identifier)
-    ).fetchone()
-    con.close()
+    row = users_repository.get_by_identifier(DB_PATH, identifier)
     if not row or not check_password_hash(row[3], password):
         return jsonify({'error': 'Invalid email or password'}), 401
     token = _make_token(row[0])
@@ -271,14 +239,8 @@ def auth_update():
     if not fields:
         return jsonify({'user': _user_dict(row)})
 
-    set_clause = ', '.join(f'{k} = ?' for k in fields)
-    values     = list(fields.values()) + [user_id]
     try:
-        con = sqlite3.connect(DB_PATH)
-        con.execute(f'UPDATE users SET {set_clause} WHERE id = ?', values)
-        con.commit()
-        updated = con.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
-        con.close()
+        updated = users_repository.update_user(DB_PATH, user_id, fields)
     except sqlite3.IntegrityError:
         return jsonify({'error': 'Username already taken'}), 409
     log.info('POST /auth/update  user_id=%d  fields=%s', user_id, list(fields.keys()))
