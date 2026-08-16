@@ -128,6 +128,6 @@ if __name__ == '__main__':
         "And though I'm blessed I seen you stressin'",
         "From hearin' the chirps and naysayers",
     ]
-    from song_context import SongContext
+    from domain.song_context import SongContext
     feedback = assemble_feedback(verse, SongContext(bpm=80))
     print_feedback_summary(feedback)

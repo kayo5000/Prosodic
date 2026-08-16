@@ -10,7 +10,7 @@ end-to-end assertions in test_api.py (POST /analyze cadence_signals).
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from song_context import SongContext
+from domain.song_context import SongContext
 
 import stress_signals as ss
 

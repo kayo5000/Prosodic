@@ -37,8 +37,8 @@ from veil_prompt import VEIL_SYSTEM_PROMPT
 from learning_engine import record_signals_batch, get_top_signals
 from veil_revival_routes import veil_revival_bp
 import usage_history
-from song_context import SongContext
-from prosodic_config import NEAR_RHYME_SAME_VOWEL_SCORE
+from domain.song_context import SongContext
+from domain.prosodic_config import NEAR_RHYME_SAME_VOWEL_SCORE
 import users_repository
 import feature_flags
 if feature_flags.CANTOS_ENABLED:

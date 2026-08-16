@@ -17,7 +17,7 @@ from pocket_engine import (
     STRONG_POSITIONS, POCKET_POSITIONS,
 )
 from rhyme_detection_engine import build_verse_stream
-from song_context import SongContext
+from domain.song_context import SongContext
 
 
 def _old_proportional_position(i, total, start_position=0):

@@ -8,12 +8,12 @@ Part of the Prosodic hip-hop lyric analysis suite.
 from rhyme_detection_engine import analyze_verse
 from density_engine import score_full_verse
 from syllable_engine import get_syllable_count
-from prosodic_config import (
+from domain.prosodic_config import (
     BOUNDARY_THRESHOLD, MIN_SIGNALS_FIRED, BOUNDARY_SIGNAL_WEIGHTS as SIGNALS,
     DENSITY_DROP_MIN_PREV, DENSITY_DROP_RATIO, SYLLABLE_RESET_RATIO,
     LINE_LENGTH_SHIFT_WORD_DIFF, REST_BAR_MAX_WORDS,
 )
-from final_result_converter import normalize as fr_normalize
+from domain.final_result_converter import normalize as fr_normalize
 
 def detect_rest_bar(line):
     words = line.split()

@@ -16,7 +16,7 @@ nltk.download('averaged_perceptron_tagger_eng', quiet=True)
 from nltk.corpus import cmudict
 import normalization_engine
 from normalization_engine import CONTRACTIONS
-from prosodic_config import NEAR_RHYME_SAME_VOWEL_SCORE
+from domain.prosodic_config import NEAR_RHYME_SAME_VOWEL_SCORE
 
 # Pre-warm the NLTK perceptron tagger so it loads once at import time
 # rather than on the first g2p call during a live analysis

@@ -10,7 +10,7 @@ didn't change its output.
 '''
 import pytest
 
-from final_result_converter import normalize, normalize_raw, SCALES
+from domain.final_result_converter import normalize, normalize_raw, SCALES
 
 
 # ── normalize_raw() — the core conversion ───────────────────────────────
@@ -168,7 +168,7 @@ def test_layer2_live_composite_unchanged_end_to_end():
     itself (not just the math) is correct.
     '''
     from suggestion_engine import get_suggestions
-    from song_context import SongContext
+    from domain.song_context import SongContext
 
     verse = [
         "And I swear that it's turnt",

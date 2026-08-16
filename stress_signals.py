@@ -112,7 +112,7 @@ from performed_stress import (
     get_lexical_stress_variants,
 )
 from phoneme_engine import FUNCTION_WORDS
-from prosodic_config import LAPSE_RUN_LENGTH, RECURRENCE_MIN
+from domain.prosodic_config import LAPSE_RUN_LENGTH, RECURRENCE_MIN
 
 log = logging.getLogger(__name__)
 
@@ -414,7 +414,7 @@ def analyze_verse_stream(stream, ctx):
 # ── TEST ─────────────────────────────────────────────────
 if __name__ == '__main__':
     from motif_engine import build_motif_map
-    from song_context import SongContext
+    from domain.song_context import SongContext
     verse = [
         "Getting to the money",
         "And I swear that it's turnt",

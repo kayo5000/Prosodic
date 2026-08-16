@@ -49,7 +49,7 @@ from __future__ import annotations
 import re
 from typing import Dict, List, Optional, Tuple
 
-from prosodic_config import GRID_SIZE
+from domain.prosodic_config import GRID_SIZE
 
 # ---------------------------------------------------------------------------
 # Constants

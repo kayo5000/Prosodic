@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import dataclasses
 import pytest
-from song_context import SongContext
+from domain.song_context import SongContext
 
 
 def test_default_bpm_is_none():

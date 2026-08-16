@@ -15,7 +15,7 @@ Part of the Prosodic hip-hop lyric analysis suite.
 from collections import defaultdict
 from syllable_engine import syllabify_line
 from syllable_compression import available_syllable_slots
-from prosodic_config import (
+from domain.prosodic_config import (
     GRID_SIZE, STRONG_POSITIONS, POCKET_POSITIONS, POCKET_WINDOW, NUDGE_WINDOW,
 )
 
@@ -236,6 +236,6 @@ if __name__ == '__main__':
             strong = '[ BEAT ]' if s['on_strong_beat'] else ''
             stress = 'STRESSED' if s['is_stressed'] else 'unstressed'
             print(f'  {s["word"]:<14} beat {s["beat_number"]} pos {s["pocket_position"]:>2}  {stress}  {strong}{pocket}')
-    from song_context import SongContext
+    from domain.song_context import SongContext
     sig = get_flow_signature(verse, SongContext(bpm=bpm))
     print(f'\nFlow Signature: {sig}')

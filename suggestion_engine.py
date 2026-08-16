@@ -19,8 +19,8 @@ from rhyme_detection_engine import analyze_verse
 from motif_engine import build_motif_map
 from semantics_engine import semantic_similarity, SPACY_AVAILABLE
 from thesaurus_engine import lookup as thesaurus_lookup
-from final_result_converter import normalize as fr_normalize
-from prosodic_config import NEAR_RHYME_SAME_VOWEL_SCORE
+from domain.final_result_converter import normalize as fr_normalize
+from domain.prosodic_config import NEAR_RHYME_SAME_VOWEL_SCORE
 
 # CMU is phoneme_engine's single load of the ~125k-word CMU Pronouncing
 # Dictionary — imported, not reloaded, so this process holds exactly one
@@ -465,7 +465,7 @@ if __name__ == '__main__':
             print(f"       {s['reason']}")
             print()
 
-    from song_context import SongContext
+    from domain.song_context import SongContext
     top10 = get_suggestions(verse, ctx=SongContext(bpm=80), trigger_mode='manual')
     _print_suggestions('TOP 10 SUGGESTIONS', top10)
 

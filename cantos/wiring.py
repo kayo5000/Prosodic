@@ -16,7 +16,7 @@ from analysis.bar_segmenter import segment
 from analysis.bar_feature_mapper import map_features
 from behavior.state_engine import classify as classify_state
 from feedback_engine import assemble_feedback
-from song_context import SongContext
+from domain.song_context import SongContext
 from cantos import notebooks
 
 

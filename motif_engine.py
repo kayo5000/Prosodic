@@ -125,7 +125,7 @@ if __name__ == '__main__':
         "From hearin' the chirps and naysayers",
     ]
 
-    from song_context import SongContext
+    from domain.song_context import SongContext
     motif_map_result = build_motif_map(verse, SongContext(bpm=80))
     print(f"Total color families: {motif_map_result['total_colors']}")
     print(f"Motif groups: {len(motif_map_result['motif_groups'])}")

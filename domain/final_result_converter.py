@@ -93,7 +93,7 @@ reverse-engineering it.
 Part of the Prosodic hip-hop lyric analysis suite.
 '''
 
-from prosodic_config import BOUNDARY_THRESHOLD, BOUNDARY_SIGNAL_WEIGHTS
+from domain.prosodic_config import BOUNDARY_THRESHOLD, BOUNDARY_SIGNAL_WEIGHTS
 
 # ── Per-source scale + polarity registry ────────────────────────────────
 # (raw_min, raw_max, polarity). polarity is 'normal' (higher raw = stronger)
