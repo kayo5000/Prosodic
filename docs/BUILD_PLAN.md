@@ -14,7 +14,7 @@ Only one structural thing has been built so far this session: the **AI provider 
 
 ---
 
-## Phase 1 — Backend Clean Architecture reorg (the rest of it) 🔵
+## Phase 1 — Backend Clean Architecture reorg (the rest of it) ✅
 
 The single biggest structural item, and the one everything else in this plan is ordered around. `api.py`'s route *paths and JSON shapes* shouldn't change (this is a reorganization, not a rewrite of behavior) — but *which files things live in* and *how routes call into business logic* will, and that's exactly the churn an OpenAPI spec, a mypy baseline, or a coverage number would otherwise have to be redone against.
 
