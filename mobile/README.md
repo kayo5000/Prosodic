@@ -1,22 +1,35 @@
 # Prosodic — Mobile (React Native + Expo)
 
-Native mobile client for the same Flask API the web app
-(`frontend/`) talks to. No backend changes — same JSON endpoints,
-real mobile client instead of a browser.
+Native mobile client for the same Flask API the (now-removed) web app
+used. No backend changes — same JSON endpoints, real mobile client
+instead of a browser.
 
 ## Status
 
-First working screen: **Analyze / Suggest** (`src/screens/AnalyzeScreen.js`)
-— write a verse, set BPM, hit Analyze, see the rhyme map color-coded by
-family, then pull real suggestions. This is the most central flow in the
-existing web app (`frontend/src/pages/SongViewPage.js`), rebuilt as a
-functional mobile-native screen rather than a full port of that file —
-same real backend, `/analyze` and `/suggest`, simpler UI to start.
+Three real tabs, all talking to the live backend:
 
-Not yet built: VEIL chat, Mastery, login/signup, Notepad, Freewrite,
-Tools, Projects. See "Next screens" below — the web app under
-`frontend/src/pages/` is the reference for what each of these needs to
-cover when they get built.
+- **Analyze** (`src/screens/AnalyzeScreen.js`) — write a verse, set BPM,
+  hit Analyze, see the rhyme map color-coded by family, then pull real
+  suggestions from `/suggest`. The most central flow in the app.
+- **Chat** (`src/screens/ChatScreen.js`) — VEIL, backed by `/veil/chat`.
+  Full turn history resent per message (the backend is stateless per
+  request). Surfaces the real rate-limit (429) and circuit-breaker-open
+  (503) error strings from the backend rather than a generic failure.
+- **Profile** (`src/screens/ProfileScreen.js`) — shows the logged-in
+  user + logout, or `LoginScreen.js` (login/register toggle) if signed
+  out. Auth (`src/state/AuthContext.js`) uses `expo-secure-store` for
+  the JWT, restored on launch via `GET /auth/me`.
+
+Only Profile is auth-gated — Analyze and Chat work for anyone who opens
+the app, matching the backend exactly (`/analyze` and `/suggest` don't
+require auth; login only unlocks personalization — `used_before` /
+`community_uses` tagging in `/suggest`).
+
+Not yet built: Mastery (backend `/mastery` is still an honest "not
+ready" stub, nothing real to build against yet), Notepad, Freewrite,
+Tools, Projects, Search. The deleted web app's git history (commit
+before `543c8e1`) is the reference for what each of those covered, if
+rebuilding them later.
 
 ## Setup
 
@@ -37,8 +50,8 @@ EXPO_PUBLIC_API_URL=http://localhost:5000
   your computer. e.g. `http://192.168.1.23:5000`. Your phone and
   computer need to be on the same WiFi network for this to work.
 - **Railway (production)**: use the public `https://...up.railway.app`
-  URL — works from any network, no shared WiFi needed. This is the
-  right default once you have the URL (see TODO below).
+  URL — works from any network, no shared WiFi needed. Still a TODO —
+  see below, this hasn't been wired in yet.
 
 ## Run it
 
@@ -60,25 +73,28 @@ works across networks via a relay.
 ## Project layout
 
 ```
-App.js                        — navigation root (React Navigation stack)
-src/api/prosodicApi.js        — API layer, mirrors frontend/src/api/prosodicApi.js
-src/theme/theme.js            — dark palette matching the web app + rhyme-family colors
+App.js                        — navigation root (bottom tabs: Analyze / Chat / Profile)
+src/api/prosodicApi.js        — API layer: analyze, suggest, veilChat, register/login/getMe
+src/state/AuthContext.js      — JWT session state, expo-secure-store persistence
+src/theme/theme.js            — dark palette matching the (removed) web app + rhyme-family colors
 src/screens/AnalyzeScreen.js  — Analyze/Suggest screen
+src/screens/ChatScreen.js     — VEIL chat screen
+src/screens/LoginScreen.js    — login/register
+src/screens/ProfileScreen.js  — logged-in user info + logout
 ```
 
-## Next screens (in rough priority order)
+## Known gotchas (already fixed once, worth knowing about)
 
-1. **VEIL chat** — reference `frontend/src/pages/NewChatPage.js` +
-   `ChatThreadPage.js`, backend `/veil/chat` (now rate-limited + circuit-
-   breaker protected, see `anthropic_circuit_breaker.py` /
-   `rate_limiter.py` at repo root).
-2. **Auth** — reference `frontend/src/state/AuthContext.js`
-   (JWT-based). `/analyze` and `/suggest` don't require auth today, but
-   `/mastery` and usage history do read `user_id`.
-3. **Mastery / progress** — reference `frontend/src/pages/MasteryPage.js`,
-   backend `/mastery`.
-4. Notepad, Freewrite, Tools, Projects, Search — lower priority, see
-   `frontend/src/pages/` for what each currently does.
+- **Don't import the `@expo/vector-icons` barrel.** `import { Ionicons }
+  from '@expo/vector-icons'` pulls in every icon set via `IconsLazy.js`,
+  and one font asset (Octicons.ttf) doesn't resolve in the currently
+  installed version — 500s the whole Metro bundle. Use the subpath
+  import instead: `import Ionicons from '@expo/vector-icons/Ionicons'`.
+- **`expo-secure-store` has no real web implementation** (its `.web.js`
+  build is a bare `{}`) — calls to it are wrapped in try/catch in
+  `AuthContext.js` so a missing storage backend degrades to "don't
+  persist the session" instead of crashing. Only matters if someone runs
+  `npx expo start --web`; native (the real target) is unaffected.
 
 ## TODO / flagged for later (not urgent)
 
@@ -86,6 +102,11 @@ src/screens/AnalyzeScreen.js  — Analyze/Suggest screen
   a placeholder — swap in the actual deployed Railway URL once you have
   it handy (check the Railway dashboard, or `railway domain` after
   `railway login`).
+- **App icon**: using the real Prosodic logo now (`assets/icon.png`),
+  but at its original 2000x2000 with a baked-in white background — fine
+  for Expo Go preview, but a real store submission wants an exact
+  1024x1024 and the Android adaptive-icon layers (currently still
+  Expo's scaffold defaults) redone with the background stripped out.
 - **App Store / Play Store publishing**: not needed for the Expo Go
   preview flow above, only for real store submission down the line.
   - Apple Developer Program: $99/year (required to submit to the App
