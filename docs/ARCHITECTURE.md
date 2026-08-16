@@ -2,7 +2,14 @@
 
 How a request actually flows through the system, and the real state of the module-by-module audit findings — so a future session doesn't have to rediscover any of this by reading 20+ files cold. Verified against current code as of 2026-08-16; where an earlier audit's finding has since changed, that's stated explicitly.
 
-**Mid-reorg note:** a Clean Architecture layering pass is in progress (see `docs/BUILD_PLAN.md` for the phased plan and live status). §3/§4 below describe module *behavior*, which the reorg deliberately doesn't change — but file *locations* have moved. As of Phase 1c: `song_context.py`, `final_result_converter.py`, `prosodic_config.py`, and 16 live-pipeline engines (`phoneme_engine.py`, `syllable_engine.py`, `rhyme_detection_engine.py`, `motif_engine.py`, `density_engine.py`, `pocket_engine.py`, `phrase_container_engine.py`, `perceptual_family_engine.py`, `pattern_reader_engine.py`, `semantics_engine.py`, `feedback_engine.py`, `suggestion_engine.py`, `normalization_engine.py`, `performed_stress.py`, `stress_signals.py`, `syllable_compression.py`) all now live under `domain/`, imported as `domain.<module>`. `thesaurus_engine.py`/`concreteness_engine.py` deliberately stay at repo root (they embed real `sqlite3` code — moving them into `domain/` untouched would misrepresent them as pure domain modules; see `docs/BUILD_PLAN.md` Phase 1e). Where this doc references a bare module name below, assume `domain.` prefix unless stated otherwise.
+**Clean Architecture reorg note:** Phase 1 (the backend layering pass) is complete — see `docs/BUILD_PLAN.md` for the full phased history and what's still ahead in later phases. §3/§4 below describe module *behavior*, which the reorg deliberately never changed — only file *locations* moved. Current layout:
+- `domain/` — 19 modules: `song_context.py`, `final_result_converter.py`, `prosodic_config.py`, `ai_provider.py` (the port, not an adapter), `family_scoring.py`, and the 16 live-pipeline engines (`phoneme_engine.py`, `syllable_engine.py`, `rhyme_detection_engine.py`, `motif_engine.py`, `density_engine.py`, `pocket_engine.py`, `phrase_container_engine.py`, `perceptual_family_engine.py`, `pattern_reader_engine.py`, `semantics_engine.py`, `feedback_engine.py`, `suggestion_engine.py`, `normalization_engine.py`, `performed_stress.py`, `stress_signals.py`, `syllable_compression.py`).
+- `application/` — deliberately minimal, 2 real use-case functions: `suggest_enrichment.py`, `thesaurus_related.py`.
+- `infrastructure/` — `ai_providers/` (the AI vendor adapters + circuit breaker) and 3 pure-persistence repositories: `users_repository.py`, `telemetry.py`, `feature_store.py`.
+- Deliberately left at repo root, each for a specific evidence-backed reason (see `docs/BUILD_PLAN.md` Phase 1b/1e/1f): `thesaurus_engine.py`, `concreteness_engine.py`, `learning_engine.py`, `usage_history.py` — all four mix real domain computation with direct `sqlite3` persistence in the same file; splitting them properly is bigger surgery than a reorg pass covers, so they're flagged, not force-moved.
+- `cantos/`, `behavior/`, `analysis/` — deliberately NOT moved under `domain/`; see §7, a real evidence-backed decision, not a gap.
+
+Where this doc references a bare module name below, assume `domain.` prefix unless stated otherwise.
 
 ---
 
@@ -14,22 +21,24 @@ Mobile app (mobile/, React Native + Expo)
     ▼
 Flask API (api.py) — the only place routes live
     │
-    ├─→ application/ — the use-case layer (currently one real inhabitant:
-    │     suggest_enrichment.py, coordinating domain/suggestion_engine.py
-    │     with infrastructure reads for /suggest's community_uses/
-    │     used_before/concreteness tagging — see docs/BUILD_PLAN.md
-    │     Phase 1c for why this is deliberately thin, not a blanket layer)
+    ├─→ application/ — the use-case layer (deliberately minimal — 2 real
+    │     inhabitants found by reading actual route bodies, not built
+    │     speculatively: suggest_enrichment.py and thesaurus_related.py,
+    │     each coordinating a domain computation with infrastructure
+    │     reads for one specific combined view — see docs/BUILD_PLAN.md
+    │     Phase 1c/1d for why this stayed thin, not a blanket layer)
     │
     ├─→ domain/ — pure business logic, zero framework/DB/vendor deps
     │     ├─→ Live analysis pipeline (/analyze, /suggest) ──→ engines (§3)
+    │     ├─→ family_scoring.py — real phonetic scoring, found sitting
+    │     │     inline in /autofill + /suggest-family before Phase 1d
     │     └─→ ai_provider.py — the AI provider port (§6)
     │
-    ├─→ infrastructure/ — adapters (currently: ai_providers/, the AI
-    │     vendor adapters + circuit breaker; users_repository.py and the
-    │     other DB-touching modules are next, per docs/BUILD_PLAN.md
-    │     Phase 1f — not yet moved)
+    ├─→ infrastructure/ — adapters: ai_providers/ (the AI vendor adapters
+    │     + circuit breaker) and 3 pure-persistence repositories
+    │     (users_repository.py, telemetry.py, feature_store.py)
     │
-    ├─→ Auth (/auth/*) ──→ users_repository.py ──→ prosodic.db
+    ├─→ Auth (/auth/*) ──→ infrastructure/users_repository.py ──→ prosodic.db
     ├─→ VEIL (/veil/chat, /veil/revival/chat) ──→ infrastructure/ai_providers
     │     (behind rate limiter + circuit breaker, §6)
     ├─→ Cantos (/cantos/state-snapshot, FEATURE_CANTOS_ENABLED-gated)
@@ -87,7 +96,7 @@ Methodology: one job per module is the goal. Named smells: **generalist** (does 
 | `cantos/direct.py` | 🚩 **both encoder and decoder** — same shape as `suggestion_engine.py`: gathers real context (notebook/board/disposition) and also renders the final response (rule-voiced via `voice.py`, or LLM via `converse()`), in one file. **Open**, and lower priority since this whole module is held back from any default/live path anyway. |
 | `cantos/voice.py` | Clean **decoder** — single job, renders structured signal+delta into template text, explicitly cannot generate lyric content, no LLM involved. |
 | `behavior/ai_interpreter.py` | Clean **decoder** — structured state/drift/degradation → 2–4 sentence artist-facing text via Anthropic. Correctly single-job. |
-| `mastery_engine.py`, `feature_store.py` | **Single-writer-principle violation.** Real, tested, correctly-written code; genuinely can't run because nothing in the app populates a `song_id` concept anywhere. Not a bug in either file — the gap is upstream. |
+| `mastery_engine.py`, `infrastructure/feature_store.py` | **Single-writer-principle violation.** Real, tested, correctly-written code; genuinely can't run because nothing in the app populates a `song_id` concept anywhere. Not a bug in either file — the gap is upstream. |
 
 Only `behavior/state_engine.py` (via `cantos/wiring.py`) is actually reachable from a live route (`/cantos/state-snapshot`, itself gated behind `FEATURE_CANTOS_ENABLED`). The other ~20 analysis engines feed it as raw inputs but aren't individually surfaced as their own Cantos signals — see `docs/PROJECT_STATUS.md`.
 
@@ -107,7 +116,7 @@ Only `behavior/state_engine.py` (via `cantos/wiring.py`) is actually reachable f
 
 Every SQLite-backed module went through a real concurrency-safety pass this session (previously: thread-local connections opened once per thread and never explicitly closed — harmless only because the deployment runs exactly 1 gunicorn worker/1 thread today, not because of any actual safety mechanism):
 
-- **6 modules** (`concreteness_engine.py`, `thesaurus_engine.py`, `learning_engine.py`, `usage_history.py`, `telemetry.py`, `feature_store.py`) converted to open-and-close-per-call via a `contextmanager`, matching the pattern already proven in `users_repository.py`.
+- **6 modules** (`concreteness_engine.py`, `thesaurus_engine.py`, `learning_engine.py`, `usage_history.py`, `infrastructure/telemetry.py`, `infrastructure/feature_store.py`) converted to open-and-close-per-call via a `contextmanager`, matching the pattern already proven in `infrastructure/users_repository.py`. (Paths reflect the Phase 1f move — the connection-safety work itself predates and is unrelated to that move, see the note in each file's own docstring.)
 - **`cantos/db.py`** kept its thread-local connection (14 external call sites across 5 files made a full calling-convention change too risky) but is now closed by a Flask `@app.teardown_appcontext` hook, bounding its lifetime to one request instead of the life of the thread.
 - A real concurrent-load test (`tests/test_thread_local_connections_concurrency.py`, 25–40 real threads via `threading.Barrier`) caught an actual race during this work: `PRAGMA journal_mode=WAL` was being issued before `PRAGMA busy_timeout`, so on a cold DB file, threads could race to switch journal mode with no lock-wait protection active yet. Fixed everywhere by setting `busy_timeout` first and gating the (database-file-level, not per-connection) WAL switch to run exactly once under a lock.
 - **In-memory caches (CMU dict, phoneme/thesaurus/concreteness `lru_cache`s) are per-OS-process**, documented at each cache site. Fine today (1 gunicorn worker), but will NOT be shared across workers if this ever scales to `--workers N>1` — each worker would pay full warm-up cost independently. Flagged as a real infrastructure decision for when it's actually needed (a shared cache like Redis), not built speculatively.
