@@ -34,12 +34,13 @@ load_dotenv()
 from domain.feedback_engine import assemble_feedback
 from domain.suggestion_engine import get_suggestions, get_more_suggestions
 from application.suggest_enrichment import enrich_suggestions
+from application.thesaurus_related import get_related_synonyms
+from domain.family_scoring import score_verse_against_families, score_word_against_families
 from veil_prompt import VEIL_SYSTEM_PROMPT
 from learning_engine import record_signals_batch, get_top_signals
 from veil_revival_routes import veil_revival_bp
 import usage_history
 from domain.song_context import SongContext
-from domain.prosodic_config import NEAR_RHYME_SAME_VOWEL_SCORE
 import users_repository
 import feature_flags
 if feature_flags.CANTOS_ENABLED:
@@ -543,68 +544,15 @@ def autofill_route():
     }
     Response: { assignments: [{word, line_index, word_index, color_id, score}] }
     '''
-    from domain.phoneme_engine import get_phonemes, get_rhyme_unit_from_phonemes, syllable_rhyme_score
-
     body       = request.get_json(silent=True) or {}
     verse_lines = body.get('verse_lines', [])
     families    = body.get('families', [])
     threshold   = float(body.get('threshold', 0.60))
 
-    if not verse_lines or not families:
-        return jsonify({'assignments': []})
-
-    # Pre-compute rhyme_units for each family's sample words once
-    # Also track family size — EH+R slant (score == 0.65) only allowed for families
-    # with 3+ established sample words (mirrors Pass 4 gate in rhyme_detection_engine).
-    SLANT_MIN_FAMILY_SIZE = 3
-    family_data = []
-    for fam in families:
-        rus = []
-        for sw in fam.get('sample_words', [])[:8]:
-            p = get_phonemes(sw)
-            if p:
-                ru = get_rhyme_unit_from_phonemes(p)
-                if ru:
-                    rus.append(ru)
-        if rus:
-            family_data.append({
-                'color_id': fam['color_id'],
-                'rhyme_units': rus,
-                'size': len(fam.get('sample_words', [])),
-            })
-
-    assignments = []
-    for li, line in enumerate(verse_lines):
-        words = line.split()
-        for wi, token in enumerate(words):
-            clean = token.strip('.,!?;:"\'-').lower()
-            if not clean:
-                continue
-            p = get_phonemes(clean)
-            if not p:
-                continue
-            target_ru = get_rhyme_unit_from_phonemes(p)
-            if not target_ru:
-                continue
-            best_cid, best_score = None, 0.0
-            for fam in family_data:
-                for ru in fam['rhyme_units']:
-                    s = syllable_rhyme_score(target_ru, ru)
-                    # EH+R slant tier (0.65) — only allow for established families
-                    if 0.64 <= s <= 0.66 and fam['size'] < SLANT_MIN_FAMILY_SIZE:
-                        continue
-                    if s > best_score:
-                        best_score, best_cid = s, fam['color_id']
-            if best_cid and best_score >= threshold:
-                assignments.append({
-                    'word':       clean,
-                    'line_index': li,
-                    'word_index': wi,
-                    'color_id':   best_cid,
-                    'score':      round(best_score, 3),
-                })
-
-    assignments.sort(key=lambda a: a['score'], reverse=True)
+    # Scoring logic extracted to domain/family_scoring.py (Phase 1d) — was
+    # real phonetic computation sitting inline in this route, never
+    # independently testable. See that module's docstring.
+    assignments = score_verse_against_families(verse_lines, families, threshold)
     return jsonify({'assignments': assignments})
 
 
@@ -616,48 +564,14 @@ def suggest_family():
     Scores the word's rhyme unit against each family's sample words.
     Returns top matches with scores >= 0.65 (includes slant bridges).
     '''
-    from domain.phoneme_engine import get_phonemes, get_rhyme_unit_from_phonemes, syllable_rhyme_score, classify_r_family
-    from domain.rhyme_detection_engine import r_family_compatible
     body = request.get_json(silent=True) or {}
     word = body.get('word', '').strip()
     families = body.get('families', [])
 
-    if not word:
-        return jsonify({'suggestions': []})
-
-    target_phonemes = get_phonemes(word)
-    if not target_phonemes:
-        return jsonify({'suggestions': []})
-
-    target_ru = get_rhyme_unit_from_phonemes(target_phonemes)
-    if not target_ru:
-        return jsonify({'suggestions': []})
-
-    target_r_class = classify_r_family(target_ru)
-
-    suggestions = []
-    for fam in families:
-        color_id = fam.get('color_id')
-        sample_words = fam.get('sample_words', [])
-        if not sample_words:
-            continue
-        best = 0.0
-        for sw in sample_words[:8]:
-            sw_phonemes = get_phonemes(sw)
-            if not sw_phonemes:
-                continue
-            sw_ru = get_rhyme_unit_from_phonemes(sw_phonemes)
-            if not sw_ru:
-                continue
-            if not r_family_compatible(target_r_class, classify_r_family(sw_ru)):
-                continue
-            score = syllable_rhyme_score(target_ru, sw_ru)
-            if score > best:
-                best = score
-        if best >= 0.55:
-            suggestions.append({'color_id': color_id, 'score': round(best, 3)})
-
-    suggestions.sort(key=lambda s: s['score'], reverse=True)
+    # Scoring logic extracted to domain/family_scoring.py (Phase 1d) — see
+    # that module's docstring. Top-3 truncation stays here — an API-
+    # contract decision, not a scoring one.
+    suggestions = score_word_against_families(word, families)
     return jsonify({'word': word, 'suggestions': suggestions[:3]})
 
 
@@ -754,41 +668,17 @@ def thesaurus_related():
     with one of the verse's active rhyme families — one view instead of
     switching between the thesaurus and the rhyme suggester separately.
     '''
-    from thesaurus_engine import lookup as thesaurus_lookup
-    from domain.phoneme_engine import get_rhyme_unit, syllable_rhyme_score
-    from concreteness_engine import get_concreteness
-
     body = request.get_json(silent=True) or {}
     word = (body.get('word') or '').strip()
     verse_lines = body.get('verse_lines') or []
     if not word:
         return jsonify({'error': 'word is required'}), 400
 
-    result = thesaurus_lookup(word)
-    if not result['found']:
-        return jsonify({'word': word, 'found': False, 'synonyms': []})
-
-    family_units = []
-    if verse_lines:
-        from domain.motif_engine import build_motif_map
-        motif_result = build_motif_map(verse_lines, None)
-        for group in motif_result['motif_groups']:
-            for member in group['members']:
-                ru = get_rhyme_unit(member['word'])
-                if ru:
-                    family_units.append(ru)
-                    break
-
-    tagged = []
-    for syn in result['synonyms']:
-        syn_ru = get_rhyme_unit(syn)
-        also_rhymes = bool(syn_ru) and any(
-            syllable_rhyme_score(syn_ru, fu) >= NEAR_RHYME_SAME_VOWEL_SCORE for fu in family_units
-        )
-        tagged.append({'word': syn, 'also_rhymes': also_rhymes, 'concreteness': get_concreteness(syn)})
-
-    tagged.sort(key=lambda s: s['also_rhymes'], reverse=True)
-    return jsonify({'word': word, 'found': True, 'synonyms': tagged})
+    # Extracted to application/thesaurus_related.py (Phase 1d) — coordinates
+    # a domain computation with two infrastructure reads for one combined
+    # view, the shape of a use case. See that module's docstring.
+    result = get_related_synonyms(word, verse_lines)
+    return jsonify({'word': word, **result})
 
 
 @app.route('/suggest-motif-words', methods=['POST'])
