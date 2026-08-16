@@ -1,0 +1,31 @@
+{
+  "expo": {
+    "name": "Prosodic",
+    "slug": "prosodic",
+    "scheme": "prosodic",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#06060A",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.prosodic.app"
+    },
+    "android": {
+      "package": "com.prosodic.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#06060A",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-secure-store"
+    ]
+  }
+}

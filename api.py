@@ -114,7 +114,15 @@ def _make_token(user_id):
         # PyJWT requires 'sub' to be a string (JWT spec: StringOrURI) — encoding
         # a raw int makes every decode() fail with InvalidSubjectError.
         'sub': str(user_id),
-        'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1),
+        # Was 1 hour — fine for a web tab someone re-logs into, brutal for a
+        # mobile app someone opens once and expects to still be signed into
+        # a day later (there's no refresh-token flow to paper over it, so an
+        # expired token today just drops straight to a login screen mid-use).
+        # 30 days is the common mobile "stay signed in" convention; a real
+        # refresh-token rotation is the correct long-term fix if finer-
+        # grained revocation is ever needed, flagged here rather than built
+        # tonight.
+        'exp': datetime.datetime.utcnow() + datetime.timedelta(days=30),
     }
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGO)
 
