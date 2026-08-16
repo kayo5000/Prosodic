@@ -160,8 +160,8 @@ def test_shared_features_db_concurrent_mixed_load_no_lock_errors():
     os.environ['PROSODIC_FEATURES_DB_PATH'] = _tmp.name
 
     import importlib
-    import feature_store as fs
-    import telemetry as tel
+    import infrastructure.feature_store as fs
+    import infrastructure.telemetry as tel
     import usage_history as uh
     importlib.reload(fs)
     importlib.reload(tel)

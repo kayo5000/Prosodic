@@ -41,7 +41,7 @@ from learning_engine import record_signals_batch, get_top_signals
 from veil_revival_routes import veil_revival_bp
 import usage_history
 from domain.song_context import SongContext
-import users_repository
+import infrastructure.users_repository as users_repository
 import feature_flags
 if feature_flags.CANTOS_ENABLED:
     from cantos import wiring as cantos_wiring

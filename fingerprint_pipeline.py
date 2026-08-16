@@ -367,7 +367,7 @@ def process_source(url: str) -> bool:
 
         # save to feature store
         try:
-            from feature_store import _get_connection
+            from infrastructure.feature_store import _get_connection  # NOTE: already stale pre-existing — feature_store.py no longer has _get_connection (renamed to _connection(), a context manager, in an earlier connection-safety pass); path updated, underlying breakage NOT fixed here, out of scope for this move — see docs/BUILD_PLAN.md Phase 1f
             conn = _get_connection()
             conn.execute(
                 """
