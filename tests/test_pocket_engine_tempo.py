@@ -13,8 +13,8 @@ green isn't a coincidence — it's what the model is supposed to do there).
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from pocket_engine import map_line_to_pocket, _tempo_adjusted_span, GRID_SIZE
-from syllable_compression import syllables_per_beat
+from domain.pocket_engine import map_line_to_pocket, _tempo_adjusted_span, GRID_SIZE
+from domain.syllable_compression import syllables_per_beat
 
 
 LINE = "Fast forward through years of rehearsal"

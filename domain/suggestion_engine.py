@@ -11,13 +11,13 @@ from collections import defaultdict
 
 log = logging.getLogger(__name__)
 
-from phoneme_engine import (
+from domain.phoneme_engine import (
     get_rhyme_unit, rhyme_score, get_phonemes, FUNCTION_WORDS, CMU,
 )
-from syllable_engine import get_syllable_count, syllabify_line
-from rhyme_detection_engine import analyze_verse
-from motif_engine import build_motif_map
-from semantics_engine import semantic_similarity, SPACY_AVAILABLE
+from domain.syllable_engine import get_syllable_count, syllabify_line
+from domain.rhyme_detection_engine import analyze_verse
+from domain.motif_engine import build_motif_map
+from domain.semantics_engine import semantic_similarity, SPACY_AVAILABLE
 from thesaurus_engine import lookup as thesaurus_lookup
 from domain.final_result_converter import normalize as fr_normalize
 from domain.prosodic_config import NEAR_RHYME_SAME_VOWEL_SCORE
@@ -388,7 +388,7 @@ def get_suggestions(verse_lines, ctx=None, trigger_mode='auto', target_word=None
 
     # If a specific target word was given, override phonetic candidates around that word
     if target_word:
-        from phoneme_engine import get_rhyme_unit
+        from domain.phoneme_engine import get_rhyme_unit
         target_rhyme = get_rhyme_unit(target_word)
         if target_rhyme:
             raw = _scan_phonetic_candidates(target_rhyme)

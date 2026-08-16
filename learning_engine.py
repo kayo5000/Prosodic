@@ -24,7 +24,7 @@ import sqlite3
 import threading
 from contextlib import contextmanager
 from datetime import datetime, timezone
-from phoneme_engine import get_phonemes, normalize
+from domain.phoneme_engine import get_phonemes, normalize
 
 DB_PATH = os.environ.get('LEARNING_SIGNALS_DB_PATH') or os.path.join(os.path.dirname(__file__), 'learning_signals.db')
 

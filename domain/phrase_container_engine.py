@@ -5,9 +5,9 @@ Never imposes structure — containers emerge from the writing itself.
 
 Part of the Prosodic hip-hop lyric analysis suite.
 '''
-from rhyme_detection_engine import analyze_verse
-from density_engine import score_full_verse
-from syllable_engine import get_syllable_count
+from domain.rhyme_detection_engine import analyze_verse
+from domain.density_engine import score_full_verse
+from domain.syllable_engine import get_syllable_count
 from domain.prosodic_config import (
     BOUNDARY_THRESHOLD, MIN_SIGNALS_FIRED, BOUNDARY_SIGNAL_WEIGHTS as SIGNALS,
     DENSITY_DROP_MIN_PREV, DENSITY_DROP_RATIO, SYLLABLE_RESET_RATIO,

@@ -31,8 +31,8 @@ from flask import Flask, request, jsonify
 from dotenv import load_dotenv
 load_dotenv()
 
-from feedback_engine import assemble_feedback
-from suggestion_engine import get_suggestions, get_more_suggestions
+from domain.feedback_engine import assemble_feedback
+from domain.suggestion_engine import get_suggestions, get_more_suggestions
 from veil_prompt import VEIL_SYSTEM_PROMPT
 from learning_engine import record_signals_batch, get_top_signals
 from veil_revival_routes import veil_revival_bp
@@ -329,7 +329,7 @@ def _require_verse(data):
 
 def _extract_content_words(text, n=5):
     '''Naive content-word extraction — longest non-trivial words in the message.'''
-    from phoneme_engine import FUNCTION_WORDS
+    from domain.phoneme_engine import FUNCTION_WORDS
     seen = {}
     for word in text.split():
         clean = word.strip('.,!?;:"\'()-').lower()
@@ -551,7 +551,7 @@ def autofill_route():
     }
     Response: { assignments: [{word, line_index, word_index, color_id, score}] }
     '''
-    from phoneme_engine import get_phonemes, get_rhyme_unit_from_phonemes, syllable_rhyme_score
+    from domain.phoneme_engine import get_phonemes, get_rhyme_unit_from_phonemes, syllable_rhyme_score
 
     body       = request.get_json(silent=True) or {}
     verse_lines = body.get('verse_lines', [])
@@ -624,8 +624,8 @@ def suggest_family():
     Scores the word's rhyme unit against each family's sample words.
     Returns top matches with scores >= 0.65 (includes slant bridges).
     '''
-    from phoneme_engine import get_phonemes, get_rhyme_unit_from_phonemes, syllable_rhyme_score, classify_r_family
-    from rhyme_detection_engine import r_family_compatible
+    from domain.phoneme_engine import get_phonemes, get_rhyme_unit_from_phonemes, syllable_rhyme_score, classify_r_family
+    from domain.rhyme_detection_engine import r_family_compatible
     body = request.get_json(silent=True) or {}
     word = body.get('word', '').strip()
     families = body.get('families', [])
@@ -720,7 +720,7 @@ def thesaurus_synonyms():
     the bar's rhythm, not just a generic alphabetical dictionary dump.
     '''
     from thesaurus_engine import lookup as thesaurus_lookup
-    from syllable_engine import get_syllable_count
+    from domain.syllable_engine import get_syllable_count
     from concreteness_engine import get_concreteness
 
     body = request.get_json(silent=True) or {}
@@ -763,7 +763,7 @@ def thesaurus_related():
     switching between the thesaurus and the rhyme suggester separately.
     '''
     from thesaurus_engine import lookup as thesaurus_lookup
-    from phoneme_engine import get_rhyme_unit, syllable_rhyme_score
+    from domain.phoneme_engine import get_rhyme_unit, syllable_rhyme_score
     from concreteness_engine import get_concreteness
 
     body = request.get_json(silent=True) or {}
@@ -778,7 +778,7 @@ def thesaurus_related():
 
     family_units = []
     if verse_lines:
-        from motif_engine import build_motif_map
+        from domain.motif_engine import build_motif_map
         motif_result = build_motif_map(verse_lines, None)
         for group in motif_result['motif_groups']:
             for member in group['members']:

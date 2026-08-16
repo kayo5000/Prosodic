@@ -12,9 +12,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from domain.song_context import SongContext
 
-import stress_signals as ss
-
-
+import domain.stress_signals as ss
 def _syl(word, wi, si, gi, pos, perf, lex):
     return {
         'word': word, 'word_index': wi, 'syllable_index': si,
@@ -197,6 +195,6 @@ def test_signal_counts_always_has_all_taxonomy_keys():
     """Even when nothing fires, every key must be present at 0 — a caller
     checking cadence_signals['signal_counts']['syncopation'] should never
     KeyError just because this verse had none."""
-    from feedback_engine import assemble_feedback
+    from domain.feedback_engine import assemble_feedback
     fb = assemble_feedback(['a a a'], SongContext(bpm=90))
     assert set(fb['cadence_signals']['signal_counts'].keys()) == set(ss.SIGNAL_TYPES)

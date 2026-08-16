@@ -9,7 +9,7 @@ import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import pytest
-from phrase_container_engine import build_containers, detect_boundaries, BOUNDARY_THRESHOLD, SIGNALS
+from domain.phrase_container_engine import build_containers, detect_boundaries, BOUNDARY_THRESHOLD, SIGNALS
 
 
 def test_first_container_always_full_confidence():

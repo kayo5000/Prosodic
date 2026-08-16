@@ -22,8 +22,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from golden_master import assert_matches_golden
-from feedback_engine import assemble_feedback
-from suggestion_engine import get_suggestions
+from domain.feedback_engine import assemble_feedback
+from domain.suggestion_engine import get_suggestions
 from domain.song_context import SongContext
 
 VERSE_A = [

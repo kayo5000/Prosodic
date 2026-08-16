@@ -5,11 +5,11 @@ and builds the unified motif map used by the density and feedback engines.
 
 Part of the Prosodic hip-hop lyric analysis suite.
 '''
-from rhyme_detection_engine import (
+from domain.rhyme_detection_engine import (
     build_verse_stream, extract_rhyme_candidates,
     find_rhyme_groups, build_compound_sequences, find_function_word_rhymes
 )
-from pocket_engine import enrich_stream_with_pocket
+from domain.pocket_engine import enrich_stream_with_pocket
 
 # ── Motif Map (used by density_engine) ──────────────────
 def build_motif_map(verse_lines, ctx=None):

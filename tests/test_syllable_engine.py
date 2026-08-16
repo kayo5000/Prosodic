@@ -10,8 +10,8 @@ engine that reads the stream).
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import syllable_engine
-from syllable_engine import (
+import domain.syllable_engine as syllable_engine
+from domain.syllable_engine import (
     get_syllables, get_syllable_count, syllabify_line,
     _estimate_syllable_count_from_letters,
 )

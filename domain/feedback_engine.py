@@ -5,14 +5,13 @@ ready for UI consumption. This is the top-level entry point for the pipeline.
 
 Part of the Prosodic hip-hop lyric analysis suite.
 '''
-from motif_engine import build_motif_map
-from density_engine import score_full_verse
-from pocket_engine import get_flow_signature
-from phrase_container_engine import build_containers
-from stress_signals import analyze_verse_stream
-import perceptual_family_engine
-import pattern_reader_engine
-
+from domain.motif_engine import build_motif_map
+from domain.density_engine import score_full_verse
+from domain.pocket_engine import get_flow_signature
+from domain.phrase_container_engine import build_containers
+from domain.stress_signals import analyze_verse_stream
+import domain.perceptual_family_engine as perceptual_family_engine
+import domain.pattern_reader_engine as pattern_reader_engine
 def assemble_feedback(verse_lines, ctx):
     '''
     Main function. Takes verse lines and a SongContext.

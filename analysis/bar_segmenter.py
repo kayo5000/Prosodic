@@ -13,7 +13,7 @@ import hashlib
 import re
 import datetime
 
-from normalization_engine import normalize as _normalize_word
+from domain.normalization_engine import normalize as _normalize_word
 
 _METHOD  = "deterministic_v1"
 _VERSION = "bar_segmenter_1.0.0"
@@ -58,7 +58,7 @@ def _normalize_line(line):
 def _count_syllables(text):
     """Count syllables using syllable_engine; fall back to vowel-cluster heuristic."""
     try:
-        from syllable_engine import syllabify_line
+        from domain.syllable_engine import syllabify_line
         syls = syllabify_line(text)
         return len(syls), syls
     except Exception:
@@ -80,7 +80,7 @@ def _rhymes_with(word_a, word_b):
     if not word_a or not word_b or word_a == word_b:
         return False
     try:
-        from phoneme_engine import rhyme_score
+        from domain.phoneme_engine import rhyme_score
         return rhyme_score(word_a, word_b) >= 0.70
     except Exception:
         return False

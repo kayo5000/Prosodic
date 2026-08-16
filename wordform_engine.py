@@ -8,7 +8,7 @@ Part of the Prosodic hip-hop lyric analysis suite.
 '''
 from collections import defaultdict
 from nltk.stem import PorterStemmer
-from phoneme_engine import CMU as _CMU
+from domain.phoneme_engine import CMU as _CMU
 
 _stemmer = PorterStemmer()
 

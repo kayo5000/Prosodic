@@ -17,14 +17,14 @@ Part of the Prosodic hip-hop lyric analysis suite.
 import logging
 from collections import defaultdict
 
-from perceptual_family_engine import (
+from domain.perceptual_family_engine import (
     PERCEPTUAL_FAMILIES,
     BOUNDARY_WORD_FLAGS,            # noqa: F401 — re-exported for callers
     score_unregistered_words,
     score_family_membership,
 )
-from phoneme_engine import FUNCTION_WORDS   # available to callers; tags already filtered
-import syllable_engine                       # stress data accessed via tagged_words;
+from domain.phoneme_engine import FUNCTION_WORDS   # available to callers; tags already filtered
+import domain.syllable_engine as syllable_engine  # stress data accessed via tagged_words;
                                              # imported per engine suite convention
 
 log = logging.getLogger(__name__)
@@ -342,7 +342,7 @@ def describe_pattern(pattern_result):
 
 # ── Test Block ────────────────────────────────────────────────────────────────
 if __name__ == '__main__':
-    from perceptual_family_engine import tag_verse_words
+    from domain.perceptual_family_engine import tag_verse_words
 
     verse = [
         "And I swear that it's turnt",

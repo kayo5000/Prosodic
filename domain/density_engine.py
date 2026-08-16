@@ -5,7 +5,7 @@ and motif recurrence. Feeds the feedback bars shown in the UI.
 
 Part of the Prosodic hip-hop lyric analysis suite.
 '''
-from motif_engine import build_motif_map
+from domain.motif_engine import build_motif_map
 
 def score_bar_density(verse_lines, line_index, motif_result=None):
     if motif_result is None:

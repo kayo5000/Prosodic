@@ -167,7 +167,7 @@ def test_layer2_live_composite_unchanged_end_to_end():
     pipeline instead of the formula in isolation — confirms the wiring
     itself (not just the math) is correct.
     '''
-    from suggestion_engine import get_suggestions
+    from domain.suggestion_engine import get_suggestions
     from domain.song_context import SongContext
 
     verse = [

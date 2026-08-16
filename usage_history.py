@@ -85,7 +85,7 @@ def record_usage(user_id, rhyme_map):
     so this collapses by (line_index, word_index) first — one row per actual
     word occurrence, not one per syllable.
     '''
-    from phoneme_engine import get_rhyme_unit
+    from domain.phoneme_engine import get_rhyme_unit
 
     by_occurrence = {}  # (line_index, word_index) -> {'word', 'color_id'}
     for entry in rhyme_map:

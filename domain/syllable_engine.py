@@ -6,7 +6,7 @@ Produces the flat syllable stream consumed by all downstream engines.
 Part of the Prosodic hip-hop lyric analysis suite.
 '''
 import re
-from phoneme_engine import get_phonemes
+from domain.phoneme_engine import get_phonemes
 
 _VOWEL_GROUP = re.compile(r'[aeiou]+')
 

@@ -10,8 +10,8 @@ even if A and C never directly compare above threshold.
 Part of the Prosodic hip-hop lyric analysis suite.
 '''
 from collections import defaultdict
-from phoneme_engine import get_rhyme_unit_from_phonemes, syllable_rhyme_score, classify_r_family, FUNCTION_WORDS
-from syllable_engine import syllabify_line
+from domain.phoneme_engine import get_rhyme_unit_from_phonemes, syllable_rhyme_score, classify_r_family, FUNCTION_WORDS
+from domain.syllable_engine import syllabify_line
 from domain.prosodic_config import RHYME_THRESHOLD
 
 def build_verse_stream(verse_lines):

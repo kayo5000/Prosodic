@@ -17,8 +17,8 @@ all of them in the dependency chain.
 Part of the Prosodic hip-hop lyric analysis suite.
 '''
 import logging
-from phoneme_engine import rhyme_score, FUNCTION_WORDS, get_rhyme_unit
-from syllable_engine import syllabify_line
+from domain.phoneme_engine import rhyme_score, FUNCTION_WORDS, get_rhyme_unit
+from domain.syllable_engine import syllabify_line
 
 log = logging.getLogger(__name__)
 

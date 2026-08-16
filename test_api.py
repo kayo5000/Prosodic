@@ -10,7 +10,7 @@ import json
 import sys
 import time
 import api
-from suggestion_engine import _suggestion_cache
+from domain.suggestion_engine import _suggestion_cache
 
 VERSE = [
     "And I swear that it's turnt",

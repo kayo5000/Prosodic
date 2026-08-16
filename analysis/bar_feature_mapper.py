@@ -23,7 +23,7 @@ _TARGET_SYLLABLES = 12  # must match bar_segmenter.py
 
 def _count_syllables(text):
     try:
-        from syllable_engine import syllabify_line
+        from domain.syllable_engine import syllabify_line
         syls = syllabify_line(text)
         return len(syls), syls
     except Exception:

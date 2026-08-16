@@ -12,11 +12,11 @@ Covers:
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from pocket_engine import (
+from domain.pocket_engine import (
     map_line_to_pocket, enrich_stream_with_pocket, get_flow_signature,
     STRONG_POSITIONS, POCKET_POSITIONS,
 )
-from rhyme_detection_engine import build_verse_stream
+from domain.rhyme_detection_engine import build_verse_stream
 from domain.song_context import SongContext
 
 

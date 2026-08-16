@@ -13,8 +13,8 @@ syllable_compression.py, not reinvented — see its own docstring for why).
 Part of the Prosodic hip-hop lyric analysis suite.
 '''
 from collections import defaultdict
-from syllable_engine import syllabify_line
-from syllable_compression import available_syllable_slots
+from domain.syllable_engine import syllabify_line
+from domain.syllable_compression import available_syllable_slots
 from domain.prosodic_config import (
     GRID_SIZE, STRONG_POSITIONS, POCKET_POSITIONS, POCKET_WINDOW, NUDGE_WINDOW,
 )

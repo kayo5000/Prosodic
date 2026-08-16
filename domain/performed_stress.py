@@ -102,7 +102,7 @@ def _load_cmudict() -> Dict[str, List[List[str]]]:
         return _cmudict_cache
 
     try:
-        from phoneme_engine import CMU
+        from domain.phoneme_engine import CMU
         _cmudict_cache = CMU
     except Exception:
         _cmudict_cache = {}

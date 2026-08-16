@@ -106,12 +106,12 @@ ever confidence 1.0.
 import logging
 from collections import Counter
 
-from pocket_engine import STRONG_POSITIONS, POCKET_POSITIONS, POCKET_WINDOW
-from performed_stress import (
+from domain.pocket_engine import STRONG_POSITIONS, POCKET_POSITIONS, POCKET_WINDOW
+from domain.performed_stress import (
     infer_performed_stress_from_stream,
     get_lexical_stress_variants,
 )
-from phoneme_engine import FUNCTION_WORDS
+from domain.phoneme_engine import FUNCTION_WORDS
 from domain.prosodic_config import LAPSE_RUN_LENGTH, RECURRENCE_MIN
 
 log = logging.getLogger(__name__)
@@ -413,7 +413,7 @@ def analyze_verse_stream(stream, ctx):
 
 # ── TEST ─────────────────────────────────────────────────
 if __name__ == '__main__':
-    from motif_engine import build_motif_map
+    from domain.motif_engine import build_motif_map
     from domain.song_context import SongContext
     verse = [
         "Getting to the money",

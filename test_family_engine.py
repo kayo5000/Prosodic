@@ -7,9 +7,9 @@ Run: python test_family_engine.py
 
 All five assertions must pass before any further engine changes are made.
 '''
-import perceptual_family_engine
-import pattern_reader_engine
-from perceptual_family_engine import score_unregistered_words
+import domain.perceptual_family_engine as perceptual_family_engine
+import domain.pattern_reader_engine as pattern_reader_engine
+from domain.perceptual_family_engine import score_unregistered_words
 
 # ── Test verse ────────────────────────────────────────────────────────────────
 
