@@ -33,6 +33,7 @@ load_dotenv()
 
 from domain.feedback_engine import assemble_feedback
 from domain.suggestion_engine import get_suggestions, get_more_suggestions
+from application.suggest_enrichment import enrich_suggestions
 from veil_prompt import VEIL_SYSTEM_PROMPT
 from learning_engine import record_signals_batch, get_top_signals
 from veil_revival_routes import veil_revival_bp
@@ -427,24 +428,15 @@ def suggest():
             motif_bank=motif_bank,
         )
 
-        # Tag each suggestion with how many other users have reached for this
-        # same rhyme unit (cliche signal), whether this user has used the
-        # word before (repetition warning), and how concrete/vivid the word
-        # is (1.0 abstract - 5.0 sensory). Never blocks suggestions if it fails.
+        # Tag each suggestion with community_uses/used_before/concreteness —
+        # extracted to application/suggest_enrichment.py (Phase 1c, Clean
+        # Architecture reorg): this coordinates a domain computation with
+        # infrastructure reads for one specific use case, not framework
+        # glue, so it doesn't belong inline in the route body. Behavior
+        # unchanged — see that module's docstring for the exact quirks
+        # preserved from this original inline version.
         user_id = _optional_user_id()
-        try:
-            from concreteness_engine import get_concreteness
-            for s in suggestions:
-                ru = s.get('rhyme_unit')
-                s['community_uses'] = usage_history.get_rhyme_unit_frequency(
-                    tuple(ru) if ru else None, exclude_user_id=user_id
-                )
-                s['used_before'] = (
-                    usage_history.user_has_used(user_id, s['word']) if user_id is not None else 0
-                )
-                s['concreteness'] = get_concreteness(s['word'])
-        except Exception:
-            log.exception('Failed to tag community_uses/used_before/concreteness (non-fatal)')
+        suggestions = enrich_suggestions(suggestions, user_id)
 
         return jsonify(_serializable({
             'suggestions': suggestions,

@@ -2,6 +2,8 @@
 
 How a request actually flows through the system, and the real state of the module-by-module audit findings — so a future session doesn't have to rediscover any of this by reading 20+ files cold. Verified against current code as of 2026-08-16; where an earlier audit's finding has since changed, that's stated explicitly.
 
+**Mid-reorg note:** a Clean Architecture layering pass is in progress (see `docs/BUILD_PLAN.md` for the phased plan and live status). §3/§4 below describe module *behavior*, which the reorg deliberately doesn't change — but file *locations* have moved. As of Phase 1c: `song_context.py`, `final_result_converter.py`, `prosodic_config.py`, and 16 live-pipeline engines (`phoneme_engine.py`, `syllable_engine.py`, `rhyme_detection_engine.py`, `motif_engine.py`, `density_engine.py`, `pocket_engine.py`, `phrase_container_engine.py`, `perceptual_family_engine.py`, `pattern_reader_engine.py`, `semantics_engine.py`, `feedback_engine.py`, `suggestion_engine.py`, `normalization_engine.py`, `performed_stress.py`, `stress_signals.py`, `syllable_compression.py`) all now live under `domain/`, imported as `domain.<module>`. `thesaurus_engine.py`/`concreteness_engine.py` deliberately stay at repo root (they embed real `sqlite3` code — moving them into `domain/` untouched would misrepresent them as pure domain modules; see `docs/BUILD_PLAN.md` Phase 1e). Where this doc references a bare module name below, assume `domain.` prefix unless stated otherwise.
+
 ---
 
 ## 1. System shape
@@ -12,12 +14,28 @@ Mobile app (mobile/, React Native + Expo)
     ▼
 Flask API (api.py) — the only place routes live
     │
-    ├─→ Live analysis pipeline (/analyze, /suggest) ──→ engines (§3)
+    ├─→ application/ — the use-case layer (currently one real inhabitant:
+    │     suggest_enrichment.py, coordinating domain/suggestion_engine.py
+    │     with infrastructure reads for /suggest's community_uses/
+    │     used_before/concreteness tagging — see docs/BUILD_PLAN.md
+    │     Phase 1c for why this is deliberately thin, not a blanket layer)
+    │
+    ├─→ domain/ — pure business logic, zero framework/DB/vendor deps
+    │     ├─→ Live analysis pipeline (/analyze, /suggest) ──→ engines (§3)
+    │     └─→ ai_provider.py — the AI provider port (§6)
+    │
+    ├─→ infrastructure/ — adapters (currently: ai_providers/, the AI
+    │     vendor adapters + circuit breaker; users_repository.py and the
+    │     other DB-touching modules are next, per docs/BUILD_PLAN.md
+    │     Phase 1f — not yet moved)
+    │
     ├─→ Auth (/auth/*) ──→ users_repository.py ──→ prosodic.db
-    ├─→ VEIL (/veil/chat, /veil/revival/chat) ──→ Anthropic API
-    │     (behind rate limiter + circuit breaker, §5)
+    ├─→ VEIL (/veil/chat, /veil/revival/chat) ──→ infrastructure/ai_providers
+    │     (behind rate limiter + circuit breaker, §6)
     ├─→ Cantos (/cantos/state-snapshot, FEATURE_CANTOS_ENABLED-gated)
     │     ──→ cantos/wiring.py ──→ behavioral layer (§6)
+    │     (cantos/, behavior/, analysis/ deliberately NOT moved under
+    │     domain/ — see §7, a real evidence-backed decision not a gap)
     └─→ Thesaurus/concreteness/corrections/mastery-stub routes
 ```
 
@@ -98,15 +116,17 @@ Every SQLite-backed module went through a real concurrency-safety pass this sess
 
 ## 6. VEIL / Anthropic safety
 
-Both Anthropic-backed routes (`/veil/chat`, `/veil/revival/chat`) sit behind two independent layers:
+All four AI-calling code paths now go through one shared abstraction (`domain/ai_provider.py` + `infrastructure/ai_providers/` — see that package's own `README.md` for the live-vs-stub provider breakdown): `api.py`'s `/veil/chat`, `veil_revival_routes.py`'s `/veil/revival/chat`, `behavior/ai_interpreter.py`'s `interpret()`, and `cantos/direct.py`'s `converse()`. Nothing outside that package imports the `anthropic` SDK directly anymore.
 
-- **Rate limiting** (`rate_limiter.py`, Flask-Limiter) — 5/minute + 20/hour per IP, clean 429 JSON response on limit. `ProxyFix` is applied so IP-keyed limits see the real client behind Railway's reverse proxy, not the proxy's own address.
-- **Circuit breaker** (`anthropic_circuit_breaker.py`) — opens after 3 consecutive Anthropic failures, 45-second cooldown, thread-safe half-open trial (exactly one caller gets to test if Anthropic's back up, verified with a 40-thread concurrency test). Fails fast with a 503 instead of every request hanging during a real Anthropic outage. Deliberately separate from rate limiting — protects against Anthropic's own health, not caller abuse.
+- **Rate limiting** (`rate_limiter.py`, Flask-Limiter) — 5/minute + 20/hour per IP, clean 429 JSON response on limit, applied only to the two HTTP routes (`/veil/chat`, `/veil/revival/chat` — a route/web-layer concern, correctly not part of the provider abstraction). `ProxyFix` is applied so IP-keyed limits see the real client behind Railway's reverse proxy, not the proxy's own address.
+- **Circuit breaker** (`infrastructure/ai_providers/circuit_breaker.py`, moved here from root `anthropic_circuit_breaker.py`) — opens after 3 consecutive Anthropic failures, 45-second cooldown, thread-safe half-open trial (exactly one caller gets to test if Anthropic's back up, verified with a 40-thread concurrency test). Fails fast with a 503 instead of every request hanging during a real Anthropic outage. Deliberately separate from rate limiting — protects against Anthropic's own health, not caller abuse.
 
-`cantos/direct.py`'s `converse()` also calls Anthropic directly but has neither protection — acceptable today only because that whole module is unwired from any live route. **Needs the same treatment before Cantos/Direct mode ever gets a real route.**
+**Previously a real, flagged gap, now closed:** `behavior/ai_interpreter.py` and `cantos/direct.py`'s `converse()` used to call `anthropic.Anthropic(...)` directly with zero circuit-breaker protection — this section used to say exactly that. Both now go through `ClaudeProvider`, which wraps every call in the same shared circuit breaker automatically — a real, disclosed side effect of building the provider abstraction, not a separate fix. All four call sites now share one circuit: if Anthropic itself is down, every AI-backed feature sees that consistently, which is the circuit breaker's actual job (protecting against the vendor's health, not any one caller).
 
 ---
 
 ## 7. Cantos package
 
 Separate spec-driven subsystem (`docs/cantos/PROSODIC_CANTOS_LAUNCH_SPEC.md`), its own persistence layer (`cantos/db.py`, SQLite today, deliberately structured for a Postgres migration later), gated entirely behind `FEATURE_CANTOS_ENABLED`. See `docs/cantos/OVERNIGHT_BUILD_SUMMARY.md` for the original build and `docs/PROJECT_STATUS.md` for current wiring depth. Not re-documented in full here — this file covers how it connects to the rest of the system (§1, §3), not its internal spec.
+
+**Clean Architecture reorg finding (Phase 1e, checked not assumed):** `cantos/`, `behavior/`, and `analysis/` do NOT move under `domain/`. Grepped every file in all three packages for `sqlite3`/`flask` imports — exactly one file per package touches persistence (`cantos/db.py`; `behavior/label_capture.py`; `analysis/` has zero DB-touching files at all), and every other module in each package routes through that one file rather than constructing its own connection (confirmed for `cantos/board.py`/`disposition.py`/`meetings.py`/`notebooks.py`/`notes.py` via `db.get_connection()`, and for `behavior/state_engine.py` via `label_capture.capture_prediction()`). Each package already applies the repository-pattern separation internally, at a finer grain than a package-level move would achieve — moving the whole package under `domain/` would incorrectly imply the one persistence file in each belongs in the domain layer, which would be wrong. A real, evidence-backed "no action needed," not a default.
