@@ -42,16 +42,22 @@ Point the app at a backend by editing `.env` (gitignored — `.env.example`
 is the committed template):
 
 ```
-EXPO_PUBLIC_API_URL=http://localhost:5000
+EXPO_PUBLIC_API_URL=https://prosodic-production.up.railway.app
 ```
 
-- **Local Flask dev server**: use your machine's LAN IP, not
-  `localhost` — `localhost` on your phone means the phone itself, not
-  your computer. e.g. `http://192.168.1.23:5000`. Your phone and
+That's the current default (`.env.example` matches) — works from any
+network, no shared WiFi needed, verified with a real `POST /analyze`
+against it. **Expo bakes this into the bundle once at CLI startup —
+editing `.env` while `expo start` is already running does nothing until
+you restart the dev server.** Hit this for real once already; if in
+doubt, re-fetch the actual bundle and grep for the URL rather than
+trusting the config file alone.
+
+- **Local Flask dev server instead** (only needed when developing
+  against backend changes not yet deployed): use your machine's LAN IP,
+  not `localhost` — `localhost` on your phone means the phone itself,
+  not your computer. e.g. `http://192.168.1.23:5000`. Your phone and
   computer need to be on the same WiFi network for this to work.
-- **Railway (production)**: use the public `https://...up.railway.app`
-  URL — works from any network, no shared WiFi needed. Still a TODO —
-  see below, this hasn't been wired in yet.
 
 ## Run it
 
@@ -66,9 +72,15 @@ the App Store / Play Store. No Apple/Google developer account needed
 for this — that's only required for actual App Store / Play Store
 submission later (see TODO below).
 
-If your phone can't reach the dev server (different WiFi, VPN,
-corporate network), run `npx expo start --tunnel` instead — slower, but
-works across networks via a relay.
+If your phone can't reach the dev server directly (different WiFi, VPN,
+corporate network, or you just want to preview from anywhere), run
+`npx expo start --tunnel` instead — slower, routes through a public
+relay. **Known gotcha**: Expo's *bundled* ngrok authtoken (shared by
+every Expo developer running tunnel mode) is currently ACL-blocked by
+ngrok (`ERR_NGROK_316`, confirmed by running the raw `ngrok.exe` binary
+directly, not a guess) — tunnel mode fails identically on every retry
+until you configure your own free ngrok account and authtoken. Full
+steps in `docs/SETUP.md`.
 
 ## Project layout
 
@@ -98,10 +110,8 @@ src/screens/ProfileScreen.js  — logged-in user info + logout
 
 ## TODO / flagged for later (not urgent)
 
-- **Real Railway URL**: `.env` currently points at `localhost:5000` as
-  a placeholder — swap in the actual deployed Railway URL once you have
-  it handy (check the Railway dashboard, or `railway domain` after
-  `railway login`).
+- **Tunnel mode needs a personal ngrok authtoken** — see the gotcha
+  above / `docs/SETUP.md`. Not done yet; LAN mode works today.
 - **App icon**: using the real Prosodic logo now (`assets/icon.png`),
   but at its original 2000x2000 with a baked-in white background — fine
   for Expo Go preview, but a real store submission wants an exact
