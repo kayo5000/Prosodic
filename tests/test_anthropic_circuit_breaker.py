@@ -1,8 +1,10 @@
 '''
-Tests for anthropic_circuit_breaker.py — including the one part that's
-easy to get subtly wrong: the half-open trial slot must be claimed by
-exactly one caller even when many requests hit it at the exact same
-moment, not just when tested one at a time.
+Tests for infrastructure/ai_providers/circuit_breaker.py (moved here
+from root anthropic_circuit_breaker.py as part of the Clean Architecture
+reorg — same file, same tests, updated import path only) — including the
+one part that's easy to get subtly wrong: the half-open trial slot must
+be claimed by exactly one caller even when many requests hit it at the
+exact same moment, not just when tested one at a time.
 '''
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -11,7 +13,7 @@ import threading
 import time
 import pytest
 
-import anthropic_circuit_breaker as cb
+import infrastructure.ai_providers.circuit_breaker as cb
 
 
 @pytest.fixture(autouse=True)

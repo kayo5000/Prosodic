@@ -67,7 +67,6 @@ import os
 import re
 import json
 
-import anthropic
 from dotenv import load_dotenv
 
 from cantos import notebooks
@@ -75,6 +74,14 @@ from cantos import disposition as disposition_module
 from cantos import voice
 from cantos_dev_log import log_event
 from behavior import ai_interpreter
+# No more direct `import anthropic` — routed through the AI provider
+# abstraction instead (Clean Architecture reorg; see
+# infrastructure/ai_providers/README.md). This also means this call site
+# gets circuit-breaker protection for the first time — it had none
+# before this reorg, a deliberate, disclosed improvement (see
+# ClaudeProvider's own docstring).
+from infrastructure.ai_providers import get_provider
+from domain.ai_provider import AIMessage, ReasoningRequest
 
 load_dotenv()
 
@@ -270,14 +277,14 @@ def converse(engine, user_id, message, recent_limit=5):
     )
 
     try:
-        client = anthropic.Anthropic(api_key=api_key)
-        response = client.messages.create(
-            model=ai_interpreter._MODEL,
-            max_tokens=ai_interpreter._MAX_TOKENS,
+        provider = get_provider()  # Claude today — see infrastructure/ai_providers/README.md
+        result = provider.get_reasoning(ReasoningRequest(
+            messages=[AIMessage(role='user', content=user_prompt)],
             system=system,
-            messages=[{'role': 'user', 'content': user_prompt}],
-        )
-        text = response.content[0].text.strip()
+            max_tokens=ai_interpreter._MAX_TOKENS,
+            model=ai_interpreter._MODEL,
+        ))
+        text = result.text.strip()
     except Exception as exc:
         log_event(engine.upper(), 'conversation fallback',
                    f'{exc.__class__.__name__} — used rule-voiced response')

@@ -1,16 +1,28 @@
 '''
-Anthropic Circuit Breaker
-Thread-safe circuit breaker shared by every route that calls the Anthropic
-API (/veil/chat, /veil/revival/chat) — protects against hammering a
-genuinely down/erroring Anthropic with every incoming request, each one
-paying its own full timeout, during an outage.
+infrastructure/ai_providers/circuit_breaker.py
 
-This is deliberately separate from the rate limiter (rate_limiter.py):
-the rate limiter protects cost/abuse from one caller sending too many
-requests; this protects the app (and every OTHER caller) from Anthropic's
-own health, independent of how many distinct callers there are — a single
-well-behaved user can trip this just as easily as an abusive one, because
-it has nothing to do with who's asking.
+Moved here from anthropic_circuit_breaker.py (repo root) as part of the
+Clean Architecture reorg — this is infrastructure-layer reliability
+plumbing for exactly one kind of dependency (an AI vendor API), so it
+belongs inside infrastructure/ai_providers/, not sitting at the top
+level next to the engines. Content is unchanged from the original except
+this note and the module docstring's file path — same global state
+machine, same behavior, same tests (see tests/test_anthropic_circuit_
+breaker.py, import path updated to match).
+
+Thread-safe circuit breaker shared by every code path that calls the
+Anthropic API through ClaudeProvider (see claude_provider.py) —
+protects against hammering a genuinely down/erroring Anthropic with
+every incoming request, each one paying its own full timeout, during an
+outage.
+
+This is deliberately separate from the rate limiter (rate_limiter.py,
+still at repo root — a web/route-layer concern, not an AI-provider
+concern): the rate limiter protects cost/abuse from one caller sending
+too many requests; this protects the app (and every OTHER caller) from
+Anthropic's own health, independent of how many distinct callers there
+are — a single well-behaved user can trip this just as easily as an
+abusive one, because it has nothing to do with who's asking.
 
 State machine, the standard three states:
   CLOSED     — normal. Every call proceeds to Anthropic.
@@ -24,15 +36,12 @@ State machine, the standard three states:
                as open). If the trial succeeds, the circuit closes. If it
                fails, the circuit reopens and the cooldown restarts.
 
-Why build this now rather than defer it (this was explicitly a judgment
-call, not a requirement): it's genuinely cheap — no new dependency, no
-external state, a few dozen lines — and it earns its place on its own:
-without it, an Anthropic outage means every single user's request hangs
-for a full timeout before failing, one at a time, for as long as the
-outage lasts. With it, everyone after the first few failures gets an
-immediate, honest "temporarily unavailable" instead of a slow failure.
-That's a real reliability/UX improvement independent of cost, not just a
-nice-to-have bolted onto the rate limiter.
+Now sits behind ClaudeProvider.get_reasoning() (claude_provider.py) —
+every call site that goes through the AI provider abstraction gets this
+protection automatically and shares the SAME circuit, including two call
+sites (behavior/ai_interpreter.py, cantos/direct.py) that had zero
+protection before this reorg. That's a deliberate, disclosed improvement
+of this pass, not an accidental side effect — see docs/APP_UPDATE.md.
 
 Part of the Prosodic hip-hop lyric analysis suite.
 '''
@@ -102,7 +111,7 @@ def _report_failure():
 def guard():
     '''
     Usage:
-        with anthropic_circuit_breaker.guard():
+        with circuit_breaker.guard():
             response = client.messages.create(...)
 
     Raises CircuitOpenError immediately (before the wrapped code runs at

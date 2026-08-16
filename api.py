@@ -28,7 +28,6 @@ import jwt
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.middleware.proxy_fix import ProxyFix
 from flask import Flask, request, jsonify
-import anthropic
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -49,7 +48,14 @@ if feature_flags.CANTOS_ENABLED:
 # of whether CANTOS_ENABLED is on — see cantos/db.py's close_connection().
 from cantos import db as cantos_db
 from rate_limiter import limiter, ANTHROPIC_ROUTE_LIMITS
-import anthropic_circuit_breaker
+# No more direct `import anthropic` / anthropic_circuit_breaker here — VEIL
+# talks to the AI provider abstraction instead (Clean Architecture reorg;
+# see infrastructure/ai_providers/README.md). Circuit breaker protection
+# now lives inside ClaudeProvider itself, not wrapped per-route.
+from infrastructure.ai_providers import get_provider
+from domain.ai_provider import (
+    AIMessage, ReasoningRequest, AIProviderUnavailableError, AIProviderError,
+)
 from flask_limiter.errors import RateLimitExceeded
 
 logging.basicConfig(
@@ -100,8 +106,6 @@ def _close_cantos_connection(exception=None):
     cantos_db.close_connection()
 
 app.register_blueprint(veil_revival_bp)
-
-_anthropic = anthropic.Anthropic(api_key=os.environ.get('ANTHROPIC_API_KEY'))
 
 # ── Users DB ──────────────────────────────────────────────
 
@@ -511,22 +515,20 @@ def veil_chat():
     log.info('POST /veil/chat  turns=%d', len(messages))
 
     try:
-        with anthropic_circuit_breaker.guard():
-            response = _anthropic.messages.create(
-                model='claude-sonnet-4-6',
-                max_tokens=2048,
-                system=system,
-                messages=[{'role': m['role'], 'content': m['content']} for m in messages],
-            )
-        reply = response.content[0].text
-        return jsonify({'reply': reply})
-    except anthropic_circuit_breaker.CircuitOpenError as e:
-        log.warning('VEIL circuit breaker open, rejecting without calling Anthropic: %s', e)
+        provider = get_provider()  # Claude today — see infrastructure/ai_providers/README.md
+        result = provider.get_reasoning(ReasoningRequest(
+            messages=[AIMessage(role=m['role'], content=m['content']) for m in messages],
+            system=system,
+            max_tokens=2048,
+        ))
+        return jsonify({'reply': result.text})
+    except AIProviderUnavailableError as e:
+        log.warning('VEIL provider unavailable, rejecting without a full attempt: %s', e)
         return jsonify({
             'error': 'VEIL is temporarily unavailable — the AI service has been failing repeatedly. Please try again shortly.',
         }), 503
-    except anthropic.APIError as e:
-        log.exception('Anthropic API error in /veil/chat')
+    except AIProviderError as e:
+        log.exception('AI provider error in /veil/chat')
         return jsonify({'error': 'VEIL unavailable', 'detail': str(e)}), 502
     except Exception as e:
         log.exception('Error in /veil/chat')

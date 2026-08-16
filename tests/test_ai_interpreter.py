@@ -6,6 +6,19 @@ is not set in the environment.
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+# Same order-dependent gap already found and fixed in test_integration.py
+# this session: only api.py calls load_dotenv() at import time, so
+# whether ANTHROPIC_API_KEY is visible here depends entirely on whether
+# some OTHER test file happened to import api.py first in this pytest
+# run. Found for real (not by inspection) while verifying the AI
+# provider abstraction refactor — this file's 4 live tests silently
+# skipped a run where the key genuinely was available, exactly the
+# "sometimes silently skips a real check it should run" failure mode
+# test_integration.py already had. Calling it directly, unconditionally,
+# here fixes it the same way.
+from dotenv import load_dotenv
+load_dotenv()
+
 import pytest
 from behavior.ai_interpreter import interpret, validate_output, _sentence_count, _FORBIDDEN
 

@@ -16,7 +16,15 @@ import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import json
-import anthropic
+
+# No more direct `import anthropic` — routed through the AI provider
+# abstraction instead (Clean Architecture reorg; see
+# infrastructure/ai_providers/README.md). This also means this call site
+# gets circuit-breaker protection for the first time — it had none
+# before this reorg (see ClaudeProvider's own docstring for why that's a
+# deliberate, disclosed improvement, not an accidental side effect).
+from infrastructure.ai_providers import get_provider
+from domain.ai_provider import AIMessage, ReasoningRequest
 
 _MODEL      = "claude-sonnet-4-6"
 _MAX_TOKENS = 400
@@ -92,14 +100,14 @@ def interpret(state=None, drift=None, degradation=None):
     )
 
     try:
-        client   = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
-        response = client.messages.create(
-            model=_MODEL,
-            max_tokens=_MAX_TOKENS,
+        provider = get_provider()  # Claude today — see infrastructure/ai_providers/README.md
+        result = provider.get_reasoning(ReasoningRequest(
+            messages=[AIMessage(role="user", content=user_prompt)],
             system=_SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": user_prompt}],
-        )
-        text = response.content[0].text.strip()
+            max_tokens=_MAX_TOKENS,
+            model=_MODEL,
+        ))
+        text = result.text.strip()
     except Exception as exc:
         text = (
             f"Interpretation unavailable ({exc.__class__.__name__}). "

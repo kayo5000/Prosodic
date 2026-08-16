@@ -22,24 +22,31 @@ Registration:
 
 Design rules:
 - New file only. No existing files modified.
-  (UPDATE: this file itself was later modified once, deliberately — to add
-  rate limiting and the shared Anthropic circuit breaker, since this route
-  makes the same real, billed Anthropic calls /veil/chat does and had the
-  same open cost/abuse gap. See rate_limiter.py / anthropic_circuit_breaker.py.)
+  (UPDATE: this file itself was later modified twice, deliberately — (1)
+  to add rate limiting and the shared Anthropic circuit breaker, since
+  this route makes the same real, billed Anthropic calls /veil/chat does
+  and had the same open cost/abuse gap; (2) the Clean Architecture reorg,
+  routing the actual Anthropic call through the AI provider abstraction
+  instead of constructing an anthropic.Anthropic client inline — see
+  infrastructure/ai_providers/README.md. Same behavior, same circuit
+  breaker, just no longer importing the vendor SDK directly.)
 - Silent failures — never 500 the client on model errors.
 - Docstrings on everything.
 """
 
 from __future__ import annotations
 
-import os
 import logging
 from typing import List, Dict, Any
 
 from flask import Blueprint, request, jsonify  # type: ignore
 
 from rate_limiter import limiter, ANTHROPIC_ROUTE_LIMITS
-import anthropic_circuit_breaker
+from infrastructure.ai_providers import get_provider
+from domain.ai_provider import (
+    AIMessage, ReasoningRequest,
+    AIProviderNotConfiguredError, AIProviderUnavailableError,
+)
 
 _log = logging.getLogger(__name__)
 
@@ -89,28 +96,6 @@ Rules:
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
-
-def _get_anthropic_client():
-    """
-    Lazily construct and return the Anthropic client.
-
-    Returns the client instance, or None if the anthropic package is not
-    installed or ANTHROPIC_API_KEY is not set.  Errors are logged.
-    """
-    try:
-        import anthropic  # type: ignore
-        api_key = os.environ.get("ANTHROPIC_API_KEY")
-        if not api_key:
-            _log.warning("veil_revival: ANTHROPIC_API_KEY not set")
-            return None
-        return anthropic.Anthropic(api_key=api_key)
-    except ImportError:
-        _log.warning("veil_revival: anthropic package not installed")
-        return None
-    except Exception as exc:
-        _log.warning(f"veil_revival: client init failed: {exc}")
-        return None
-
 
 def _build_system_prompt(title: str, body: str) -> str:
     """
@@ -185,26 +170,26 @@ def revival_chat():
 
         system_prompt = _build_system_prompt(title, body)
 
-        client = _get_anthropic_client()
-        if client is None:
-            return jsonify({"error": "VEIL service unavailable"}), 503
-
-        with anthropic_circuit_breaker.guard():
-            response = client.messages.create(
-                model="claude-sonnet-4-6",
-                max_tokens=512,
-                system=system_prompt,
-                messages=clean_messages if clean_messages else [
+        provider = get_provider()  # Claude today — see infrastructure/ai_providers/README.md
+        result = provider.get_reasoning(ReasoningRequest(
+            messages=[
+                AIMessage(role=m['role'], content=m['content'])
+                for m in (clean_messages if clean_messages else [
                     {"role": "user", "content": "Please begin the revival session."}
-                ],
-            )
+                ])
+            ],
+            system=system_prompt,
+            max_tokens=512,
+        ))
 
-        reply = response.content[0].text if response.content else ""
+        return jsonify({"reply": result.text, "note_type": None})
 
-        return jsonify({"reply": reply, "note_type": None})
+    except AIProviderNotConfiguredError as exc:
+        _log.warning(f"revival_chat: provider not configured: {exc}")
+        return jsonify({"error": "VEIL service unavailable"}), 503
 
-    except anthropic_circuit_breaker.CircuitOpenError as exc:
-        _log.warning(f"revival_chat: circuit breaker open, rejecting without calling Anthropic: {exc}")
+    except AIProviderUnavailableError as exc:
+        _log.warning(f"revival_chat: provider unavailable, rejecting without a full attempt: {exc}")
         return jsonify({"error": "Revival is temporarily unavailable — the AI service has been failing repeatedly. Please try again shortly."}), 503
 
     except Exception as exc:

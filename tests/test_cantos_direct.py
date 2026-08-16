@@ -8,6 +8,8 @@ import cantos.notebooks as notebooks
 import cantos.disposition as disposition
 import cantos.direct as direct
 import cantos_dev_log as cdl
+from infrastructure.ai_providers import claude_provider
+import infrastructure.ai_providers.circuit_breaker as circuit_breaker
 
 
 @pytest.fixture(autouse=True)
@@ -16,7 +18,16 @@ def isolated(tmp_path, monkeypatch):
     db.reset_schema_cache()
     monkeypatch.setattr(cdl, 'LOG_PATH', str(tmp_path / "dev_log.txt"))
     monkeypatch.setattr(cdl, '_last_logged_date', None)
+    # converse() now goes through ClaudeProvider, which shares the SAME
+    # global circuit breaker every other Claude call site uses (see
+    # infrastructure/ai_providers/circuit_breaker.py) — reset it around
+    # every test here so a forced-failure test (e.g.
+    # test_converse_falls_back_on_api_exception) can never leak a
+    # tripped/open circuit into an unrelated success-path test later in
+    # this file, or vice versa.
+    circuit_breaker._reset_for_tests()
     yield
+    circuit_breaker._reset_for_tests()
 
 
 def test_knock_requires_engine_and_user():
@@ -162,7 +173,13 @@ class _FakeClient:
 
 
 def _patch_anthropic(monkeypatch, text=None, exc=None):
-    monkeypatch.setattr(direct.anthropic, 'Anthropic', lambda **kwargs: _FakeClient(text=text, exc=exc))
+    # direct.py no longer imports anthropic directly — it goes through
+    # ClaudeProvider (infrastructure/ai_providers/claude_provider.py),
+    # the only place that still touches the real SDK. Patch it there,
+    # not on direct.py itself, so this test exercises the real
+    # production code path (get_provider() -> ClaudeProvider ->
+    # circuit breaker -> the vendor call) instead of bypassing it.
+    monkeypatch.setattr(claude_provider.anthropic, 'Anthropic', lambda **kwargs: _FakeClient(text=text, exc=exc))
     monkeypatch.setenv('ANTHROPIC_API_KEY', 'fake-key-for-testing')
 
 
@@ -245,7 +262,7 @@ def test_converse_grounds_prompt_in_real_notebook_and_disposition(monkeypatch):
         def __init__(self, **kwargs):
             self.messages = _CapturingMessages()
 
-    monkeypatch.setattr(direct.anthropic, 'Anthropic', lambda **kwargs: _CapturingClient())
+    monkeypatch.setattr(claude_provider.anthropic, 'Anthropic', lambda **kwargs: _CapturingClient())
     monkeypatch.setenv('ANTHROPIC_API_KEY', 'fake-key-for-testing')
 
     direct.converse('motif', 'user1', 'how am I doing?')
