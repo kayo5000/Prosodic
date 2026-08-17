@@ -22,7 +22,8 @@
     "web": "expo start --web",
     "tsc": "tsc --noEmit",
     "test": "jest",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "lint": "expo lint"
   },
   "private": true,
   "devDependencies": {
@@ -30,13 +31,17 @@
     "@testing-library/react-native": "^14.0.1",
     "@types/jest": "29.5.14",
     "@types/react": "~19.2.4",
+    "eslint": "^9.0.0",
+    "eslint-config-expo": "~57.0.1",
     "jest": "~29.7.0",
     "jest-expo": "~57.0.4",
     "typescript": "~6.0.3"
   },
   "jest": {
     "preset": "jest-expo",
-    "setupFiles": ["<rootDir>/jest.setup.js"],
+    "setupFiles": [
+      "<rootDir>/jest.setup.js"
+    ],
     "collectCoverageFrom": [
       "src/**/*.{ts,tsx}",
       "App.tsx",

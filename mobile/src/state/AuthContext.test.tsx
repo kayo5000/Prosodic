@@ -1,7 +1,12 @@
 import React from 'react';
 import { renderHook, act, waitFor } from '@testing-library/react-native';
 import { AuthProvider, useAuth } from './AuthContext';
+import * as SecureStore from 'expo-secure-store';
+import * as api from '../services/api/prosodicApi';
 
+// Babel/Jest hoist jest.mock() calls to the top of the module at compile
+// time regardless of where they're written — safe to keep them below the
+// imports they mock (the more readable order) rather than above.
 jest.mock('expo-secure-store', () => ({
   getItemAsync: jest.fn(),
   setItemAsync: jest.fn(),
@@ -15,9 +20,6 @@ jest.mock('../services/api/prosodicApi', () => ({
   setAuthToken: jest.fn(),
   clearAuthToken: jest.fn(),
 }));
-
-import * as SecureStore from 'expo-secure-store';
-import * as api from '../services/api/prosodicApi';
 
 const mockUser = { id: 1, email: 'a@b.com', username: 'kayo', geo_influences: [], created_at: '2026-01-01' };
 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  View, Text, TextInput, Pressable, StyleSheet,
+  Text, TextInput, Pressable, StyleSheet,
   KeyboardAvoidingView, Platform, ActivityIndicator, ScrollView,
 } from 'react-native';
 import { useAuth } from '../state/AuthContext';
