@@ -6,14 +6,16 @@ import {
 import { useAuth } from '../state/AuthContext';
 import { colors, spacing, radius } from '../theme/theme';
 
+type Mode = 'login' | 'register';
+
 export default function LoginScreen() {
   const { login, register } = useAuth();
-  const [mode, setMode] = useState('login'); // 'login' | 'register'
+  const [mode, setMode] = useState<Mode>('login');
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   const submit = async () => {
     setError(null);

@@ -1,6 +1,5 @@
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
-import { StatusBar } from 'expo-status-bar';
-import { NavigationContainer, DarkTheme } from '@react-navigation/native';
+import { NavigationContainer, DarkTheme, type Theme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 // Import the Ionicons subpath directly, NOT the '@expo/vector-icons'
 // barrel — the barrel's IconsLazy.js eagerly pulls in every icon set
@@ -8,12 +7,12 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 // resolve in this installed version, 500-ing the whole bundle. Direct
 // subpath import also means only the one font we actually use ships.
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { AuthProvider, useAuth } from './src/state/AuthContext';
-import AnalyzeScreen from './src/screens/AnalyzeScreen';
-import ChatScreen from './src/screens/ChatScreen';
-import LoginScreen from './src/screens/LoginScreen';
-import ProfileScreen from './src/screens/ProfileScreen';
-import { colors } from './src/theme/theme';
+import { useAuth } from '../state/AuthContext';
+import AnalyzeScreen from '../screens/AnalyzeScreen';
+import ChatScreen from '../screens/ChatScreen';
+import LoginScreen from '../screens/LoginScreen';
+import ProfileScreen from '../screens/ProfileScreen';
+import { colors } from '../theme/theme';
 
 const Tab = createBottomTabNavigator();
 
@@ -22,12 +21,17 @@ const Tab = createBottomTabNavigator();
 // Mastery doesn't have one yet on purpose: /mastery is still an honest
 // "not ready" stub on the backend (api.py mastery()), so there's no real
 // data to build a screen against yet.
-const navTheme = {
+const navTheme: Theme = {
   ...DarkTheme,
   colors: { ...DarkTheme.colors, background: colors.background, card: colors.surface, border: colors.border },
 };
 
-const TAB_ICONS = { Analyze: 'pulse', Chat: 'chatbubble-ellipses', Profile: 'person-circle' };
+type TabName = 'Analyze' | 'Chat' | 'Profile';
+const TAB_ICONS: Record<TabName, keyof typeof Ionicons.glyphMap> = {
+  Analyze: 'pulse',
+  Chat: 'chatbubble-ellipses',
+  Profile: 'person-circle',
+};
 
 // Only Profile is auth-gated (login/logout lives there) — Analyze and
 // Chat work for anyone who opens the app, matching the backend exactly:
@@ -57,7 +61,7 @@ function MainTabs() {
         tabBarInactiveTintColor: colors.textFaint,
         tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
         tabBarIcon: ({ color, size }) => (
-          <Ionicons name={TAB_ICONS[route.name]} size={size} color={color} />
+          <Ionicons name={TAB_ICONS[route.name as TabName]} size={size} color={color} />
         ),
       })}
     >
@@ -68,14 +72,11 @@ function MainTabs() {
   );
 }
 
-export default function App() {
+export function AppNavigator() {
   return (
-    <AuthProvider>
-      <NavigationContainer theme={navTheme}>
-        <MainTabs />
-        <StatusBar style="light" />
-      </NavigationContainer>
-    </AuthProvider>
+    <NavigationContainer theme={navTheme}>
+      <MainTabs />
+    </NavigationContainer>
   );
 }
 

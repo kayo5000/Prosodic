@@ -8,16 +8,16 @@ instead of a browser.
 
 Three real tabs, all talking to the live backend:
 
-- **Analyze** (`src/screens/AnalyzeScreen.js`) — write a verse, set BPM,
+- **Analyze** (`src/screens/AnalyzeScreen.tsx`) — write a verse, set BPM,
   hit Analyze, see the rhyme map color-coded by family, then pull real
   suggestions from `/suggest`. The most central flow in the app.
-- **Chat** (`src/screens/ChatScreen.js`) — VEIL, backed by `/veil/chat`.
+- **Chat** (`src/screens/ChatScreen.tsx`) — VEIL, backed by `/veil/chat`.
   Full turn history resent per message (the backend is stateless per
   request). Surfaces the real rate-limit (429) and circuit-breaker-open
   (503) error strings from the backend rather than a generic failure.
-- **Profile** (`src/screens/ProfileScreen.js`) — shows the logged-in
-  user + logout, or `LoginScreen.js` (login/register toggle) if signed
-  out. Auth (`src/state/AuthContext.js`) uses `expo-secure-store` for
+- **Profile** (`src/screens/ProfileScreen.tsx`) — shows the logged-in
+  user + logout, or `LoginScreen.tsx` (login/register toggle) if signed
+  out. Auth (`src/state/AuthContext.tsx`) uses `expo-secure-store` for
   the JWT, restored on launch via `GET /auth/me`.
 
 Only Profile is auth-gated — Analyze and Chat work for anyone who opens
@@ -84,16 +84,32 @@ steps in `docs/SETUP.md`.
 
 ## Project layout
 
+Ignite-inspired structure (Phase 3, `docs/BUILD_PLAN.md`) — TypeScript
+strict mode throughout, `App.tsx` kept minimal (providers + the
+navigator only), the actual tab/screen wiring lives in `navigators/`.
+
 ```
-App.js                        — navigation root (bottom tabs: Analyze / Chat / Profile)
-src/api/prosodicApi.js        — API layer: analyze, suggest, veilChat, register/login/getMe
-src/state/AuthContext.js      — JWT session state, expo-secure-store persistence
-src/theme/theme.js            — dark palette matching the (removed) web app + rhyme-family colors
-src/screens/AnalyzeScreen.js  — Analyze/Suggest screen
-src/screens/ChatScreen.js     — VEIL chat screen
-src/screens/LoginScreen.js    — login/register
-src/screens/ProfileScreen.js  — logged-in user info + logout
+App.tsx                              — root: AuthProvider + AppNavigator + StatusBar
+index.ts                             — Expo entry point (registerRootComponent)
+src/navigators/AppNavigator.tsx      — bottom tabs (Analyze / Chat / Profile), tab icons, ProfileTab auth gate
+src/services/api/prosodicApi.ts      — API layer: analyze, suggest, veilChat, register/login/getMe
+src/state/AuthContext.tsx            — JWT session state, expo-secure-store persistence
+src/theme/theme.ts                   — dark palette matching the (removed) web app + rhyme-family colors
+src/types/api.ts                     — shared TS types, kept in sync with docs/openapi.yaml
+src/screens/AnalyzeScreen.tsx        — Analyze/Suggest screen
+src/screens/ChatScreen.tsx           — VEIL chat screen
+src/screens/LoginScreen.tsx          — login/register
+src/screens/ProfileScreen.tsx        — logged-in user info + logout
 ```
+
+No `src/components/` yet — every current sub-component (e.g.
+`ChatScreen.tsx`'s `Bubble`) is single-use and local to its screen. The
+folder gets created the moment something is genuinely shared across
+screens, not preemptively.
+
+**TypeScript**: `tsconfig.json` extends `expo/tsconfig.base` with
+`strict: true`. Run `npm run tsc` for a type-check (`tsc --noEmit`,
+matches what CI runs — see `docs/BUILD_PLAN.md` Phase 6).
 
 ## Known gotchas (already fixed once, worth knowing about)
 
@@ -104,7 +120,7 @@ src/screens/ProfileScreen.js  — logged-in user info + logout
   import instead: `import Ionicons from '@expo/vector-icons/Ionicons'`.
 - **`expo-secure-store` has no real web implementation** (its `.web.js`
   build is a bare `{}`) — calls to it are wrapped in try/catch in
-  `AuthContext.js` so a missing storage backend degrades to "don't
+  `AuthContext.tsx` so a missing storage backend degrades to "don't
   persist the session" instead of crashing. Only matters if someone runs
   `npx expo start --web`; native (the real target) is unaffected.
 

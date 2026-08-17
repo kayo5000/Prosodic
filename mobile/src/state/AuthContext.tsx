@@ -1,9 +1,21 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import * as SecureStore from 'expo-secure-store';
-import { login as apiLogin, register as apiRegister, getMe, setAuthToken, clearAuthToken } from '../api/prosodicApi';
+import {
+  login as apiLogin, register as apiRegister, getMe, setAuthToken, clearAuthToken,
+} from '../services/api/prosodicApi';
+import type { User } from '../types/api';
 
 const TOKEN_KEY = 'prosodic_auth_token';
-const AuthContext = createContext(null);
+
+interface AuthContextValue {
+  user: User | null;
+  loading: boolean;
+  login: (identifier: string, password: string) => Promise<{ error: string | null }>;
+  register: (email: string, username: string, password: string) => Promise<{ error: string | null }>;
+  logout: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextValue | null>(null);
 
 // expo-secure-store has no real implementation on web (its .web.js module
 // is a bare `{}` — every method is undefined there), so calling it on web
@@ -11,21 +23,21 @@ const AuthContext = createContext(null);
 // but `expo start --web` is a script that ships in package.json by
 // default and someone could still reach for it — these wrappers turn
 // "storage unavailable" into "just don't persist" instead of a crash.
-async function safeGetToken() {
+async function safeGetToken(): Promise<string | null> {
   try { return await SecureStore.getItemAsync(TOKEN_KEY); }
   catch { return null; }
 }
-async function safeSetToken(value) {
+async function safeSetToken(value: string): Promise<void> {
   try { await SecureStore.setItemAsync(TOKEN_KEY, value); }
   catch { /* no persistent storage on this platform — session is memory-only */ }
 }
-async function safeDeleteToken() {
+async function safeDeleteToken(): Promise<void> {
   try { await SecureStore.deleteItemAsync(TOKEN_KEY); }
   catch { /* nothing to clean up if it was never persisted */ }
 }
 
-export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Restore a stored session on app launch. Backend JWTs are valid 30
@@ -51,18 +63,18 @@ export function AuthProvider({ children }) {
     })();
   }, []);
 
-  const login = useCallback(async (identifier, password) => {
+  const login = useCallback(async (identifier: string, password: string) => {
     const { data, error } = await apiLogin(identifier, password);
-    if (error) return { error };
+    if (error || !data) return { error };
     setAuthToken(data.token);
     await safeSetToken(data.token);
     setUser(data.user);
     return { error: null };
   }, []);
 
-  const register = useCallback(async (email, username, password) => {
+  const register = useCallback(async (email: string, username: string, password: string) => {
     const { data, error } = await apiRegister(email, username, password);
-    if (error) return { error };
+    if (error || !data) return { error };
     setAuthToken(data.token);
     await safeSetToken(data.token);
     setUser(data.user);
@@ -82,7 +94,7 @@ export function AuthProvider({ children }) {
   );
 }
 
-export function useAuth() {
+export function useAuth(): AuthContextValue {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth must be used within AuthProvider');
   return ctx;

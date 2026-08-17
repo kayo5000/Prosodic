@@ -3,7 +3,7 @@ import {
   View, Text, TextInput, FlatList, Pressable,
   StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator,
 } from 'react-native';
-import { veilChat } from '../api/prosodicApi';
+import { veilChat } from '../services/api/prosodicApi';
 import { colors, spacing, radius } from '../theme/theme';
 
 const STARTER_PROMPTS = [
@@ -12,10 +12,16 @@ const STARTER_PROMPTS = [
   "I want denser rhymes without it sounding forced. Where's room to add?",
 ];
 
+interface Message {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 let nextId = 1;
 const makeId = () => `m${nextId++}`;
 
-function Bubble({ role, content, pending }) {
+function Bubble({ role, content, pending }: { role: 'user' | 'assistant'; content?: string; pending?: boolean }) {
   const isUser = role === 'user';
   return (
     <View style={[styles.bubbleRow, isUser && styles.bubbleRowUser]}>
@@ -29,23 +35,23 @@ function Bubble({ role, content, pending }) {
 }
 
 export default function ChatScreen() {
-  const [messages, setMessages] = useState([]); // { id, role, content }
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
-  const [error, setError] = useState(null);
-  const listRef = useRef(null);
+  const [error, setError] = useState<string | null>(null);
+  const listRef = useRef<FlatList<Message>>(null);
 
   const scrollToEnd = useCallback(() => {
     requestAnimationFrame(() => listRef.current?.scrollToOffset({ offset: 0, animated: true }));
   }, []);
 
-  const send = async (text) => {
+  const send = async (text: string) => {
     const trimmed = text.trim();
     if (!trimmed || sending) return;
     setError(null);
     setInput('');
 
-    const userMsg = { id: makeId(), role: 'user', content: trimmed };
+    const userMsg: Message = { id: makeId(), role: 'user', content: trimmed };
     const history = [...messages, userMsg];
     setMessages(history);
     setSending(true);
@@ -57,7 +63,7 @@ export default function ChatScreen() {
     const { data, error: err } = await veilChat(apiMessages);
     setSending(false);
 
-    if (err) {
+    if (err || !data) {
       // Backend distinguishes rate-limit (429) and circuit-breaker-open
       // (503) with their own clean error strings — surfaced as-is rather
       // than a generic "something went wrong" so the user knows whether

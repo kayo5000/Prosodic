@@ -3,23 +3,29 @@ import {
   View, Text, TextInput, ScrollView, Pressable,
   StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator,
 } from 'react-native';
-import { analyze, suggest } from '../api/prosodicApi';
+import { analyze, suggest } from '../services/api/prosodicApi';
 import { colors, colorForFamily, spacing, radius } from '../theme/theme';
+import type { AnalyzeResponse, RhymeMapEntry, Suggestion } from '../types/api';
 
 const PLACEHOLDER_VERSE =
   "I never ran from a fight but I been on the run\n" +
   "Chasing something that I thought was gonna come undone";
 
+interface GroupedLine {
+  lineIndex: number;
+  words: RhymeMapEntry[];
+}
+
 // rhyme_map has one entry PER SYLLABLE (see feedback_engine.py assemble_feedback)
 // — multiple entries can share the same word. Collapse to one chip per word,
 // picking the color_id from whichever syllable carries a real rhyme-family
 // assignment (non-zero) so the whole word reflects its rhyme family.
-function groupByLine(rhymeMap) {
-  const lines = new Map();
+function groupByLine(rhymeMap: RhymeMapEntry[] | undefined): GroupedLine[] {
+  const lines = new Map<number, Map<string, RhymeMapEntry>>();
   for (const entry of rhymeMap || []) {
     const key = `${entry.line_index}:${entry.word_index}`;
     if (!lines.has(entry.line_index)) lines.set(entry.line_index, new Map());
-    const wordsInLine = lines.get(entry.line_index);
+    const wordsInLine = lines.get(entry.line_index)!;
     const existing = wordsInLine.get(key);
     if (!existing || (existing.color_id === 0 && entry.color_id !== 0)) {
       wordsInLine.set(key, entry);
@@ -37,9 +43,9 @@ export default function AnalyzeScreen() {
   const [bpm, setBpm] = useState('90');
   const [verseText, setVerseText] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [result, setResult] = useState(null);
-  const [suggestions, setSuggestions] = useState(null);
+  const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<AnalyzeResponse | null>(null);
+  const [suggestions, setSuggestions] = useState<Suggestion[] | null>(null);
   const [suggestLoading, setSuggestLoading] = useState(false);
 
   const verseLines = useMemo(
@@ -79,7 +85,7 @@ export default function AnalyzeScreen() {
     const { data, error: err } = await suggest(verseLines, bpmNum, 'manual');
     setSuggestLoading(false);
     if (err) { setError(err); return; }
-    setSuggestions(data.suggestions || []);
+    setSuggestions(data?.suggestions || []);
   };
 
   return (

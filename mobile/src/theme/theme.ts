@@ -28,9 +28,9 @@ const FAMILY_COLORS = [
   '#60A5FA', '#818CF8', '#C084FC', '#F472B6',
 ];
 
-export function colorForFamily(colorId) {
+export function colorForFamily(colorId: number | null | undefined): string {
   if (!colorId || colorId <= 0) return colors.textFaint; // 0 = no rhyme family
-  return FAMILY_COLORS[(colorId - 1) % FAMILY_COLORS.length];
+  return FAMILY_COLORS[(colorId - 1) % FAMILY_COLORS.length] as string;
 }
 
 export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 };
