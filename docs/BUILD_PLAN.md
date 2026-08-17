@@ -55,14 +55,18 @@ Everything here is generated from or checked against the backend's *final* shape
 
 ---
 
-## Phase 3 — Mobile app restructuring (Ignite-inspired) + TypeScript strict ⬜
+## Phase 3 — Mobile app restructuring (Ignite-inspired) + TypeScript strict ✅
 
 Independent codebase from Phases 1–2, so this *could* run concurrently with the backend reorg in principle — sequenced here in writing because it's executed by one agent serially, not because it's blocked on the backend. Keep the current Expo Go live-preview workflow working throughout — this is explicitly not an Ignite-style build-only migration.
 
-- Consistent screens/components/navigation folder structure, matching the current 3 screens (Analyze/Chat/Profile) into the new shape without changing their behavior.
-- Enable TypeScript strict mode. `mobile/` is currently plain JS — this is a real, non-trivial conversion, not a config flip; sequence file-by-file, verify the app still boots and the Expo bundle still compiles after each meaningful chunk (the exact same "fetch the real compiled bundle, don't just trust the diff" discipline already used twice this session for real caught bugs).
+**✅ DONE.** Checked `mobile/AGENTS.md`'s own standing instruction first (Expo has changed since training — read the versioned SDK 57 docs before writing code) before touching anything; confirmed the current `expo/tsconfig.base` + `strict: true` convention from the real docs, not memory. The whole app turned out to be small enough (910 lines, 9 files) to convert and restructure in one pass rather than needing its own multi-day allocation — smaller in practice than the earlier size estimate, which was made before actually reading the code.
 
-**Interleaved with or after Phase 3:** the remaining mobile screens (Notepad, Freewrite, Tools, Projects, Search) — build these *in* the new Ignite-inspired structure, not in the old flat structure and then migrate. Lower priority than the structural work itself; see `docs/PROJECT_STATUS.md` for why these were deprioritized originally.
+- **TypeScript strict mode**: `typescript` + `@types/react` installed via `npx expo install --dev` (SDK-compatible versions). `tsconfig.json` extends `expo/tsconfig.base` with `strict: true` only — no extra strictness flags or path aliases beyond what was actually asked for. Every `.js`/`.jsx` file converted to `.ts`/`.tsx` — zero left anywhere in the app. `npm run tsc` added as the check command (also what Phase 6's CI will run).
+- **Ignite-inspired structure, adapted not copied**: `src/navigators/AppNavigator.tsx` (extracted from `App.js` — tab navigator, icons, the auth-gated ProfileTab; `App.tsx` itself is now just `AuthProvider` + `AppNavigator` + `StatusBar`), `src/services/api/prosodicApi.ts` (moved from `src/api/`, fully typed against `src/types/api.ts` — new, kept in sync with `docs/openapi.yaml`, so these types were written against the *verified* Phase 2a contract, not guessed at independently). No `src/components/` yet — nothing in the app is genuinely shared across screens today (`ChatScreen.tsx`'s `Bubble` is still single-use); created the moment something actually needs it, not preemptively, same reasoning `application/` got in Phase 1c on the backend.
+- **Verified, not assumed**: `npm run tsc` clean (0 errors across all 11 converted files). More importantly, real bundling proof, not just the type checker — `npx expo export --platform android` actually ran Metro end-to-end on the restructured tree (859 modules, a real `.hbc` bundle), confirming the Expo Go live-preview pipeline still works, not just that the files parse. (`--platform web` needs `react-dom`/`react-native-web`, not installed — web isn't a real target for this app, so not added just to exercise a platform nobody uses.)
+- `mobile/README.md` updated: file paths, new project-layout section explaining the structure and the `components/` decision.
+
+**Interleaved with or after Phase 3, not done here:** the remaining mobile screens (Notepad, Freewrite, Tools, Projects, Search) — build these *in* the now-real Ignite-inspired structure. Lower priority than the structural work itself; see `docs/PROJECT_STATUS.md` for why these were deprioritized originally. Not started.
 
 ---
 
