@@ -111,6 +111,33 @@ screens, not preemptively.
 `strict: true`. Run `npm run tsc` for a type-check (`tsc --noEmit`,
 matches what CI runs — see `docs/BUILD_PLAN.md` Phase 6).
 
+## Testing (Phase 4, `docs/BUILD_PLAN.md`)
+
+```
+npm test              # jest
+npm run test:coverage # jest --coverage
+```
+
+`jest-expo` preset, `@testing-library/react-native` for hook/component
+tests. Current real coverage: `src/services/api/prosodicApi.ts` (~95%
+— contract tests checked directly against `docs/openapi.yaml`'s request/
+response shapes, not just "does it not crash") and `src/state/
+AuthContext.tsx` (~84% — session restore, login/register/logout state
+transitions) and `src/theme/theme.ts` (100%). Screens and
+`AppNavigator.tsx` have **no tests yet** — 0% is the honest number, not
+hidden; component-level RNTL tests (mocking navigation, SecureStore,
+etc. per screen) are real additional work not yet scheduled, tracked in
+`docs/BUILD_PLAN.md`.
+
+**Gotcha worth knowing**: `@testing-library/react-native` v14 made
+`render()`/`renderHook()` return a `Promise` (a real, non-obvious API
+change from every earlier major version) — both must be `await`ed, or
+the destructured `result` is silently `undefined` instead of erroring
+clearly. `jest.setup.js` also sets `global.IS_REACT_ACT_ENVIRONMENT =
+true`, required for this exact React 19 + jest-expo 57 + RNTL 14
+combination — without it every state update inside a test logs "The
+current testing environment is not configured to support act(...)".
+
 ## Known gotchas (already fixed once, worth knowing about)
 
 - **Don't import the `@expo/vector-icons` barrel.** `import { Ionicons }
