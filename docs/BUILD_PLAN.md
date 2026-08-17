@@ -70,10 +70,11 @@ Independent codebase from Phases 1–2, so this *could* run concurrently with th
 
 ---
 
-## Phase 4 — Mobile quality tooling + contract validation ⬜
+## Phase 4 — Mobile quality tooling + contract validation ✅
 
-- **4a. Jest coverage**, configured against the Phase 3 structure.
-- **4b. Validate the mobile API client against the Phase 2a OpenAPI spec** — the actual point of building the spec in the first place ("the formal contract the mobile app can be checked against," per Khris's own framing). Only meaningful once both sides are in their final shape.
+- **4a. ✅ DONE. Jest coverage.** `jest-expo` + `@testing-library/react-native` + `@types/jest`, `npm test`/`npm run test:coverage`. Found and fixed a real, non-obvious setup problem rather than working around it: `@testing-library/react-native` v14 made `render()`/`renderHook()` return a `Promise` — an unawaited call silently returns a pending Promise instead of the render result (destructuring `{ result }` off it gives `undefined` with no error pointing at the real cause), diagnosed by reproducing it in isolation. `jest.setup.js` sets `global.IS_REACT_ACT_ENVIRONMENT = true`, required for this exact React 19.2 + jest-expo 57 + RNTL 14 combination. Coverage is honest: `prosodicApi.ts` ~95%, `AuthContext.tsx` ~84%, `theme.ts` 100% — screens and `AppNavigator.tsx` are 0%, disclosed in `mobile/README.md` as real not-yet-done work (component-level tests need per-screen navigation/SecureStore mocking), not glossed over.
+- **4b. ✅ DONE. Validate the mobile API client against the Phase 2a OpenAPI spec** — the actual point of building the spec in the first place. `src/services/api/prosodicApi.test.ts`: 17 contract tests, each tracing back to a specific `docs/openapi.yaml` path/method/schema — verifies actual request bodies (field presence AND correct omission of optional fields), response unwrapping, Authorization header attachment, and that the real backend error strings (429 rate-limit, 503 circuit-breaker) surface through unchanged. Tests the client's request-shaping/response-consuming logic against the verified contract, not the live backend itself (that's the Python-side Flask-test-client tests).
+- Verified: `npm run tsc` clean, `npx jest` 29/29 passed, and — the real proof, not just the tests — `npx expo export --platform android` still bundles cleanly (859 modules) after all of Phase 4 landed.
 
 ---
 
