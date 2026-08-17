@@ -86,9 +86,17 @@ Cross-cutting, not structurally entangled with Phases 1–4, but sequenced after
 
 ---
 
-## Phase 6 — GitHub Actions CI ⬜
+## Phase 6 — GitHub Actions CI ✅
 
-Gates on Phases 1–5 producing real, green tests + types + lint + coverage on both halves. Wiring CI before that would just mean a red pipeline from day one, teaching everyone to ignore it. Runs: backend tests + mypy + lint, mobile Jest + TS strict check, on every push.
+Gated on Phases 1–4 producing real, green tests + types + coverage on both halves (Phase 5/Sentry is skipped per `docs/DECISIONS_NEEDED.md`, not a CI-pipeline dependency — nothing about running tests/types/lint needs it). Wiring CI before that would just mean a red pipeline from day one, teaching everyone to ignore it.
+
+**✅ DONE.** `.github/workflows/ci.yml`, two independent jobs:
+- **backend**: `pytest --cov` + `mypy` + `ruff`, Python 3.11.9 (matches `runtime.txt`/`.python-version` — what production actually runs, not whatever's on the dev machine). `JWT_SECRET` set to an obviously-fake CI value (`api.py` refuses to boot without one). `ANTHROPIC_API_KEY` deliberately left unset — live-LLM tests skip cleanly without it, avoiding both real API spend and the documented non-deterministic-output flakiness on every push.
+- **mobile**: `npm ci` + `tsc` + `eslint` + `jest --coverage`, Node 22 (SDK 57's documented minimum).
+- **Lint tooling didn't exist for either half before this phase** — added as part of it, not assumed already in place:
+  - **Backend: `ruff`** (`pyproject.toml`). Checked ruff's actual default rule set first rather than assuming — a bare `ruff check .` found 907 findings, almost all pyupgrade/bandit/pylint-style modernization noise, not real bugs. Scoped to `E4`/`E9`/`F` (import/syntax errors + pyflakes) minus `E402`, which cut it to 178 — then triaged that 178 for real: fixed everything genuinely fixable (safe autofixes for E401/F401, plus 6 real dead-variable/dead-import removals found by reading each site in context, e.g. `domain/normalization_engine.py`'s `was_split` and `analysis/bar_segmenter.py`'s abandoned `word_start`/`mid_syl` approach — never actually referenced by the return values they seemed to feed), disclosed-and-excluded what was deliberate existing style rather than reformatting working code (`E701`'s aligned if/elif ladders, `E741`'s pervasive `l`-as-loop-variable convention, `E402`'s dotenv-before-import necessity in `api.py`), and disclosed-suppressed the one real ambiguous case (`fingerprint_pipeline.py`'s single `F821`, a deliberately defensive double-delete pattern). **0 findings now**, all real, none silently muted.
+  - **Mobile: ESLint** (`eslint.config.js` via `npx expo lint` — current SDK 57 flat-config convention). Caught and fixed 2 real findings: a dead `View` import in `LoginScreen.tsx` (stale since the original `.js`), and an import-ordering warning in `AuthContext.test.tsx`.
+- Verified end-to-end locally before committing — every job step run in the same order CI runs it, not just written and pushed on faith: backend's 3 steps already independently proven across the ruff-cleanup commits (406/406 tests, mypy clean, ruff clean); mobile's 4 steps run fresh (`npm ci` against the real `package-lock.json` — stricter than `install` about the lockfile actually matching — then `tsc`/`eslint`/`jest --coverage`, all clean).
 
 ---
 
