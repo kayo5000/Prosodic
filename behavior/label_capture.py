@@ -137,7 +137,7 @@ def get_label_stats():
                ORDER BY n DESC"""
         ).fetchall()
 
-        corrections = {}
+        corrections: dict = {}
         for r in corr_rows:
             ps = r["predicted_state"]
             corrections.setdefault(ps, [])

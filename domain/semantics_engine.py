@@ -26,6 +26,10 @@ except (ImportError, OSError) as e:
 def semantic_similarity(word_a, word_b):
     if not SPACY_AVAILABLE:
         return 0.0
+    # SPACY_AVAILABLE and nlp are always set together above (both True/
+    # non-None or both False/None) — the early return just above
+    # guarantees nlp is not None from here down.
+    assert nlp is not None
     # make_doc() only tokenizes (vectors come straight from vocab) — it skips
     # the tagger/parser/NER pipeline that nlp() would otherwise run on every
     # call. With suggestion_engine checking this against every phonetic

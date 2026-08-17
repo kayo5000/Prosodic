@@ -19,7 +19,7 @@ def build_verse_stream(verse_lines):
     Takes a list of lines.
     Returns flat syllable stream with line_index added to each syllable.
     '''
-    stream = []
+    stream: list = []
     for li, line in enumerate(verse_lines):
         sylls = syllabify_line(line)
         for s in sylls:
@@ -232,7 +232,7 @@ def find_function_word_rhymes(stream, rhyme_groups, min_group_lines=3):
     Each syllable_dict already has 'rhyme_unit' attached.
     '''
     # Compute words-per-line for position-from-end calculation
-    line_word_counts = defaultdict(int)
+    line_word_counts: dict = defaultdict(int)
     for s in stream:
         if s['word_index'] + 1 > line_word_counts[s['line_index']]:
             line_word_counts[s['line_index']] = s['word_index'] + 1

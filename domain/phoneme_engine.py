@@ -314,10 +314,8 @@ if __name__ == '__main__':
     print('\n=== PHONEME LOOKUP ===')
     for word in test_words:
         phonemes = get_phonemes(word)
-        stress = get_stress_map(word)
         rhyme = get_rhyme_unit(word)
         print(f'{word:<14} phonemes: {phonemes}')
-        print(f'{"":<14} stress:   {stress}')
         print(f'{"":<14} rhyme:    {rhyme}')
         print()
 

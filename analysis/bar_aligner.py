@@ -12,6 +12,7 @@ import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import uuid
+from typing import Dict, List, Optional, Tuple
 
 _METHOD = "content_aware_v1"
 
@@ -100,7 +101,7 @@ def _feature_similarity(bar_a, bar_b):
 def _build_similarity_matrix(features_a, features_b):
     n, m = len(features_a), len(features_b)
     sim   = [[0.0] * m for _ in range(n)]
-    contr = [[{}]  * m for _ in range(n)]
+    contr: List[List[Dict]] = [[{}]  * m for _ in range(n)]
     for i in range(n):
         for j in range(m):
             s, c = _feature_similarity(features_a[i], features_b[j])
@@ -136,7 +137,7 @@ def _dtw_traceback(features_a, features_b):
             )
 
     # traceback
-    path = []
+    path: List[Tuple[Optional[int], Optional[int]]] = []
     i, j = n, m
     while i > 0 or j > 0:
         if i == 0:
@@ -193,6 +194,7 @@ def align(snapshot_a, snapshot_b):
         }
 
     sim_matrix = None
+    path: List[Tuple[Optional[int], Optional[int]]]
     if feats_a and feats_b:
         result = _dtw_traceback(feats_a, feats_b)
         path, sim_matrix = result
@@ -207,7 +209,9 @@ def align(snapshot_a, snapshot_b):
     pairs = []
     for (ai, bi) in path:
         if ai is None:
-            # inserted in B
+            # inserted in B — path entries are built so exactly one of
+            # (ai, bi) is None at a time, never both.
+            assert bi is not None
             pairs.append({
                 "a_bar_index": None,
                 "b_bar_index": feats_b[bi]["bar_index"],
@@ -217,7 +221,8 @@ def align(snapshot_a, snapshot_b):
             })
             continue
         if bi is None:
-            # deleted from A
+            # deleted from A — same invariant as above.
+            assert ai is not None
             pairs.append({
                 "a_bar_index": feats_a[ai]["bar_index"],
                 "b_bar_index": None,
@@ -227,6 +232,13 @@ def align(snapshot_a, snapshot_b):
             })
             continue
 
+        # sim_matrix is only None when the `else` branch above ran (one
+        # side empty) — that branch's path entries are all pure
+        # insert/delete pairs, so the ai-is-None/bi-is-None checks above
+        # always `continue` before this line is reached in that case.
+        # Real invariant, not a guess — documented for mypy, which can't
+        # see the cross-branch guarantee.
+        assert sim_matrix is not None
         sim   = sim_matrix[ai][bi]
         _, contr = _feature_similarity(feats_a[ai], feats_b[bi])
 

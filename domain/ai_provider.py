@@ -36,7 +36,7 @@ here. When that happens: get a real API key from Khris then, not before.
 """
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 
 # ── Value objects ────────────────────────────────────────────────────────
@@ -44,7 +44,7 @@ from typing import List, Optional
 @dataclass(frozen=True)
 class AIMessage:
     """One turn in a reasoning conversation."""
-    role: str  # 'user' | 'assistant'
+    role: Literal['user', 'assistant']
     content: str
 
 

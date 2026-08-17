@@ -22,7 +22,7 @@ import os
 import threading
 from contextlib import contextmanager
 from datetime import datetime, timezone
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Iterator
 
 from prosodic_data_objects import (
     PhonemeSequence,
@@ -81,7 +81,7 @@ def _log_error(context: str, exc: Exception) -> None:
 # ---------------------------------------------------------------------------
 
 @contextmanager
-def _connection() -> sqlite3.Connection:
+def _connection() -> Iterator[sqlite3.Connection]:
     """
     One connection per call, always closed — not a thread-local one reused
     (and never closed) for the life of the thread. This is the busiest of

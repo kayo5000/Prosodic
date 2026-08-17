@@ -214,7 +214,7 @@ def detect_line_signals(syllable_data, word_recurrence=None):
     taxonomy and the deliberateness gate).
     '''
     word_recurrence = word_recurrence or {}
-    signals = []
+    signals: list = []
     if not syllable_data:
         return signals
 
@@ -226,7 +226,7 @@ def detect_line_signals(syllable_data, word_recurrence=None):
 
     # ── stress_clash (adjacent, both lexically stressed) + track which
     #    global_syll_idx values are clash-adjacent, for the gate below ──
-    clash_adjacent = set()
+    clash_adjacent: set = set()
     for i in range(1, len(syllable_data)):
         prev, cur = syllable_data[i - 1], syllable_data[i]
         if eff[prev['global_syll_idx']] >= 1 and eff[cur['global_syll_idx']] >= 1:
@@ -279,7 +279,7 @@ def detect_line_signals(syllable_data, word_recurrence=None):
     # ── secondary_recruitment (per-word: level-2 near beat, level-1 not) ─
     # Not gated by _effective_lexical_stress — CMU levels 1/2 already only
     # apply to multi-syllable words, which aren't in FUNCTION_WORDS anyway.
-    by_word = {}
+    by_word: dict = {}
     for s in syllable_data:
         by_word.setdefault(s['word_index'], []).append(s)
     for sylls in by_word.values():
@@ -368,7 +368,7 @@ def analyze_verse_stream(stream, ctx):
     if not stream or ctx is None or ctx.bpm is None:
         return empty
 
-    lines = {}
+    lines: dict = {}
     for s in stream:
         lines.setdefault(s['line_index'], []).append(s)
     if not lines:
@@ -378,7 +378,7 @@ def analyze_verse_stream(stream, ctx):
     # A word counts once per line it appears on (not once per occurrence),
     # matching the "recurrence across DIFFERENT lines" bar used elsewhere
     # in this codebase (motif_engine's min_recurrence=2).
-    word_recurrence = Counter()
+    word_recurrence: dict = Counter()
     for sylls in lines.values():
         for w in {s['word'].lower() for s in sylls}:
             word_recurrence[w] += 1

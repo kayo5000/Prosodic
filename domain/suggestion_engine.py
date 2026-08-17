@@ -108,7 +108,10 @@ def _top_content_words(verse_lines, n=5):
             clean = word.strip('.,!?;:"-').lower()
             if clean and clean not in FUNCTION_WORDS and len(clean) > 2:
                 seen[clean] = len(clean)
-    ranked = sorted(seen, key=seen.get, reverse=True)
+    # key=seen[...] rather than seen.get — same reasoning as api.py's
+    # identical helper: every key sorted here came from this dict, the
+    # lookup never misses.
+    ranked = sorted(seen, key=lambda w: seen[w], reverse=True)
     return ranked[:n]
 
 def _mode_syllable_count(verse_lines, n=3):
@@ -359,7 +362,7 @@ def _layer2(verse_lines, candidates, dominant_word, content_words, trigger_mode,
 
 # ── Suggestion cache — stores last full ranked result for get_more_suggestions ─
 
-_suggestion_cache = []
+_suggestion_cache: list = []
 
 # ── Main callable ─────────────────────────────────────────────────────────────
 

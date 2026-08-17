@@ -113,7 +113,7 @@ def _describe_deletion(bar_a):
 
 def _summary_evidence(per_bar_changes, overall):
     """3-5 plain-language strings naming the largest mean deltas."""
-    all_deltas = {}
+    all_deltas: dict = {}
     for change in per_bar_changes:
         for feat, delta in (change.get("changes") or {}).items():
             all_deltas.setdefault(feat, []).append(delta)

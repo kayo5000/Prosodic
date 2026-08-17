@@ -67,7 +67,7 @@ def map_features(segmentation, engine_outputs):
             density_by_line[idx] = item.get("scores", {})
 
     # motif hits by line_index → list of color_id strings
-    motif_by_line = {}
+    motif_by_line: dict = {}
     for group in motif_groups:
         if not isinstance(group, dict):
             continue

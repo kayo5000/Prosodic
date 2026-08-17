@@ -74,6 +74,9 @@ if not JWT_SECRET:
         'a hardcoded fallback would let anyone forge auth tokens. '
         'Set JWT_SECRET in your .env (dev) or environment (prod).'
     )
+# mypy can't carry this not-None narrowing into _make_token/_verify_token
+# below — nested functions don't get flow-sensitive narrowing on a module
+# global. Re-asserted locally in each of those two functions instead.
 JWT_ALGO   = 'HS256'
 DB_PATH    = os.environ.get('PROSODIC_DB_PATH') or os.path.join(os.path.expanduser('~'), 'prosodic_data', 'prosodic.db')
 
@@ -85,7 +88,11 @@ app = Flask(__name__)
 # would see only the proxy's own address, putting every single caller in
 # the same bucket. x_for=1 trusts exactly one proxy hop, matching
 # Railway's setup — not a wildcard trust of arbitrary forwarded headers.
-app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+# The standard Flask/Werkzeug middleware-wrapping idiom; mypy sees
+# app.wsgi_app as a bound method and flags any reassignment, but this is
+# how every Werkzeug middleware (ProxyFix included) is meant to be
+# installed. Known, disclosed false positive, not a real typing gap.
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)  # type: ignore[method-assign]
 
 limiter.init_app(app)
 
@@ -116,6 +123,12 @@ users_repository.create_table(DB_PATH)
 usage_history.init_table()
 
 def _make_token(user_id):
+    # Module-level narrowing (the `if not JWT_SECRET: raise` above) doesn't
+    # carry into nested functions for mypy — re-asserted locally rather
+    # than relying on the cast() at module scope, which turned out not to
+    # stick either (mypy widens a global's type to the union of every
+    # assignment it sees, not just the last one).
+    assert JWT_SECRET is not None
     payload = {
         # PyJWT requires 'sub' to be a string (JWT spec: StringOrURI) — encoding
         # a raw int makes every decode() fail with InvalidSubjectError.
@@ -133,6 +146,7 @@ def _make_token(user_id):
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGO)
 
 def _verify_token(token):
+    assert JWT_SECRET is not None
     try:
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGO])
         return int(payload['sub']), None
@@ -337,7 +351,11 @@ def _extract_content_words(text, n=5):
         clean = word.strip('.,!?;:"\'()-').lower()
         if clean and clean not in FUNCTION_WORDS and len(clean) > 3:
             seen[clean] = len(clean)
-    ranked = sorted(seen, key=seen.get, reverse=True)
+    # key=seen[...] rather than seen.get — every key sorted here came from
+    # this same dict, so the lookup never misses; .get's Optional return
+    # type (for the possible-miss case) is what trips up static analysis
+    # here, not a real runtime possibility.
+    ranked = sorted(seen, key=lambda w: seen[w], reverse=True)
     return ranked[:n]
 
 

@@ -138,12 +138,12 @@ def segment(lyrics, bpm):
     input_hash   = hashlib.sha256(f"{norm_concat}{bpm}".encode("utf-8")).hexdigest()
     seg_id       = input_hash[:32]
 
-    bars     = []
+    bars: list     = []
     warnings = []
 
     global_syl  = 0
     global_char = 0
-    last_words  = []   # recent bar-end words for end_rhyme detection
+    last_words: list  = []   # recent bar-end words for end_rhyme detection
 
     for line_idx, (raw, norm) in enumerate(zip(lines, norm_lines)):
         syl_count, syl_list = _count_syllables(norm)

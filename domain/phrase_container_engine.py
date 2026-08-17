@@ -57,7 +57,7 @@ def detect_boundaries(verse_lines):
             if s['word'].lower() == last_word:
                 end_rhyme_lines.add(s['line_index'])
 
-    boundaries = [{'line': 0, 'weight': None, 'signals_fired': []}]
+    boundaries: list = [{'line': 0, 'weight': None, 'signals_fired': []}]
     for i in range(1, len(verse_lines)):
         weight = 0.0
         signals_fired = []

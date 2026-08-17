@@ -83,7 +83,24 @@ class ClaudeProvider(AIProvider):
                 # shared adapter, rather than preserving the
                 # inconsistency (a real, disclosed improvement, not
                 # invented scope — see docs/APP_UPDATE.md).
-                text = response.content[0].text if response.content else ''
+                #
+                # response.content[0] is typed as a union of every Anthropic
+                # content-block type (TextBlock, ThinkingBlock, ToolUseBlock,
+                # ...) — only TextBlock has .text. No call site here ever
+                # requests extended thinking or tool use, so in practice
+                # it's always a TextBlock, but that's an assumption about
+                # today's callers, not a guarantee the SDK's own types make.
+                # Checked explicitly rather than asserted, so a genuinely
+                # unexpected block type fails loud (a clear AIProviderError)
+                # instead of either a silent wrong value or an
+                # AttributeError leaking a vendor type past this adapter.
+                block = response.content[0] if response.content else None
+                if block is not None and not hasattr(block, 'text'):
+                    raise AIProviderError(
+                        f'Unexpected Anthropic response block type: {type(block).__name__} '
+                        '(expected a text block — no call site requests thinking or tool use)'
+                    )
+                text = block.text if block is not None else ''
         except CircuitOpenError as e:
             raise AIProviderUnavailableError(str(e), retry_after=e.retry_after) from e
         except Exception as e:

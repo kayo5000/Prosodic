@@ -31,7 +31,7 @@ def _bucket_mean(per_bar_changes, keys):
 
 def _top_movers(per_bar_changes, direction="up"):
     """Features with the largest mean deltas in the given direction."""
-    totals = {}
+    totals: dict = {}
     for change in per_bar_changes:
         for feat, val in (change.get("changes") or {}).items():
             totals.setdefault(feat, []).append(float(val))

@@ -630,7 +630,9 @@ def score_section_stress_control(
     for s in line_scores:
         t = s["stress_pattern_type"]
         type_counts[t] = type_counts.get(t, 0) + 1
-    dominant = max(type_counts, key=type_counts.get) if type_counts else "locked"
+    # key=type_counts[...] rather than .get — every key maxed here came
+    # from this same dict, the lookup never misses.
+    dominant = max(type_counts, key=lambda t: type_counts[t]) if type_counts else "locked"
 
     return {
         "line_scores":              line_scores,

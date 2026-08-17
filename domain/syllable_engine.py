@@ -75,7 +75,7 @@ def get_syllables(word):
             }
             for i in range(count)
         ]
-    syllables = []
+    syllables: list = []
     current = []
     for p in phonemes:
         current.append(p)
@@ -145,7 +145,7 @@ def syllable_char_ranges(word, sylls):
             pos += 1
         return pos
 
-    ranges = []
+    ranges: list = []
     for i in range(num_syllables):
         start = 0 if i == 0 else ranges[-1][1]
         if i == num_syllables - 1:
@@ -171,7 +171,7 @@ def syllabify_line(line):
     char_start/char_end are character offsets within the clean word.
     '''
     words = line.split()
-    stream = []
+    stream: list = []
     for wi, word in enumerate(words):
         clean = word.strip('.,!?;:"-')
         sylls = get_syllables(clean)

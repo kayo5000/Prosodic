@@ -17,18 +17,20 @@ object is just avoiding a trivial reallocation, not caching anything
 that could go stale.
 """
 import os
+from typing import Dict, Type
 
+from domain.ai_provider import AIProvider
 from infrastructure.ai_providers.claude_provider import ClaudeProvider
 from infrastructure.ai_providers.gemini_provider import GeminiProvider
 from infrastructure.ai_providers.openai_provider import OpenAIProvider
 
-_PROVIDERS = {
+_PROVIDERS: Dict[str, Type[AIProvider]] = {
     'claude': ClaudeProvider,
     'gemini': GeminiProvider,
     'openai': OpenAIProvider,
 }
 
-_instances = {}
+_instances: Dict[str, AIProvider] = {}
 
 
 def get_provider(name=None):
@@ -41,5 +43,13 @@ def get_provider(name=None):
     if name not in _PROVIDERS:
         raise ValueError(f"Unknown AI provider '{name}'. Known: {sorted(_PROVIDERS)}")
     if name not in _instances:
-        _instances[name] = _PROVIDERS[name]()
+        # mypy flags this as "instantiating an abstract class" — a known
+        # false positive for the dict[str, type[Base]] factory pattern:
+        # mypy widens _PROVIDERS[name]'s static type to the shared
+        # supertype (AIProvider itself, which IS abstract) even though
+        # every runtime value is one of the three concrete subclasses,
+        # all of which implement every abstract method (proven by
+        # tests/test_ai_provider.py actually instantiating and calling
+        # all three). Disclosed suppression, not a silent one.
+        _instances[name] = _PROVIDERS[name]()  # type: ignore[abstract]
     return _instances[name]

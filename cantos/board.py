@@ -94,7 +94,7 @@ def get_sections_with_posts(session_id):
     query, not a meeting-shaped one.
     '''
     posts = get_posts(session_id)
-    by_section = {}
+    by_section: dict = {}
     for p in posts:
         by_section.setdefault(p['section'], set()).add(p['engine'])
     return {section: engines for section, engines in by_section.items() if len(engines) >= 2}

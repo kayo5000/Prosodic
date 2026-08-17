@@ -49,7 +49,7 @@ Compression severity thresholds:
 from __future__ import annotations
 
 import re
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -434,7 +434,7 @@ def find_compression_candidates(
             clean_tokens.append(clean)
 
     total_words = len(clean_tokens)
-    candidates = []
+    candidates: List[Dict[str, Any]] = []
 
     for wi, word in enumerate(clean_tokens):
         word_lower = word.lower().rstrip("'")

@@ -48,7 +48,7 @@ _ADJACENCY_PAIRS = [
 
 
 def _symmetric_closure(pairs):
-    adjacency = {}
+    adjacency: dict = {}
     for a, b in pairs:
         adjacency.setdefault(a, set()).add(b)
         adjacency.setdefault(b, set()).add(a)
@@ -91,7 +91,7 @@ def _find_clusters(posts):
             if posts[i]['engine'] != posts[j]['engine'] and related(posts[i]['signal'], posts[j]['signal']):
                 union(i, j)
 
-    clusters = {}
+    clusters: dict = {}
     for i in range(n):
         clusters.setdefault(find(i), []).append(posts[i])
     return list(clusters.values())

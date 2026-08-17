@@ -37,7 +37,7 @@ Design rules:
 from __future__ import annotations
 
 import logging
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Literal, cast
 
 from flask import Blueprint, request, jsonify  # type: ignore
 
@@ -160,7 +160,7 @@ def revival_chat():
         messages: List[Dict[str, Any]] = data.get("messages") or []
 
         # validate message list
-        clean_messages = []
+        clean_messages: List[Dict[str, str]] = []
         for m in messages:
             if isinstance(m, dict) and m.get("role") in ("user", "assistant"):
                 clean_messages.append({
@@ -173,7 +173,12 @@ def revival_chat():
         provider = get_provider()  # Claude today — see infrastructure/ai_providers/README.md
         result = provider.get_reasoning(ReasoningRequest(
             messages=[
-                AIMessage(role=m['role'], content=m['content'])
+                # cast, not a type gap — every dict reaching here was
+                # either the literal opening-prompt fallback below or
+                # passed the `role in ("user", "assistant")` filter above;
+                # mypy just can't carry that per-entry validation through
+                # the dict's own str-typed "role" value.
+                AIMessage(role=cast(Literal['user', 'assistant'], m['role']), content=m['content'])
                 for m in (clean_messages if clean_messages else [
                     {"role": "user", "content": "Please begin the revival session."}
                 ])
