@@ -31,6 +31,14 @@ Tools, Projects, Search. The deleted web app's git history (commit
 before `543c8e1`) is the reference for what each of those covered, if
 rebuilding them later.
 
+**Native quick-access (Phase 7)** — real iOS App Intents (Swift) and
+Android App Shortcuts/Quick Settings Tile (Kotlin) deep-linking into
+Quick Write / Ask VEIL, wired via Expo config plugins. See
+`native/README.md` for the full picture — including a real asymmetry in
+how verified each half is (Android was run and inspected against a real
+`expo prebuild`; iOS could not be, since that command refuses to run on
+Windows at all).
+
 ## Setup
 
 ```
@@ -82,6 +90,19 @@ directly, not a guess) — tunnel mode fails identically on every retry
 until you configure your own free ngrok account and authtoken. Full
 steps in `docs/SETUP.md`.
 
+**Native quick-access features (Phase 7 — see `native/README.md`) do
+NOT work in Expo Go**, and can't: Expo Go is a generic pre-built binary
+Apple/Google already shipped, and it has no way to contain this app's
+own compiled Swift/Kotlin. The 3 existing screens (Analyze/Chat/Profile)
+keep working in Expo Go exactly as before — confirmed by running the
+full verification chain (`tsc`, lint, Jest, and a real `npx expo export`
+bundle) after the native plugin was wired into `app.json`, all still
+clean. Testing the App Intents / App Shortcuts / Quick Settings Tile
+themselves requires a real native build: `npx expo run:ios` or
+`npx expo run:android` (which `npm run ios`/`npm run android` now alias
+— `expo prebuild` updated them automatically the moment real native
+code entered the project), not `expo start` + Expo Go.
+
 ## Project layout
 
 Ignite-inspired structure (Phase 3, `docs/BUILD_PLAN.md`) — TypeScript
@@ -100,6 +121,9 @@ src/screens/AnalyzeScreen.tsx        — Analyze/Suggest screen
 src/screens/ChatScreen.tsx           — VEIL chat screen
 src/screens/LoginScreen.tsx          — login/register
 src/screens/ProfileScreen.tsx        — logged-in user info + logout
+src/navigators/linking.ts            — deep-link config (prosodic://write, prosodic://chat) — see native/README.md
+plugins/                             — Expo config plugins wiring native/ into expo prebuild (Phase 7)
+native/                              — real Swift/Kotlin source for iOS App Intents + Android App Shortcuts/Quick Settings Tile
 ```
 
 No `src/components/` yet — every current sub-component (e.g.

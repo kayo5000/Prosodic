@@ -13,8 +13,10 @@ import ChatScreen from '../screens/ChatScreen';
 import LoginScreen from '../screens/LoginScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import { colors } from '../theme/theme';
+import { linking } from './linking';
+import type { RootTabParamList } from './types';
 
-const Tab = createBottomTabNavigator();
+const Tab = createBottomTabNavigator<RootTabParamList>();
 
 // More screens (Mastery, Notepad/Freewrite/Tools) get added to this tab
 // bar as they're built — see mobile/README.md's "Next screens" section.
@@ -26,7 +28,7 @@ const navTheme: Theme = {
   colors: { ...DarkTheme.colors, background: colors.background, card: colors.surface, border: colors.border },
 };
 
-type TabName = 'Analyze' | 'Chat' | 'Profile';
+type TabName = keyof RootTabParamList;
 const TAB_ICONS: Record<TabName, keyof typeof Ionicons.glyphMap> = {
   Analyze: 'pulse',
   Chat: 'chatbubble-ellipses',
@@ -74,7 +76,7 @@ function MainTabs() {
 
 export function AppNavigator() {
   return (
-    <NavigationContainer theme={navTheme}>
+    <NavigationContainer theme={navTheme} linking={linking}>
       <MainTabs />
     </NavigationContainer>
   );

@@ -1,11 +1,13 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import {
   View, Text, TextInput, ScrollView, Pressable,
   StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator,
 } from 'react-native';
+import { useRoute, type RouteProp } from '@react-navigation/native';
 import { analyze, suggest } from '../services/api/prosodicApi';
 import { colors, colorForFamily, spacing, radius } from '../theme/theme';
 import type { AnalyzeResponse, RhymeMapEntry, Suggestion } from '../types/api';
+import type { RootTabParamList } from '../navigators/types';
 
 const PLACEHOLDER_VERSE =
   "I never ran from a fight but I been on the run\n" +
@@ -47,6 +49,26 @@ export default function AnalyzeScreen() {
   const [result, setResult] = useState<AnalyzeResponse | null>(null);
   const [suggestions, setSuggestions] = useState<Suggestion[] | null>(null);
   const [suggestLoading, setSuggestLoading] = useState(false);
+
+  // Quick Write (iOS App Intents / Android App Actions / Quick Settings
+  // Tile — see mobile/native/) deep-links to prosodic://write?focus=1.
+  // The whole point is landing the user typing immediately, not one
+  // extra tap into the field after the app opens.
+  const route = useRoute<RouteProp<RootTabParamList, 'Analyze'>>();
+  const verseInputRef = useRef<TextInput>(null);
+  useEffect(() => {
+    if (route.params?.focus) {
+      verseInputRef.current?.focus();
+    }
+    // Deliberately keyed on the param value, not just mount: if the app
+    // is already open on this screen and a second Quick Write tap comes
+    // in, React Navigation updates route.params on the existing screen
+    // instance rather than remounting it. Known gap: a second tap
+    // sending the exact same `focus` value won't re-trigger (React
+    // treats an unchanged dependency as a no-op) — the native side
+    // could send a changing value (e.g. a timestamp) to close this if
+    // it turns out to matter in practice; not done speculatively here.
+  }, [route.params?.focus]);
 
   const verseLines = useMemo(
     () => verseText.split('\n').map(l => l).filter(l => l.trim().length > 0),
@@ -115,6 +137,7 @@ export default function AnalyzeScreen() {
 
         <Text style={styles.label}>Verse (one line per line)</Text>
         <TextInput
+          ref={verseInputRef}
           style={styles.verseInput}
           value={verseText}
           onChangeText={setVerseText}

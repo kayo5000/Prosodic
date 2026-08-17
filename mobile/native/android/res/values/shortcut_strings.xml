@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  shortcut_strings.xml — string resources for shortcuts.xml.
+
+  Separate file from Expo's own generated res/values/strings.xml so the
+  config plugin can copy it in wholesale without needing to parse and
+  merge into a file it doesn't own — see plugins/withAndroidQuickAccess.js.
+  Android's resource system merges every res/values/*.xml file at build
+  time regardless of filename, so this works exactly like adding entries
+  to strings.xml directly.
+-->
+<resources>
+    <string name="shortcut_write_short_label">Quick Write</string>
+    <string name="shortcut_write_long_label">Quick Write — start a new verse</string>
+    <string name="shortcut_chat_short_label">Ask VEIL</string>
+    <string name="shortcut_chat_long_label">Ask VEIL — open a chat</string>
+</resources>
