@@ -40,12 +40,12 @@ Golden-master snapshot + full test suite before and after every sub-step, same d
 
 ---
 
-## Phase 2 — Backend contract + quality tooling (after Phase 1 settles) ⬜
+## Phase 2 — Backend contract + quality tooling (after Phase 1 settles) 🔵
 
 Everything here is generated from or checked against the backend's *final* shape — this is the phase Khris's own example was about.
 
-- **2a. OpenAPI spec.** Sourced from the actual live routes in their final location, covering every current endpoint. Becomes the formal contract Phase 4 checks the mobile app against.
-- **2b. mypy on the backend.** Run against the final import structure, not mid-move — otherwise most of the noise is transient "module moved" errors instead of real typing gaps. Fix what's cheap, log/flag what's more involved (per Khris's original instruction) rather than silently suppressing.
+- **2a. ✅ DONE. OpenAPI spec.** `docs/openapi.yaml`, OpenAPI 3.0.3, sourced from the actual live routes in their final `domain/`/`application/`/`infrastructure/` locations — 21 real paths, 22 operations (`/corrections` has GET+POST), confirmed to be the complete real set by diffing against `api.app.url_map.iter_rules()` directly (43 raw Flask rules incl. the duplicate explicit-OPTIONS handlers and Flask's own auto-added OPTIONS, which collapse to exactly 21 real paths). Validated structurally with `openapi-spec-validator` (clean pass) after fixing two real authoring bugs it caught: (1) `exclusiveMinimum: 0` — OpenAPI 3.0 uses JSON Schema Draft 4 semantics where `exclusiveMinimum` is a boolean flag paired with `minimum`, not a number (that's 3.1/2020-12 style) — fixed to `minimum: 0, exclusiveMinimum: true` on the 3 `bpm` fields; (2) three unquoted YAML flow-mapping description strings containing commas (e.g. `description: HS256 JWT, 30-day expiry`) were silently parsed as an extra bogus dict key instead of one string — fixed by quoting. Then verified against **real Flask-test-client responses**, not just read from source, for the highest-risk endpoints (`/health`, `/mastery`, `/auth/register`, `/auth/me`, `/suggest-family`, `/autofill`, `/thesaurus/synonyms`, `/corrections`, `/suggest`, `/analyze`) — caught one real spec inaccuracy this way: a speculative `is_slant_bridge` boolean on `FamilySuggestion` (inferred from a docstring's wording, not the actual code) doesn't exist in the real response, which is just `{color_id, score}`. Removed before finalizing. `requirements-dev.txt` created (pytest-cov, mypy, pyyaml, openapi-spec-validator — dev/CI-only, not shipped in the app's own `requirements.txt`).
+- **2b. 🔵 IN PROGRESS. mypy on the backend.** Run against the final import structure, not mid-move — otherwise most of the noise is transient "module moved" errors instead of real typing gaps. Fix what's cheap, log/flag what's more involved (per Khris's original instruction) rather than silently suppressing.
 - **2c. pytest-cov.** Coverage numbers computed against the final file layout, so they mean something on the next check rather than needing a re-baseline the moment Phase 1 finishes.
 
 ---

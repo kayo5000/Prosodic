@@ -1,0 +1,10 @@
+# Dev/CI-only tooling — not needed to run the app itself (see requirements.txt
+# for that). Installed separately so production images/deploys don't carry
+# type-checkers, coverage instrumentation, or spec validators they never use.
+#
+# Part of Phase 2 (docs/BUILD_PLAN.md) — backend contract + quality tooling.
+
+pytest-cov==7.1.0
+mypy==2.3.1
+pyyaml==6.0.3
+openapi-spec-validator==0.9.0

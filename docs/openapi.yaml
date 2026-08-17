@@ -1,0 +1,1080 @@
+openapi: 3.0.3
+info:
+  title: Prosodic API
+  description: |
+    Flask JSON API for the Prosodic hip-hop lyric analysis suite — rhyme
+    architecture, cadence, syllabic density, motif clustering, stress-pattern
+    feedback, and VEIL (an AI craft mentor).
+
+    **This spec is generated from the actual live routes**, sourced directly
+    from `api.py` and `veil_revival_routes.py` after the Clean Architecture
+    reorg (Phase 1 of `docs/BUILD_PLAN.md`) — not written against the
+    pre-reorg route bodies. It is the formal contract the mobile app
+    (`mobile/`) is checked against in Phase 4.
+
+    A few endpoints return large, deeply-nested engine output
+    (`/analyze` and `/cantos/state-snapshot` especially). Their schemas below
+    cover every top-level field and the shape of nested collections, but
+    engines that emit large per-syllable/per-line arrays (`density_per_line`,
+    `phrase_containers`, `cadence_signals`) are typed loosely (`type: object`
+    with a description) rather than exhaustively — see the referenced source
+    file for field-level ground truth on those specifically. Every field
+    that IS typed here was read directly from the code that produces it,
+    not inferred or guessed.
+
+    **Auth.** Endpoints marked `bearerAuth` require `Authorization: Bearer
+    <token>` from `/auth/login` or `/auth/register`. A few endpoints
+    (`/analyze`, `/suggest`) accept an *optional* bearer token — present vs.
+    absent changes response content (usage-history enrichment) but the
+    endpoint works either way; documented per-endpoint.
+
+    **CORS.** Every route responds to `OPTIONS` with `204` and
+    `Access-Control-Allow-Origin: *` — omitted from the paths below as
+    boilerplate, not a real per-route contract.
+  version: "1.0.0"
+  contact:
+    name: Prosodic
+externalDocs:
+  description: Architecture and module-by-module notes
+  url: ../ARCHITECTURE.md
+
+servers:
+  - url: http://localhost:5000
+    description: Local dev (python api.py)
+  - url: https://{railway-app}.up.railway.app
+    description: Railway production (see docs/SETUP.md)
+    variables:
+      railway-app:
+        default: prosodic
+
+tags:
+  - name: health
+  - name: auth
+  - name: analysis
+  - name: suggestions
+  - name: veil
+  - name: color-families
+  - name: thesaurus
+  - name: corrections
+  - name: usage-history
+  - name: mastery
+  - name: cantos
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >
+        HS256 JWT minted by /auth/register or /auth/login, 30-day expiry.
+        See api.py's _make_token/_verify_token.
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        detail:
+          type: string
+          description: Present on some 500/502 responses — exception string. Absent elsewhere.
+      required: [error]
+
+    User:
+      type: object
+      description: Shape returned by api.py's _user_dict(row).
+      properties:
+        id: { type: integer }
+        email: { type: string, format: email }
+        username: { type: string }
+        veil_name: { type: string, nullable: true }
+        gradient_index: { type: integer, nullable: true }
+        phone: { type: string, nullable: true }
+        hometown: { type: string, nullable: true }
+        geo_influences:
+          type: array
+          items: { type: string }
+          description: Split from a comma-joined column; [] if unset.
+        created_at: { type: string, format: date-time }
+      required: [id, email, username, geo_influences, created_at]
+
+    AuthResponse:
+      type: object
+      properties:
+        token: { type: string, description: 'HS256 JWT, 30-day expiry' }
+        user: { $ref: '#/components/schemas/User' }
+      required: [token, user]
+
+    ColorFamily:
+      type: object
+      description: A caller-supplied rhyme-family definition used by /autofill and /suggest-family.
+      properties:
+        color_id: { type: integer }
+        sample_words:
+          type: array
+          items: { type: string }
+      required: [color_id, sample_words]
+
+    FamilyAssignment:
+      type: object
+      description: One entry in /autofill's assignments array (domain/family_scoring.py::score_verse_against_families).
+      properties:
+        word: { type: string }
+        line_index: { type: integer }
+        word_index: { type: integer }
+        color_id: { type: integer }
+        score: { type: number, format: float }
+      required: [word, line_index, word_index, color_id, score]
+
+    FamilySuggestion:
+      type: object
+      description: >
+        One entry in /suggest-family's suggestions array
+        (domain/family_scoring.py::score_word_against_families) — verified
+        via a real Flask test-client call, not just read from source.
+        Slant-bridge matches (r_family_compatible) affect which color_ids
+        qualify and their score, but are not surfaced as a separate flag —
+        just color_id + score, same shape either way.
+      properties:
+        color_id: { type: integer }
+        score: { type: number, format: float }
+      required: [color_id, score]
+
+    Suggestion:
+      type: object
+      description: >
+        One ranked rhyme suggestion. Base fields come from
+        domain/suggestion_engine.py's _layer1/_layer2; community_uses,
+        used_before, and concreteness are added afterward by
+        application/suggest_enrichment.py (Phase 1c) before the route
+        returns the list — enrichment is best-effort and silently
+        no-ops per-item on error (values stay whatever they were:
+        0/false/null), it never fails the whole request.
+      properties:
+        word: { type: string }
+        rhyme_score: { type: integer, description: '0-100, phonetic match quality' }
+        semantic_score: { type: integer }
+        syllable_count: { type: integer }
+        syllable_priority: { type: integer, description: '0-2 ordinal, closeness to the verse''s modal syllable count' }
+        motif_fit:
+          type: string
+          enum: ['extends existing family', 'starts new family']
+        rhyme_unit:
+          type: array
+          items: { type: string }
+          description: ARPABET phoneme sequence used as the rhyme key.
+        thesaurus_score: { type: integer, description: '0-100, synonym-overlap contribution' }
+        composite_score: { type: integer, description: 0-100 blended score — see _layer2 docstring for the exact weighting }
+        star_rating: { type: integer, minimum: 1, maximum: 5 }
+        reason: { type: string, description: 'Human-readable explanation, e.g. "perfect rhyme, extends rhyme family"' }
+        trigger_mode: { type: string, enum: [auto, manual] }
+        rank: { type: integer, description: 1-based rank within this result set }
+        community_uses:
+          type: integer
+          description: How many distinct OTHER users have used this rhyme unit, per usage_history.get_rhyme_unit_frequency. 0 on enrichment failure.
+        used_before:
+          type: integer
+          description: 1 if the requesting (authenticated) user has used this rhyme unit before, else 0. Always 0 for anonymous callers.
+        concreteness:
+          type: number
+          nullable: true
+          description: Brysbaert concreteness rating (concreteness.db), or null if the word isn't in that dataset.
+      required: [word, rhyme_score, semantic_score, syllable_count, syllable_priority, motif_fit, rhyme_unit, thesaurus_score, composite_score, star_rating, reason, trigger_mode, rank]
+
+    VeilMessage:
+      type: object
+      properties:
+        role: { type: string, enum: [user, assistant] }
+        content: { type: string }
+      required: [role, content]
+
+    RhymeMapEntry:
+      type: object
+      description: One syllable-level entry in /analyze's rhyme_map (domain/feedback_engine.py).
+      properties:
+        word: { type: string }
+        line_index: { type: integer }
+        syllable_index: { type: integer }
+        stream_index: { type: integer }
+        word_index: { type: integer }
+        char_start: { type: integer }
+        char_end: { type: integer }
+        color_id: { type: integer, description: "0 = uncolored/no family" }
+        is_stressed: { type: boolean }
+        on_pocket: { type: boolean }
+      required: [word, line_index, syllable_index, stream_index, word_index, char_start, char_end, color_id, is_stressed, on_pocket]
+
+    AnalyzeResponse:
+      type: object
+      description: >
+        Full shape returned by domain/feedback_engine.py::assemble_feedback(),
+        run through api.py's _serializable() (tuples -> lists) before
+        jsonify. Several nested fields are intentionally typed loosely —
+        see this file's top-level description.
+      properties:
+        rhyme_map:
+          type: array
+          items: { $ref: '#/components/schemas/RhymeMapEntry' }
+        motif_groups:
+          type: array
+          items:
+            type: object
+            properties:
+              color_id: { type: integer }
+              type: { type: string, description: 'e.g. "perfect", "slant"' }
+              members:
+                type: array
+                items: { type: object }
+        total_color_families: { type: integer }
+        density_per_line:
+          type: array
+          description: One entry per verse line — see domain/density_engine.py::score_full_verse for exact per-line shape (scores.internal/multisyllabic/motif at minimum).
+          items: { type: object }
+        density_summary:
+          type: object
+          properties:
+            internal: { type: number, description: '0-100 average, rounded to 1 decimal' }
+            multisyllabic: { type: number }
+            motif: { type: number }
+          required: [internal, multisyllabic, motif]
+        phrase_containers:
+          type: array
+          description: See domain/phrase_container_engine.py::build_containers.
+          items: { type: object }
+        flow_signature:
+          type: object
+          description: See domain/pocket_engine.py::get_flow_signature.
+        cadence_signals:
+          type: object
+          description: See domain/stress_signals.py::analyze_verse_stream.
+        bpm: { type: number, format: float }
+        line_count: { type: integer }
+        perceptual_pattern:
+          type: object
+          description: See domain/pattern_reader_engine.py::read_patterns. Includes `active_families`.
+      required: [rhyme_map, motif_groups, total_color_families, density_per_line, density_summary, phrase_containers, flow_signature, cadence_signals, bpm, line_count, perceptual_pattern]
+
+  parameters:
+    AuthorizationHeader:
+      name: Authorization
+      in: header
+      required: true
+      schema: { type: string, example: 'Bearer eyJhbGciOi...' }
+
+  responses:
+    BadRequest:
+      description: Malformed or missing request fields.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Unauthorized:
+      description: Missing, invalid, or expired bearer token.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    ServerError:
+      description: Unhandled failure.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    TooManyRequests:
+      description: Rate limit exceeded (Flask-Limiter — Retry-After/X-RateLimit-* headers on the real response, not modeled in the JSON body).
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+
+paths:
+  /health:
+    get:
+      tags: [health]
+      summary: Liveness check
+      operationId: health
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: { status: { type: string, example: ok } }
+
+  /auth/register:
+    post:
+      tags: [auth]
+      summary: Create a new account
+      operationId: authRegister
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string, format: email }
+                username: { type: string }
+                password: { type: string, minLength: 6 }
+              required: [email, username, password]
+      responses:
+        '201':
+          description: Account created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409':
+          description: Email or username already taken
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /auth/login:
+    post:
+      tags: [auth]
+      summary: Log in
+      operationId: authLogin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Provide either email or username as the identifier.
+              properties:
+                email: { type: string }
+                username: { type: string }
+                password: { type: string }
+              required: [password]
+      responses:
+        '200':
+          description: Logged in
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401':
+          description: Invalid email/username or password
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /auth/me:
+    get:
+      tags: [auth]
+      summary: Get the current authenticated user
+      operationId: authMe
+      security: [{ bearerAuth: [] }]
+      parameters: [{ $ref: '#/components/parameters/AuthorizationHeader' }]
+      responses:
+        '200':
+          description: Current user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: { user: { $ref: '#/components/schemas/User' } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /auth/update:
+    post:
+      tags: [auth]
+      summary: Update profile fields (and optionally change password)
+      operationId: authUpdate
+      security: [{ bearerAuth: [] }]
+      parameters: [{ $ref: '#/components/parameters/AuthorizationHeader' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: All fields optional; only keys present in the body are updated. Omitting all fields returns the user unchanged.
+              properties:
+                username: { type: string }
+                veil_name: { type: string }
+                phone: { type: string }
+                hometown: { type: string }
+                gradient_index: { type: integer }
+                geo_influences:
+                  type: array
+                  items: { type: string }
+                current_password: { type: string, description: Required if new_password is set. }
+                new_password: { type: string, minLength: 6 }
+      responses:
+        '200':
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: { user: { $ref: '#/components/schemas/User' } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403':
+          description: current_password incorrect
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '409':
+          description: Username already taken
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /analyze:
+    post:
+      tags: [analysis]
+      summary: Full verse analysis
+      description: >
+        Runs the full engine pipeline (domain/feedback_engine.py::assemble_feedback)
+        on a verse. bpm is required (unlike /suggest). If an optional bearer
+        token is present, the resulting rhyme_map is also recorded to that
+        user's usage history (best-effort, failure here never fails the request).
+      operationId: analyze
+      security:
+        - {}
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                verse_lines:
+                  type: array
+                  items: { type: string }
+                  minItems: 1
+                bpm: { type: number, format: float, minimum: 0, exclusiveMinimum: true }
+              required: [verse_lines, bpm]
+      responses:
+        '200':
+          description: Analysis result
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AnalyzeResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /suggest:
+    post:
+      tags: [suggestions]
+      summary: Top 10 rhyme suggestions for the next line
+      description: >
+        bpm is optional here (unlike /analyze — pocket-awareness degrades
+        gracefully without it). Caches the full top-20 ranked list so a
+        subsequent GET /suggest/more returns instantly with no extra
+        engine/API cost.
+      operationId: suggest
+      security:
+        - {}
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                verse_lines:
+                  type: array
+                  items: { type: string }
+                  minItems: 1
+                bpm: { type: number, format: float, minimum: 0, exclusiveMinimum: true }
+                trigger_mode: { type: string, enum: [auto, manual], default: auto }
+                target_word:
+                  type: string
+                  nullable: true
+                  description: Overrides dominant-family detection — find rhymes for this specific word instead.
+                context_lines:
+                  type: array
+                  items: { type: string }
+                  nullable: true
+                  description: Full song context across all sections, used for thematic scoring when motif mode is on.
+                motif_bank:
+                  type: object
+                  nullable: true
+                  description: '{cluster_name: [word, ...]} of user-defined thematic word associations.'
+                  additionalProperties:
+                    type: array
+                    items: { type: string }
+              required: [verse_lines]
+      responses:
+        '200':
+          description: Ranked suggestions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  suggestions:
+                    type: array
+                    items: { $ref: '#/components/schemas/Suggestion' }
+                  count: { type: integer }
+                  trigger_mode: { type: string, enum: [auto, manual] }
+                required: [suggestions, count, trigger_mode]
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /suggest/more:
+    get:
+      tags: [suggestions]
+      summary: Ranks 11-20 from the last /suggest call
+      description: No engine work or API cost — served from an in-memory cache populated by the most recent POST /suggest. Process-global, not per-user or per-session (single-worker/single-thread deployment — see CLAUDE.md).
+      operationId: suggestMore
+      responses:
+        '200':
+          description: Cached suggestions 11-20 (or fewer/empty if /suggest hasn't been called yet)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  suggestions:
+                    type: array
+                    items: { $ref: '#/components/schemas/Suggestion' }
+                  count: { type: integer }
+                required: [suggestions, count]
+
+  /veil/chat:
+    post:
+      tags: [veil]
+      summary: VEIL AI craft mentor chat
+      description: >
+        Routes through the AI provider abstraction (infrastructure/ai_providers/ —
+        Claude is the only live provider today). Rate-limited via
+        ANTHROPIC_ROUTE_LIMITS (rate_limiter.py) since this makes a real,
+        billed API call. Grounds word-choice discussion in real thesaurus
+        lookups for content words in the caller's last message rather than
+        letting the model invent synonyms.
+      operationId: veilChat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                messages:
+                  type: array
+                  minItems: 1
+                  items: { $ref: '#/components/schemas/VeilMessage' }
+                analysis_context:
+                  type: string
+                  nullable: true
+                  description: Optional current-song analysis data, appended to the system prompt as extra grounding.
+              required: [messages]
+      responses:
+        '200':
+          description: VEIL's reply
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: { reply: { type: string } }
+                required: [reply]
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '502':
+          description: AI provider error (non-circuit-breaker failure)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '503':
+          description: AI provider unavailable (circuit breaker open, or not configured)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /veil/revival/chat:
+    post:
+      tags: [veil]
+      summary: VEIL Revival — bring an abandoned note back to life
+      description: >
+        Separate Flask Blueprint (veil_revival_routes.py). Same AI provider
+        abstraction and rate limiting as /veil/chat. Never 500s on model
+        errors — always returns a clean JSON error instead (see route
+        docstring's "Silent failures" design rule).
+      operationId: veilRevivalChat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                note:
+                  type: object
+                  properties:
+                    title: { type: string, default: Untitled }
+                    body: { type: string, default: '' }
+                messages:
+                  type: array
+                  description: Pass [] on the first call — VEIL classifies the note and asks its opening question.
+                  items: { $ref: '#/components/schemas/VeilMessage' }
+      responses:
+        '200':
+          description: VEIL's reply
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reply: { type: string }
+                  note_type:
+                    type: string
+                    nullable: true
+                    description: Always null today — classification exists in the prompt but isn't parsed back out of the model's reply yet.
+                required: [reply, note_type]
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500':
+          description: Any failure (model error, provider error, malformed input) — this route deliberately collapses everything to a clean message rather than surfacing internals.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '503':
+          description: Provider not configured or temporarily unavailable (circuit breaker open)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /autofill:
+    post:
+      tags: [color-families]
+      summary: Score every verse word against existing color families
+      description: Scoring logic lives in domain/family_scoring.py::score_verse_against_families (Phase 1d extraction). Caller decides which returned words to actually apply (e.g. uncolored ones only).
+      operationId: autofill
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                verse_lines:
+                  type: array
+                  items: { type: string }
+                families:
+                  type: array
+                  items: { $ref: '#/components/schemas/ColorFamily' }
+                threshold: { type: number, format: float, default: 0.60 }
+      responses:
+        '200':
+          description: Family assignments, ordered by score
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  assignments:
+                    type: array
+                    items: { $ref: '#/components/schemas/FamilyAssignment' }
+                required: [assignments]
+
+  /suggest-family:
+    post:
+      tags: [color-families]
+      summary: Suggest which color family a single word belongs to
+      description: Scoring logic in domain/family_scoring.py::score_word_against_families (Phase 1d extraction); route truncates to top 3.
+      operationId: suggestFamily
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                word: { type: string }
+                families:
+                  type: array
+                  items: { $ref: '#/components/schemas/ColorFamily' }
+      responses:
+        '200':
+          description: Top-3 family suggestions (score >= 0.55)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  word: { type: string }
+                  suggestions:
+                    type: array
+                    maxItems: 3
+                    items: { $ref: '#/components/schemas/FamilySuggestion' }
+                required: [word, suggestions]
+
+  /thesaurus/bridge:
+    post:
+      tags: [thesaurus]
+      summary: Find words connecting two topics via the synonym graph
+      operationId: thesaurusBridge
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                word_a: { type: string }
+                word_b: { type: string }
+              required: [word_a, word_b]
+      responses:
+        '200':
+          description: Bridge result (thesaurus_engine.py::find_bridge_words's own return shape)
+          content:
+            application/json:
+              schema: { type: object }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /thesaurus/reverse:
+    post:
+      tags: [thesaurus]
+      summary: Find root words for which `word` appears as a synonym
+      operationId: thesaurusReverse
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: { word: { type: string } }
+              required: [word]
+      responses:
+        '200':
+          description: Roots found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  word: { type: string }
+                  roots:
+                    type: array
+                    items: { type: string }
+                  count: { type: integer }
+                required: [word, roots, count]
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /thesaurus/synonyms:
+    post:
+      tags: [thesaurus]
+      summary: Synonyms tagged with syllable count, sorted by rhythmic fit
+      operationId: thesaurusSynonyms
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                word: { type: string }
+                target_syllables:
+                  type: integer
+                  nullable: true
+                  description: If given, results sort by closeness to this count instead of ascending syllable count.
+              required: [word]
+      responses:
+        '200':
+          description: Tagged synonyms (empty array if the word isn't in the thesaurus)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  word: { type: string }
+                  found: { type: boolean }
+                  synonyms:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        word: { type: string }
+                        syllable_count: { type: integer }
+                        concreteness: { type: number, nullable: true }
+                      required: [word, syllable_count, concreteness]
+                required: [word, found, synonyms]
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /thesaurus/related:
+    post:
+      tags: [thesaurus]
+      summary: Synonyms tagged with whether they also rhyme with the verse's active families
+      description: Coordination logic lives in application/thesaurus_related.py (Phase 1d) — combines domain/motif_engine.py and domain/phoneme_engine.py output with a thesaurus lookup.
+      operationId: thesaurusRelated
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                word: { type: string }
+                verse_lines:
+                  type: array
+                  items: { type: string }
+                  nullable: true
+              required: [word]
+      responses:
+        '200':
+          description: Synonyms, also_rhymes=true entries sorted first
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  word: { type: string }
+                  found: { type: boolean }
+                  synonyms:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        word: { type: string }
+                        also_rhymes: { type: boolean }
+                        concreteness: { type: number, nullable: true }
+                required: [word, found, synonyms]
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /suggest-motif-words:
+    post:
+      tags: [thesaurus]
+      summary: Suggest more words for a motif_bank cluster
+      description: Ranked by thematic centrality (how many existing cluster words the candidate is a synonym of). thesaurus_engine.py::suggest_cluster_words.
+      operationId: suggestMotifWords
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                cluster_words:
+                  type: array
+                  items: { type: string }
+                  minItems: 1
+                exclude:
+                  type: array
+                  items: { type: string }
+              required: [cluster_words]
+      responses:
+        '200':
+          description: Ranked suggestions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  suggestions:
+                    type: array
+                    items: { type: object }
+                required: [suggestions]
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /wordforms:
+    post:
+      tags: [thesaurus]
+      summary: Find words sharing this word's root (for polyptoton)
+      operationId: wordforms
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: { word: { type: string } }
+              required: [word]
+      responses:
+        '200':
+          description: Related root-sharing words (wordform_engine.py::find_same_root_words)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  word: { type: string }
+                  related:
+                    type: array
+                    items: { type: string }
+                required: [word, related]
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /corrections:
+    post:
+      tags: [corrections]
+      summary: Record manual correction signals for learning
+      operationId: recordCorrections
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                signals:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: object
+                    properties:
+                      word: { type: string }
+                      correction_type: { type: string }
+                      color_id: { type: integer, nullable: true }
+                    required: [word, correction_type]
+              required: [signals]
+      responses:
+        '200':
+          description: Count recorded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: { recorded: { type: integer } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '500': { $ref: '#/components/responses/ServerError' }
+    get:
+      tags: [corrections]
+      summary: Retrieve top correction signals (debug/review)
+      operationId: getCorrections
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema: { type: integer, default: 50, maximum: 200 }
+      responses:
+        '200':
+          description: Top signals (learning_engine.py::get_top_signals)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  signals:
+                    type: array
+                    items: { type: object }
+                  count: { type: integer }
+                required: [signals, count]
+
+  /my-words:
+    get:
+      tags: [usage-history]
+      summary: The caller's personal word-choice fingerprint
+      description: Doubles as a suggestion source — words the caller tends to reach for. `exclude` lets a caller drop words already in the verse being written.
+      operationId: myWords
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { $ref: '#/components/parameters/AuthorizationHeader' }
+        - name: exclude
+          in: query
+          required: false
+          schema: { type: string }
+          description: Comma-separated words to exclude.
+      responses:
+        '200':
+          description: Top 25 words by usage
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  top_words:
+                    type: array
+                    items: { type: object }
+                required: [top_words]
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /mastery:
+    get:
+      tags: [mastery]
+      summary: Mastery tracking status
+      description: >
+        **Deliberately not wired up.** mastery_engine.py's scoring logic is
+        real and tested, but this app has no persistent "song" identity for
+        it to attach records to — a real product-design decision, not a
+        wiring gap (see docs/DECISIONS_NEEDED.md item 2). Always returns
+        ready=false with an honest reason rather than a misleading
+        "keep writing" message.
+      operationId: mastery
+      responses:
+        '200':
+          description: Always ready=false today
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ready: { type: boolean, enum: [false] }
+                  reason: { type: string }
+                  missing:
+                    type: array
+                    items: { type: string }
+                  data_snapshot: { nullable: true }
+                required: [ready, reason, missing, data_snapshot]
+
+  /cantos/state-snapshot:
+    post:
+      tags: [cantos]
+      summary: Run the Cantos/Behavioral-Layer state chain and record a Notebook Entry
+      description: >
+        Gated behind FEATURE_CANTOS_ENABLED (feature_flags.py, default off).
+        Returns 404 with an honest reason when the flag is off — not a
+        generic Flask 404 — so the difference between "disabled" and
+        "route doesn't exist" is visible to a caller. Runs bar_segmenter ->
+        feedback_engine -> bar_feature_mapper -> state_engine.classify(),
+        written as a real Notebook Entry (cantos/notebooks.py::append_entry).
+      operationId: cantosStateSnapshot
+      security: [{ bearerAuth: [] }]
+      parameters: [{ $ref: '#/components/parameters/AuthorizationHeader' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                verse_text:
+                  type: string
+                  description: Newline-separated verse (not an array, unlike every other endpoint here — matches bar_segmenter.segment()'s expected input).
+                bpm: { type: number, format: float, minimum: 0, exclusiveMinimum: true }
+                session_id: { type: string, default: default }
+              required: [verse_text, bpm]
+      responses:
+        '200':
+          description: State classification + the Notebook Entry it produced
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ready: { type: boolean, enum: [true] }
+                  state:
+                    type: object
+                    description: cantos/state_engine.py::classify_state output — includes at minimum section_state and confidence.
+                    properties:
+                      section_state: { type: string }
+                      confidence: { type: number }
+                  notebook_entry:
+                    type: object
+                    description: cantos/notebooks.py::append_entry's return shape.
+                    properties:
+                      id: { type: string }
+                      engine: { type: string, enum: [state] }
+                      user_id: { type: integer }
+                      session_id: { type: string }
+                      observation: { type: string }
+                      metrics: { type: object }
+                      delta: { type: object, nullable: true }
+                      timestamp: { type: string, format: date-time }
+                required: [ready, state, notebook_entry]
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404':
+          description: Cantos feature flag is off
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ready: { type: boolean, enum: [false] }
+                  reason: { type: string }
+                required: [ready, reason]
