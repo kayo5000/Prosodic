@@ -72,7 +72,7 @@ Independent codebase from Phases 1–2, so this *could* run concurrently with th
 
 Cross-cutting, not structurally entangled with Phases 1–4, but sequenced after them so error tracking starts against the stable, final shape rather than generating noise during active restructuring (every file move would otherwise look like a new error source).
 
-**Blocked on:** does a Sentry account already exist for this project? If not, Khris needs to create one — account creation isn't something to do on his behalf. Current free-tier limits need checking at the time this phase actually starts (pricing/limits can change; don't assume today's numbers are still accurate whenever this phase is reached) and reporting clearly before assuming anything about cost.
+**Blocked on:** does a Sentry account already exist for this project? If not, Khris needs to create one — account creation isn't something to do on his behalf. Current free-tier limits need checking at the time this phase actually starts (pricing/limits can change; don't assume today's numbers are still accurate whenever this phase is reached) and reporting clearly before assuming anything about cost. Logged in `docs/DECISIONS_NEEDED.md` — per standing instruction, skipped rather than stalled on; work continues on every other phase around it.
 
 ---
 
@@ -86,11 +86,13 @@ Gates on Phases 1–5 producing real, green tests + types + lint + coverage on b
 
 Its own significant chunk of native Swift/Kotlin work, per Khris's own framing — sequenced last among the scaffold items on purpose. Needs the mobile app's screens/entry points to be reasonably stable (Phase 3 done) since Quick Write/Quick Record/etc. need real, stable targets to launch into, not ones still being restructured underneath them. Scope this properly as its own pass when it's reached — not folded into any earlier phase's commits.
 
+**Real constraint, checked not assumed, logged in `docs/DECISIONS_NEEDED.md`:** this dev environment has no Xcode/`swift` toolchain and no Android SDK/`gradle` either — real Swift/Kotlin source can be written here, but neither half can be compiled or verified in this environment. Not blocking anything before Phase 7 (native work is last regardless), but worth Khris knowing before arriving here with unverifiable code as the only option.
+
 ---
 
 ## Not schedulable yet — needs a product decision, not an engineering one
 
-- **Mastery tab (mobile) + `mastery_engine.py` wiring (backend).** Both are blocked on the same real, unresolved question: what does "song identity" (`song_id`) mean in this app? Nothing downstream of that question — not the backend wiring, not a mobile screen — should get built as a guess. This is Khris's call, not something to default on to keep momentum.
+- **Mastery tab (mobile) + `mastery_engine.py` wiring (backend).** Both are blocked on the same real, unresolved question: what does "song identity" (`song_id`) mean in this app? Nothing downstream of that question — not the backend wiring, not a mobile screen — should get built as a guess. This is Khris's call, not something to default on to keep momentum. Logged in `docs/DECISIONS_NEEDED.md`.
 
 ## Interleaved, not its own phase — Cantos engine wiring (standing task #20)
 
