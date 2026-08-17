@@ -11,7 +11,8 @@ paths had a real test before this file, refactor or not. Closing that
 gap here rather than leaving it — same standard as writing the
 concurrency/rate-limiter/circuit-breaker tests earlier this session.
 '''
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import tempfile

@@ -13,7 +13,8 @@ FEATURE_CANTOS_ENABLED read (which only happens once, at import time)
 picks up a clean env var each time — importing api twice in the same
 pytest process wouldn't re-evaluate that.
 '''
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import subprocess

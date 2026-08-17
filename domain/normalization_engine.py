@@ -146,7 +146,6 @@ def normalize(word):
     '''
     original = word
     manipulation = None
-    was_split = False
 
     # Layer 4 — Numeric and symbol substitution (before character stripping
     # so that standalone symbols like & aren't erased before lookup)

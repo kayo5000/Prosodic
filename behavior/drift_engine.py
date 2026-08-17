@@ -4,7 +4,8 @@ behavior/drift_engine.py
 Compares two snapshots and reports directional change across aligned bars.
 Preconditions: compatibility_checker passed, bar_aligner has been run.
 """
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import uuid

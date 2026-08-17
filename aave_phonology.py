@@ -453,9 +453,6 @@ def _label_variant_source(original: List[str], variant: List[str]) -> str:
     Returns the most specific label that applies; defaults to 'aave_combined'
     for multi-rule variants.
     """
-    orig_set = set(original)
-    var_set = set(variant)
-
     has_r_change = (
         any(_base(p) == "R" for p in original) and
         not any(_base(p) == "R" for p in variant)

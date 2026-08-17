@@ -14,7 +14,8 @@ real bundled concreteness.db (read-only reference data, safe to call
 for real — same convention as other tests that exercise thesaurus_engine
 for real).
 '''
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import tempfile

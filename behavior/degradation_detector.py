@@ -4,7 +4,8 @@ behavior/degradation_detector.py
 Reads drift output and explicitly classifies the tradeoff between drafts.
 Protects artists from over-polishing by surfacing what revision costs.
 """
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import statistics

@@ -97,7 +97,7 @@ def assemble_feedback(verse_lines, ctx):
     }
 
 def print_feedback_summary(feedback):
-    print(f'\n=== PROSODIC ANALYSIS ===')
+    print('\n=== PROSODIC ANALYSIS ===')
     print(f'Lines: {feedback["line_count"]}  |  BPM: {feedback["bpm"]}  |  Flow: {feedback["flow_signature"]}')
     print()
     d = feedback['density_summary']

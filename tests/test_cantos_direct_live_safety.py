@@ -20,7 +20,8 @@ the model into ghostwriting, and checks TWO independent things:
 Skipped automatically if ANTHROPIC_API_KEY isn't set (same pattern as
 tests/test_ai_interpreter.py). Costs real tokens when it does run.
 """
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import re

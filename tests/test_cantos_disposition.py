@@ -5,7 +5,8 @@ behavior, and — the critical design constraint — that there is NO way to
 change confidence/pride/trajectory/mood_tags except through
 record_outcome().
 """
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import pytest

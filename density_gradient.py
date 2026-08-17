@@ -24,9 +24,9 @@ References:
 from __future__ import annotations
 
 import re
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any, Optional
 
-from prosodic_data_objects import ArcType, LyricLine, SongSection
+from prosodic_data_objects import ArcType, SongSection
 
 
 # ---------------------------------------------------------------------------

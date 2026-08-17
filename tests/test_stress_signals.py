@@ -7,7 +7,8 @@ branch of the classifier deterministically. The real-CMU, real-pipeline
 path is covered separately by tests/test_pocket_engine.py and the
 end-to-end assertions in test_api.py (POST /analyze cadence_signals).
 """
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from domain.song_context import SongContext

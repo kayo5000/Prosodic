@@ -1,5 +1,6 @@
 """Tests for cantos/notes.py — Note to Cassius persistence (§2.4)."""
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import pytest
@@ -28,7 +29,7 @@ def test_drop_note_basic():
 
 
 def test_drop_note_from_a_meeting():
-    n = notes.drop_note('meeting:abc123', 's1', 'L1-8', 'motif+semantics agree', 0.77)
+    notes.drop_note('meeting:abc123', 's1', 'L1-8', 'motif+semantics agree', 0.77)
     lines = cdl.read_recent(5, engine='MEETING')
     assert len(lines) == 1
 

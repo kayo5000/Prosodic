@@ -9,12 +9,12 @@ Covers:
     on_pocket) are unchanged — this is a backward-compatibility guard
   - get_flow_signature still returns a valid label after the change
 """
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from domain.pocket_engine import (
     map_line_to_pocket, enrich_stream_with_pocket, get_flow_signature,
-    STRONG_POSITIONS, POCKET_POSITIONS,
 )
 from domain.rhyme_detection_engine import build_verse_stream
 from domain.song_context import SongContext

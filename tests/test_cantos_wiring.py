@@ -7,7 +7,8 @@ Not mocked — this is the actual production code path each piece already
 has its own unit tests for; this just proves they compose correctly and
 that a real Notebook Entry lands in the DB as a result.
 """
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import pytest

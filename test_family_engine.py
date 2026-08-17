@@ -124,7 +124,7 @@ else:
 
 print()
 print(f'  {SUBDIV}')
-print(f'  describe_pattern():')
+print('  describe_pattern():')
 print(f'    {pattern_reader_engine.describe_pattern(pattern)}')
 
 # ── SECTION C — Unregistered word catch ───────────────────────────────────────

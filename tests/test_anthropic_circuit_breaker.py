@@ -6,7 +6,8 @@ one part that's easy to get subtly wrong: the half-open trial slot must
 be claimed by exactly one caller even when many requests hit it at the
 exact same moment, not just when tested one at a time.
 '''
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import threading

@@ -23,8 +23,6 @@ from domain.perceptual_family_engine import (
     score_unregistered_words,
     score_family_membership,
 )
-from domain.phoneme_engine import FUNCTION_WORDS   # available to callers; tags already filtered
-import domain.syllable_engine as syllable_engine  # stress data accessed via tagged_words;
                                              # imported per engine suite convention
 
 log = logging.getLogger(__name__)
@@ -289,7 +287,6 @@ def describe_pattern(pattern_result):
     dominant   = pattern_result.get('dominant_families', [])
     parallel   = pattern_result.get('parallel_pocketing', False)
     fmap       = pattern_result.get('family_map', {})
-    active_all = pattern_result.get('active_families', [])
 
     if not dominant:
         return 'No dominant family detected.'

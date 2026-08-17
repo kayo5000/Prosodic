@@ -5,11 +5,11 @@ of discarding it" pattern. detect_boundaries() already computed a
 per-boundary signal weight to decide accept/reject; it just threw that
 number away right after the threshold check instead of exposing it.
 '''
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import pytest
-from domain.phrase_container_engine import build_containers, detect_boundaries, BOUNDARY_THRESHOLD, SIGNALS
+from domain.phrase_container_engine import build_containers, detect_boundaries, SIGNALS
 
 
 def test_first_container_always_full_confidence():

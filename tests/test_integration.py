@@ -3,7 +3,8 @@ Integration tests — full pipeline coverage.
 Tests 1-5 and 7 run without an API key.
 Test 6 (AI interpreter constraints) is skipped if ANTHROPIC_API_KEY is absent.
 """
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import tempfile
@@ -89,9 +90,8 @@ def test_1_single_snapshot_path():
     assert len(result["state_path"]) >= 1
     assert len(result["evidence"]) >= 1
 
-    # label_capture must have logged the prediction
-    training = lc.get_training_set()
-    # (no feedback yet — row exists in DB even if not in training set)
+    # label_capture must have logged the prediction (no feedback yet —
+    # row exists in DB even if not in training set)
     stats = lc.get_label_stats()
     assert stats["total_labels"] >= 1
 
@@ -229,7 +229,7 @@ def test_6_ai_interpreter_constraints():
     violations = validate_output(result)
 
     assert violations == [], (
-        f"Interpreter violated constraints:\n" +
+        "Interpreter violated constraints:\n" +
         "\n".join(violations) +
         f"\n\nOutput was:\n{result['interpretation']}"
     )
@@ -240,7 +240,7 @@ def test_6_ai_interpreter_constraints():
 
 def test_7_label_capture_roundtrip():
     snap = _make_snapshot(_VERSE_A, "snap_7")
-    result = classify(snap)
+    classify(snap)
 
     # State engine calls capture_prediction internally —
     # at least one row must exist in the DB

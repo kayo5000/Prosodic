@@ -7,7 +7,8 @@ and unified bar-level feature vectors.
 
 Accepts the output of feedback_engine.assemble_feedback() as engine_outputs.
 """
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import re

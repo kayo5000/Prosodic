@@ -3,7 +3,8 @@
 Tests that require the Anthropic API are skipped when ANTHROPIC_API_KEY
 is not set in the environment.
 """
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Same order-dependent gap already found and fixed in test_integration.py
@@ -20,7 +21,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import pytest
-from behavior.ai_interpreter import interpret, validate_output, _sentence_count, _FORBIDDEN
+from behavior.ai_interpreter import interpret, validate_output, _sentence_count
 
 _HAS_API_KEY = bool(os.environ.get("ANTHROPIC_API_KEY"))
 _skip_no_key = pytest.mark.skipif(not _HAS_API_KEY, reason="ANTHROPIC_API_KEY not set")

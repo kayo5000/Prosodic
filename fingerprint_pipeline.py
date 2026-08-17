@@ -37,7 +37,6 @@ from __future__ import annotations
 import os
 import re
 import time
-import json
 import logging
 from typing import List, Dict, Any, Optional
 from datetime import datetime
@@ -332,7 +331,13 @@ def text_to_fingerprint(text: str) -> Optional[Dict[str, Any]]:
     except Exception as exc:
         _log.warning(f"text_to_fingerprint failed: {exc}")
         try:
-            del text  # ensure raw text is deleted even on error
+            # `text` may already be gone — `del text` runs earlier in the
+            # try body too (line ~280), so an exception raised after that
+            # point means this second del deliberately hits NameError,
+            # which the except below exists to swallow. Ruff's static
+            # analysis correctly flags `text` as possibly-unbound here;
+            # that's the intended defensive behavior, not a bug.
+            del text  # noqa: F821 — see comment above
         except Exception:
             pass
         return None

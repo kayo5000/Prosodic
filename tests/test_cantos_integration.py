@@ -11,7 +11,8 @@ actually compose, matching the §3 session loop shape:
   5. a direct-mode knock on the surfaced engine reflects the same history
   6. the Cantos Dev Log has a coherent, readable record of the whole thing
 """
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import pytest

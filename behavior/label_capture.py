@@ -6,7 +6,8 @@ Exposes thumbs-up/thumbs-down feedback API. Accumulates a labeled training
 set. When ~200 confirmed records exist, a classifier can replace the
 rule-based engine with no other rework.
 """
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import sqlite3

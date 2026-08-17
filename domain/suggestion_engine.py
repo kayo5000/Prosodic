@@ -9,18 +9,16 @@ Part of the Prosodic hip-hop lyric analysis suite.
 import logging
 from collections import defaultdict
 
-log = logging.getLogger(__name__)
-
-from domain.phoneme_engine import (
-    get_rhyme_unit, rhyme_score, get_phonemes, FUNCTION_WORDS, CMU,
-)
-from domain.syllable_engine import get_syllable_count, syllabify_line
+from domain.phoneme_engine import get_rhyme_unit, FUNCTION_WORDS, CMU
+from domain.syllable_engine import get_syllable_count
 from domain.rhyme_detection_engine import analyze_verse
 from domain.motif_engine import build_motif_map
 from domain.semantics_engine import semantic_similarity, SPACY_AVAILABLE
 from thesaurus_engine import lookup as thesaurus_lookup
 from domain.final_result_converter import normalize as fr_normalize
 from domain.prosodic_config import NEAR_RHYME_SAME_VOWEL_SCORE
+
+log = logging.getLogger(__name__)
 
 # CMU is phoneme_engine's single load of the ~125k-word CMU Pronouncing
 # Dictionary — imported, not reloaded, so this process holds exactly one

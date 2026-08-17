@@ -12,7 +12,8 @@ Hard constraints (enforced in system prompt):
   - Never propose replacement lyrics. Explain behavior; artist writes.
   - 2-4 sentences. Never longer.
 """
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import json

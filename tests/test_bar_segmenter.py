@@ -1,5 +1,6 @@
 """Tests for analysis/bar_segmenter.py"""
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from analysis.bar_segmenter import segment

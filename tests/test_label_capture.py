@@ -1,9 +1,9 @@
 """Tests for behavior/label_capture.py"""
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import tempfile
-import importlib
 
 # Override DB path to a temp file for all tests
 import behavior.label_capture as lc

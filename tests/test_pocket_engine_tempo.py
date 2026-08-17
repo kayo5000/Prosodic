@@ -10,7 +10,8 @@ model's own 90 BPM reference point is proven to reproduce the exact old
 behavior (so tests/test_pocket_engine.py's existing bpm=90 tests staying
 green isn't a coincidence — it's what the model is supposed to do there).
 '''
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from domain.pocket_engine import map_line_to_pocket, _tempo_adjusted_span, GRID_SIZE

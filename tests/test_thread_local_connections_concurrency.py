@@ -13,7 +13,8 @@ concurrent /analyze requests would all touch that same file at once —
 so that scenario gets its own dedicated multi-module test, not just each
 file tested in isolation.
 '''
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import tempfile

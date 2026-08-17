@@ -39,7 +39,6 @@ import re
 from dataclasses import dataclass, field
 from typing import List, Dict, Any, Optional, Tuple
 
-from prosodic_data_objects import LyricLine, SongSection
 from phoneme_resolver import resolve_line, PhonemeSequence
 
 
@@ -214,7 +213,6 @@ def assign_syllables_to_beats(
         return result
 
     try:
-        tokens = line.split()
         seqs = resolve_line(line, prefer_aave=prefer_aave)
 
         if not seqs:

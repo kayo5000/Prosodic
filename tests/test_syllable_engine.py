@@ -7,7 +7,8 @@ undercounted its syllables — the word stopped existing anywhere downstream:
 wrong word_index/stream_index for everything after it, invisible to every
 engine that reads the stream).
 '''
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import domain.syllable_engine as syllable_engine

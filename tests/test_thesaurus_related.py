@@ -5,7 +5,8 @@ route body (Phase 1d, Clean Architecture reorg; confirmed via grep, not
 assumed). Uses the real bundled Moby Thesaurus + concreteness data, same
 convention as other tests exercising those engines for real.
 '''
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from application.thesaurus_related import get_related_synonyms

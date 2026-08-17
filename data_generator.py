@@ -33,7 +33,7 @@ import time
 import urllib.request
 import urllib.parse
 from collections import defaultdict
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 # ---------------------------------------------------------------------------
 # NLTK cmudict — downloaded automatically on first use
@@ -839,8 +839,6 @@ def main() -> None:
     Step 7: Fetch 2000 pairs from Datamuse API
     Step 8: Merge, shuffle, save to training_data.json
     """
-    rng = random.Random(42)
-
     print("=" * 52)
     print("PROSODIC — Synthetic Data Generator")
     print("=" * 52)

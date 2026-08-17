@@ -6,7 +6,8 @@ Every downstream module consumes this output. No other module infers bars.
 
 Algorithm v1: deterministic, rule-based, no ML.
 """
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import hashlib
@@ -178,12 +179,10 @@ def segment(lyrics, bpm):
 
         # Split into 2 bars if line is >1.8× target
         if syl_count > 1.8 * _TARGET_SYLLABLES and syl_list:
-            mid = syl_count // 2
-            mid_syl = syl_list[mid] if mid < len(syl_list) else syl_list[-1]
-            # char split: use the word's start offset within the line
-            word_start = mid_syl.get("char_start", 0)
-            # char_start is relative to the word, not the line — approximate
-            # by splitting at the nearest whitespace around the midpoint char
+            # A syllable's char_start is relative to its own word, not the
+            # line, so it can't be used directly as a line-level split
+            # offset — approximate instead by splitting at the nearest
+            # whitespace around the midpoint char.
             approx_mid_char = len(raw) // 2
             # walk forward to next whitespace
             split_pos = approx_mid_char

@@ -4,7 +4,8 @@ infrastructure/ai_providers/*) — not covered directly by the four call-
 site test files (test_cantos_direct.py etc. exercise ClaudeProvider only
 indirectly, through cantos/direct.py's converse()).
 '''
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import pytest

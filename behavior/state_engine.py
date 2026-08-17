@@ -8,7 +8,8 @@ across the verse.
 Six labels only — do not add more.
 Every prediction is logged via label_capture before being returned.
 """
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import statistics

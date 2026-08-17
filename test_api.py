@@ -6,11 +6,9 @@ the API key is unavailable, but all status codes and response shapes are verifie
 
 Run:  python test_api.py
 '''
-import json
 import sys
 import time
 import api
-from domain.suggestion_engine import _suggestion_cache
 
 VERSE = [
     "And I swear that it's turnt",

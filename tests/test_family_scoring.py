@@ -8,7 +8,8 @@ EH+R slant-tier gate, R-family compatibility) had been living only
 inline in two Flask routes, untestable independently of an HTTP
 request.
 '''
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from domain.family_scoring import score_verse_against_families, score_word_against_families

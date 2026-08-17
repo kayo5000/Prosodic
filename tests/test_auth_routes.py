@@ -12,7 +12,8 @@ users table is created at import time (api.py's own module-level
 _init_users_table() call), so the env var has to be in place first, not
 patched onto the module after the fact.
 '''
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import tempfile
