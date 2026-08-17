@@ -100,11 +100,23 @@ Gated on Phases 1–4 producing real, green tests + types + coverage on both hal
 
 ---
 
-## Phase 7 — Native quick-access (iOS App Intents, Android App Actions) ⬜
+## Phase 7 — Native quick-access (iOS App Intents, Android Shortcuts + Quick Settings Tile) ✅ (code done — verification asymmetric, see below)
 
-Its own significant chunk of native Swift/Kotlin work, per Khris's own framing — sequenced last among the scaffold items on purpose. Needs the mobile app's screens/entry points to be reasonably stable (Phase 3 done) since Quick Write/Quick Record/etc. need real, stable targets to launch into, not ones still being restructured underneath them. Scope this properly as its own pass when it's reached — not folded into any earlier phase's commits.
+Its own significant chunk of native Swift/Kotlin work, per Khris's own framing — sequenced last among the scaffold items on purpose. Built after Phase 3 settled the mobile app's screens/entry points, so Quick Write/Ask VEIL had real, stable targets to launch into.
 
-**Real constraint, checked not assumed, logged in `docs/DECISIONS_NEEDED.md`:** this dev environment has no Xcode/`swift` toolchain and no Android SDK/`gradle` either — real Swift/Kotlin source can be written here, but neither half can be compiled or verified in this environment. Not blocking anything before Phase 7 (native work is last regardless), but worth Khris knowing before arriving here with unverifiable code as the only option.
+**✅ DONE — real code, not stubs.** Full detail and the verification checklist live in `mobile/native/README.md`; summary here:
+- **Shared foundation, fully built and tested**: `src/navigators/linking.ts` (`prosodic://write?focus=1` → Analyze with the verse input auto-focused, `prosodic://chat` → Chat) — 5 real tests against React Navigation's own `getStateFromPath`, not a mock. Every native entry point below does nothing but get one of these two URLs to the OS.
+- **iOS** (`native/ios/ProsodicAppIntents.swift`): `QuickWriteIntent`/`QuickChatIntent` via `AppShortcutsProvider` — eligible for Siri, Spotlight, Control Center, Action Button (15 Pro+), Camera Control (16+). AssistiveTouch needs no code (can already run any Shortcut).
+- **Android** (`native/android/`): static App Shortcuts (long-press icon, zero external registration) + a custom Quick Settings Tile (`QuickWriteTileService.kt`).
+- **Scoped deliberately, not guessed at**: "Quick Record" from the original brief's examples wasn't built — this app has no audio-recording feature anywhere to hang a shortcut on (checked against `docs/openapi.yaml`, not assumed). Android App Actions (Google Assistant) also deliberately not built — two real reasons in `docs/DECISIONS_NEEDED.md` item 3 (an unreconciled dual XML schema in Google's own docs, and a Play-Console-upload-plus-review gate that's an account decision, not an engineering task) — skipped-around per the standing instruction, not silently dropped.
+
+**Verification is asymmetric between platforms — a real finding, disclosed, not glossed over, and more precise than what was logged when Phase 7 started:**
+- **Android: genuinely run and inspected.** `npx expo prebuild --platform android --no-install` succeeds on this Windows machine with no Android SDK installed — the generated output was directly checked for correct file placement and correct, non-duplicated `AndroidManifest.xml` entries, across two separate prebuild runs. One real bug caught this way: `shortcuts.xml` originally referenced nonexistent custom drawable icons that would have failed the Gradle build — fixed to `@mipmap/ic_launcher`, which every prebuild actually generates.
+- **iOS: zero run verification, not just "can't compile."** `npx expo prebuild --platform ios` refuses to run on Windows *at all* ("Run `npx expo prebuild` again from macOS or Linux") — worse than the original note below implied. Neither the Swift file nor its config plugin's Xcode-project registration logic has ever executed against a real project. `docs/DECISIONS_NEEDED.md` item 3 updated with this corrected finding and a real question for Khris about closing the macOS/Linux gap (a provisioned Mac, EAS Build's cloud iOS builds, or Khris verifying on his own machine).
+
+**Also found and disclosed**: Expo's local config-plugin loader transpiles the one `.ts` file named in `app.json`'s `plugins` array on the fly, but doesn't resolve that file's own local `.ts` imports — confirmed by running prebuild against a first multi-file-TypeScript draft (failed with "Cannot find module"). All three plugin files are plain CommonJS `.js` instead — the standard convention for exactly this reason, not a downgrade.
+
+**Verified the shared JS side didn't regress anything**: `tsc`/eslint/Jest (34/34) all clean, and a real `npx expo export --platform android` bundle still builds after `app.json` gained the new plugin reference — confirms the 3 existing screens keep working in Expo Go exactly as before. Only the native features themselves need a real native build (`npx expo run:ios`/`run:android`, which `expo prebuild` auto-updated the npm scripts to reflect).
 
 ---
 
