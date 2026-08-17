@@ -124,9 +124,19 @@ Its own significant chunk of native Swift/Kotlin work, per Khris's own framing �
 
 - **Mastery tab (mobile) + `mastery_engine.py` wiring (backend).** Both are blocked on the same real, unresolved question: what does "song identity" (`song_id`) mean in this app? Nothing downstream of that question — not the backend wiring, not a mobile screen — should get built as a guess. This is Khris's call, not something to default on to keep momentum. Logged in `docs/DECISIONS_NEEDED.md`.
 
-## Interleaved, not its own phase — Cantos engine wiring (standing task #20)
+## Interleaved, not its own phase — Cantos engine wiring (standing task #20) ✅ 7 of ~21
 
-Only 1 of ~21 real engines is wired into Cantos Notebooks/Board today (`docs/PROJECT_STATUS.md`). This is real feature work, not scaffold work, but it touches the exact files Phase 1 is about to move — **do this after Phase 1b relocates those engine files**, so the wiring code gets written once against final import paths instead of written now and updated later. This is the second concrete example (after Khris's own OpenAPI one) of the plan's governing rule in action.
+Was 1 of ~21 real engines wired into Cantos Notebooks/Board (`docs/PROJECT_STATUS.md`) — done after Phase 1b relocated the engine files, per this plan's own governing rule, so the wiring code was written once against final import paths.
+
+**✅ 6 more real engines wired this pass — motif, rhyme, density, pocket, phrase_container, semantics.** `cantos/wiring.py`'s new `record_full_analysis_snapshot()` runs the full `/analyze` pipeline once and gives each engine both halves of Launch Spec §3 step 3: an always-written Notebook Entry, and a Board Post when the finding clears `SALIENCE_THRESHOLD` (0.5, matching `meetings.py`'s own `T_JOIN_DEFAULT`). Signal names reuse `cantos/meetings.py`'s pre-existing `SIGNAL_ADJACENCY` vocabulary where a real match existed (`motif_return`, `rhyme_family_return`, `density_spike`, `pocket_slip`, `emotion_rising`) — that map was designed before any engine actually posted to the board, so this is the first time it's exercised for real. `phrase_container` needed one genuinely new signal (`container_boundary_shift`, added to the adjacency map with its own reasoning comment).
+
+**The actual point, proven end-to-end, not assumed:** `cantos/meetings.py`'s Meeting-trigger logic has existed since earlier this session but had nothing to trigger on — nothing had ever called `board.post()`. `tests/test_cantos_wiring.py::test_related_engines_can_now_form_a_real_meeting` runs a real (empirically-verified, not guessed-at) dense verse through the real pipeline, confirms both `motif` and `rhyme` clear salience and land on the same board section, and confirms `meetings.evaluate_meetings()` actually forms a real Meeting from them — the dead machinery is live for the first time.
+
+`semantics` required genuinely new computation, not just reading an existing field — `feedback_engine.assemble_feedback()` never calls `semantics_engine.py` today, confirmed by checking its import list rather than assumed. Built as average pairwise `semantic_similarity()` across each rhyme family's member words, directly matching that engine's own documented purpose.
+
+Still not wired, each for a real, disclosed reason (not an oversight) — see `cantos/wiring.py`'s own module docstring for the full reasoning: `device` (no dedicated engine exists in this codebase for it — the spec's "device" means literary device, not `device_detection_engine.py`, which is an unrelated hardware-detection module in the disconnected ML-experiment cluster), `mastery` (blocked on the `song_id` product decision above), `drift_engine` (needs cross-session snapshot storage — real, bigger scope, correctly flagged as such since `cantos/wiring.py`'s original note).
+
+Verified: 10/10 tests in `tests/test_cantos_wiring.py` (6 new), mypy clean (59 files), ruff clean, golden master byte-identical (5/5), `api.py` still boots to 44 routes, full suite green.
 
 ---
 

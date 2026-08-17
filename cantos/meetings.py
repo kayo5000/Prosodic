@@ -15,10 +15,13 @@ conflict-for-flavor.
 
 SIGNAL_ADJACENCY is a STARTER set. The spec gives exactly one worked
 example (theme_strengthening <-> emotion_rising <-> rhyme_family_return);
-everything else here is my own reasonable extension, since no engine is
-actually wired to post real board signals yet (that's future work — see
-docs/cantos/OVERNIGHT_BUILD_SUMMARY.md). Extend this map once real signal
-vocabulary exists from wired-up engines.
+everything else here is my own reasonable extension. UPDATE: as of
+cantos/wiring.py's record_full_analysis_snapshot(), 6 real engines
+(motif, rhyme, density, pocket, phrase_container, semantics) now
+actually post real board signals — most reuse the vocabulary already
+here (motif_return, rhyme_family_return, density_spike, pocket_slip,
+emotion_rising), confirming those choices; container_boundary_shift
+below is the one genuinely new addition that vocabulary didn't cover.
 
 This module deliberately does NOT drop a Note to Cassius when a meeting
 closes — §2.4/§3 step 5 treats that as a separate action engines/meetings
@@ -44,6 +47,11 @@ _ADJACENCY_PAIRS = [
     ('density_spike', 'multisyllabic_surge'),
     ('multisyllabic_surge', 'internal_rhyme_return'),
     ('motif_return', 'rhyme_family_return'),
+    # phrase_container's signal — a shifting bar-boundary read is
+    # structurally the same kind of finding as a flow disruption (both
+    # are "the verse's shape is moving"), so it joins that cluster
+    # rather than starting an isolated one of its own.
+    ('container_boundary_shift', 'flow_disruption'),
 ]
 
 
