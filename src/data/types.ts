@@ -1,0 +1,136 @@
+// Canonical data-shape types for build order step 1.
+// See CLAUDE.md "V1 scope — locked > Data shape" for the spec these mirror.
+//
+// Nothing in this file stores a raw engine score. MetricDefinition,
+// Rollup, Fingerprint, and Goal all reference `metricId`, which only
+// exists in the canonical namespace once the calibration boundary
+// (build order step 4) has run. Until then this is structure only.
+
+export type MetricFamily =
+  | 'rhyme'
+  | 'cadence'
+  | 'density'
+  | 'motif'
+  | 'stress'
+  | 'audio'
+  | 'mastery'
+  | 'timbre'
+  | 'device'
+  | 'phonoaffective';
+
+export type MetricScoreType =
+  | 'continuous'
+  | 'count'
+  | 'categorical'
+  | 'duration_seconds'
+  | 'boolean';
+
+export type MetricDirection = 'higher_is_better' | 'lower_is_better' | 'neutral';
+
+export type MetricAggregation = 'mean' | 'sum' | 'latest' | 'max' | 'min' | 'weighted_mean';
+
+export interface MetricDisplayMeta {
+  label: string;
+  shortLabel?: string;
+  description?: string;
+  /** Presentational only, e.g. "percent", "0-1", "bpm", "seconds". */
+  format?: string;
+}
+
+/** The canonical metric registry. Events/Rollups/Fingerprint/Goals all reference metricId here. */
+export interface MetricDefinition {
+  metricId: string; // e.g. "rhyme.density" — namespaced, stable once assigned
+  family: MetricFamily;
+  scoreType: MetricScoreType;
+  unit: string | null;
+  direction: MetricDirection;
+  aggregation: MetricAggregation;
+  display: MetricDisplayMeta;
+  /** Bumped whenever this metric's calibration changes meaning; Rollup/Fingerprint rows carry the version they were computed under. */
+  version: number;
+  createdAt: string; // ISO 8601
+  updatedAt: string; // ISO 8601
+}
+
+export type EventType =
+  | 'song_saved'
+  | 'session_started'
+  | 'session_ended'
+  | 'keystroke_timer_tick'
+  | 'voice_detection_tick'
+  | 'mastery_checkpoint'
+  | 'challenge_completed'
+  /** Calibrated analysis landed. Payload carries canonical metrics only — never a raw engine score. */
+  | 'analysis_calibrated';
+
+/** Raw, dated snapshot of something that happened. The Mastery Countdown reads these directly. */
+export interface Event<TPayload extends Record<string, unknown> = Record<string, unknown>> {
+  id: string; // uuid
+  type: EventType;
+  songId: string | null;
+  occurredAt: string; // ISO 8601
+  payload: TPayload;
+  createdAt: string; // ISO 8601, when the row was written locally
+  syncedAt: string | null; // ISO 8601, when it was last confirmed synced
+}
+
+export type RollupPeriod = 'weekly' | 'monthly';
+
+/** Precomputed weekly/monthly summary for dashboard speed. Metric-agnostic by design. */
+export interface Rollup {
+  id: string;
+  metricId: string;
+  period: RollupPeriod;
+  periodStart: string; // ISO date, start of the week/month this rollup covers
+  value: number;
+  metricVersion: number; // MetricDefinition.version at the time this was computed
+  computedAt: string; // ISO 8601
+}
+
+/** Current-state aggregate style profile — one row per metric, replaced (not appended) as it updates. */
+export interface Fingerprint {
+  metricId: string;
+  value: number;
+  metricVersion: number;
+  computedAt: string; // ISO 8601
+}
+
+export type GoalDirection = 'increase' | 'decrease' | 'maintain';
+
+/** User-set, per-metric. Gates everything the flaw detector may surface. */
+export interface Goal {
+  id: string;
+  metricId: string;
+  direction: GoalDirection;
+  targetValue: number | null;
+  active: boolean;
+  createdAt: string; // ISO 8601
+  archivedAt: string | null; // ISO 8601
+}
+
+export type BpmSource = 'user' | 'detected';
+export type InputMode = 'text' | 'record' | 'import_mp3';
+
+export interface SongStructureSection {
+  label: string; // "verse" | "hook" | "bridge" | freeform
+  startBar: number | null;
+  endBar: number | null;
+}
+
+/** Spine object for song-level state, threaded through Input -> Analysis -> Mastery Countdown. */
+export interface SongContext {
+  id: string;
+  title: string;
+  inputMode: InputMode;
+  bpm: number | null;
+  bpmSource: BpmSource | null;
+  structure: SongStructureSection[] | null;
+  /** The written or transcribed lyrics. Null for a recorded/imported song with no transcript yet. */
+  bodyText: string | null;
+  /** Instrumental / Backing track URI if imported (Step 2/5 instrumental awareness). */
+  backingTrackUri?: string | null;
+  /** Offset in milliseconds for beat alignment. */
+  audioOffsetMs?: number | null;
+  createdAt: string; // ISO 8601
+  updatedAt: string; // ISO 8601
+}

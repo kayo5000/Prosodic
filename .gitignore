@@ -30,6 +30,9 @@ yarn-error.*
 .DS_Store
 *.pem
 
+# Claude Code plugin cache
+.ingest/
+
 # local env files
 .env*.local
 
@@ -41,3 +44,9 @@ example
 # generated native folders
 /ios
 /android
+
+# local scratch space — never part of the build
+scratch/
+
+# JetBrains IDE
+.idea/
