@@ -212,9 +212,14 @@ database" is.
    step 2** (record, MP3 import, microphone permissions).
    - *Exit:* record ten seconds on a real device, play it back, and see
      the take listed in the vault after an app restart.
-6. **Mastery Countdown**
+6. **Mastery Countdown** ⚠️ **KEYSTROKE HALF BUILT** — pure clock in
+   `services/masteryClock.ts` (23 tests, deterministic, takes `nowMs`
+   rather than reading the clock), `mastery_state` table (v8), committed
+   total persisted on interval and session end, countdown live in the
+   Song View header. Voice-detection half needs on-device VAD.
    - *Exit:* typing moves the clock; thirty seconds of silence freezes it
-     at the last-keystroke checkpoint.
+     at the last-keystroke checkpoint. **Met for text, in test.** Not
+     observed on a device.
 7. **Goals + Flaw detection**
    - *Exit:* a flaw only surfaces for a metric the user has opted into,
      and disappears when the goal is archived.
