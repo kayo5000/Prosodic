@@ -100,10 +100,13 @@ signal, not the product.
    e.g. 32 bars of mono-rhyme isn't flagged unless the user chose "rhyme
    variety" as something they're working on.
 
-7. **AI Mentor** — one mentor persona, backed by analysis sub-engines
-   feeding it context directly. Text chat only in v1. Not proactive — it
-   doesn't call or message the user. Oriented toward growth, not
-   agreement; not submissive.
+7. **AI Mentor** — one mentor persona (Osborne), backed by analysis
+   sub-engines feeding it context directly. Text chat only in v1. Not
+   proactive — it doesn't call or message the user. Oriented toward
+   growth, not agreement; not submissive. Access scope: Osborne can read
+   all app sections/data by default — personal info and a handful of
+   specific user settings are the only carve-outs (both enumerated at
+   Step 8, not before).
 
 8. **Data shape:**
    - Events — raw, dated snapshots of every session/song, including
@@ -186,14 +189,15 @@ database" is.
    Goals, SongContext, MetricDefinition, on-device SQLite, sync contract.
    - *Exit:* the canonical registry is seeded on app start and every
      FK-constrained table can be written to.
-2. **Song View + Input** ⚠️ **PARTIAL — text only** — text ✅,
-   gesture/keyboard behavior ✅, offline resume ✅. Record ❌, MP3
-   import ❌, permissions ❌ — there is no audio dependency in
-   `package.json` and no microphone permission in `app.json`. The
-   recorder UI in `PlannerModal.tsx` is presentational with hardcoded
-   sample takes.
+2. **Song View + Input** ⚠️ **CODE-COMPLETE, UNVERIFIED ON HARDWARE** —
+   text ✅, gesture/keyboard behavior ✅, offline resume ✅, record ✅,
+   MP3 import ✅, permissions ✅. `expo-audio` and
+   `expo-document-picker` installed, microphone permission declared,
+   `voice_takes` (v4) and `song_context.backing_track_uri` (v6) exist
+   and are written by the UI. The hardcoded sample takes are gone.
    - *Exit:* write a verse, kill the app, reopen it, the verse is there.
-     (Met for text. Not met for audio — see step 5.)
+     Met for text. **Not met for audio** — no microphone has captured
+     sound and no file has been picked or played on a real device.
 3. **Raw text engine integration** ✅ — rhyme, cadence, density, motif,
    stress; not yet persisted or user-visible.
    - *Exit:* `analyzeLyricsMaster` returns a populated report for real
@@ -231,6 +235,156 @@ database" is.
 - Lightweight share/export of a snapshot (not a social platform)
 - Connected/social users
 - Mentor initiating contact (calls/messages)
+- Multi-dimensional metrics engine — expand each analysis engine (rhyme,
+  cadence, density, motif, stress, audio, catchiness, concreteness,
+  phoneme) beyond current basic metrics into the full set discussed
+  2026-09-04: phrase structure/flow-pattern detection, cadence momentum,
+  syncopation, spillover/enjambment analysis, motif evolution over time,
+  vocal timbre/delivery-consistency analysis, hook/catchiness mechanics,
+  imagery/concreteness dimensions. All framed as descriptive/neutral —
+  never "sloppy" or "bad," since deviation from a pocket can be
+  intentional style, not failure. Feeds the Genre Engine below.
+- Genre/Era/Geography Engine — reads the expanded metrics and produces a
+  sonic fingerprint (primary genre, sub-genre blend, regional/cultural
+  influence, era influence, comparable artists), validated against a
+  Golden Master library of 50+ labeled reference-artist profiles rather
+  than surface metrics alone (BPM/cadence is not enough — a false
+  classification here is a credibility risk for the whole app). Needs
+  confidence thresholds (stay quiet below ~60-70% rather than force a
+  label) and explicit cultural-authenticity checks, not stereotyping.
+- Upload + Story feature — fans upload a song (audio + lyrics) for
+  metrics only. Artists can additionally upload pre-Prosodic material
+  with context (age, year, years of experience) to build a "Story"
+  timeline in their fingerprint/profile, showing measurable growth over
+  time. Story completion (not just hour count) gates crossing from a
+  regular account into the 10,000-hour Masters Club; Canon Events
+  (named milestones) are optional within it.
+- Freestyle performance analysis — a freestyle is a different task from a
+  written verse, not the same task done worse, so judging it by written
+  standards is a category error. The classification layer is BUILT
+  (migration v7, `performance_mode` on takes, asked never inferred, with
+  `other_artist` so quoting someone else's verse has a truthful answer).
+  What still needs on-device audio:
+    - Fast, no words needed: hesitation gaps (silence not landing on a
+      rhythmic rest), gap position (mid-bar before a rhyme = searching),
+      recovery time after a stumble, sustain curve across bars.
+    - Slow, needs transcription: filler rate, immediate self-repetition
+      (repeating to stay afloat), rhyme-search latency, semantic
+      coherence under pressure.
+    - Hardest piece, everything depends on it: telling a deliberate empty
+      bar from running out of words. Both are silence. Three
+      discriminators — position (intentional space lands on a bar
+      boundary; searching happens mid-bar), what follows (confident
+      re-entry vs rushing to catch up), and duration shape (a rest is
+      clean; a search has ragged edges or a held vowel).
+    - Difficulty is context, not a score bonus: freestyles compare to
+      other freestyles, never across modes. That split makes "your
+      freestyle density is now within 10% of your written density" a
+      visible finding, which it is not otherwise.
+    - Anomaly prompt: when the freestyle markers go quiet all at once
+      (not merely "quality went up"), ask whether it was written —
+      worded as data protection, never suspicion, and only when the
+      markers are near-absent, so a genuine breakthrough is never
+      deflated by being questioned.
+- Quick Record (Memo) feature — a fast record-a-melody-or-freestyle
+  capture separate from the main Song Studio flow. On stop: save as
+  memo, send to a new song draft, or set a research/practice reminder.
+  Real-time pointers during/after recording (e.g. "you rushed the
+  bridge"), backed by the same metrics engine.
+- Engines as AI personas + "dreaming" memory — considered turning each
+  analysis engine into its own LLM-backed character (voice/personality)
+  rather than a silent scorer, with a scheduled memory-consolidation
+  step per persona modeled on Anthropic's Claude Dream (review recent
+  sessions between uses, update its own memory, no human has to point
+  out the pattern). Researched against the old Prosodic codebase
+  2026-09-04: no prior art for this exists there — the old app enforced
+  the opposite, a tested "zero mouth violations" rule where every engine
+  stayed silent/numeric and exactly one top-level mentor persona (VEIL/
+  "Osborne") spoke on their behalf. Reusable from that codebase: the
+  `AIProvider` interface/adapter/circuit-breaker pattern, and VEIL's
+  system-prompt-as-character technique as a template for N personas
+  instead of one. Real constraint if revisited: analysis currently fires
+  on every ~500ms autosave debounce, so per-persona LLM calls cannot run
+  at that frequency — any persona/dreaming layer must trigger on
+  explicit user action (song completion, "get feedback") or on a
+  scheduled cadence (weekly dreaming), never on live keystrokes. Rough
+  modeled cost at Sonnet 5 pricing ($3/$15 per M input/output tokens):
+  ~$0.03-0.05 per song for an 8-persona feedback pass, ~$0.08/week for a
+  full dreaming cycle across 8 personas — roughly $1-1.35/active
+  user/month. This is Step 8 (AI Mentor) territory, not Step 5, and a
+  materially bigger scope than the single-mentor version already
+  implied by the v1 spec — revisit at Step 8, not before.
+
+  Refined 2026-09-04 into a specific premium feature, "Dream Window":
+  a paid yearly subscription (user correction, same day: membership is
+  bought, not purely hours-earned — this needs reconciling later against
+  the Upload/Story entry above, which still gates the 10,000-hour
+  Masters Club itself on Story completion, not payment; whether Dream
+  Window is the same gate as Masters Club or a separate paid add-on on
+  top of it is undecided, flag at Step 8). No internal tiers once
+  someone is a paying member — the shallow-vs-deep triage below is a
+  response-timing mechanism (answer now vs. fold into tonight's cycle),
+  never a paywall ladder inside the feature itself. Where the user can
+  read a transcript of the personas' overnight "conversation" debating
+  and synthesizing insight about their craft/progression/projects.
+  Design corrections locked in during this discussion:
+    - The "conversation" must be one carefully-orchestrated generation
+      producing a dialogue-formatted transcript, never literal live
+      multi-agent message-passing between separate API calls — same
+      effect, a fraction of the cost, none of the latency/rate-limit
+      fragility.
+    - Every claim in the transcript must trace back to a real
+      fingerprint/rollup value. No claim, no line — this is the single
+      biggest lever on whether the feature feels revelatory or like
+      slop, given how much anticipation "insight you've never seen
+      before" sets up.
+    - The overnight cycle needs an actual server-side scheduled job
+      (worker + queue), independent of the app being open — the first
+      feature in this build that requires the backend to proactively do
+      work rather than just store/relay on-device data.
+    - Users can leave Osborne (the single top-level mentor, matching
+      VEIL's role in the old codebase — never the individual engine
+      personas directly) a question or prompt to have the team ponder.
+      Osborne triages it: shallow/factual questions get answered
+      immediately in real time (cheap, fast model tier — no dream cycle
+      triggered); questions with real depth (need synthesis across
+      metrics/time, benefit from the personas disagreeing and
+      reconciling) get folded into the next dream cycle alongside the
+      baseline autonomous craft/progression review, which never gets
+      replaced by a directed question, only supplemented.
+    - Escalation override: after a quick real-time answer, the user can
+      say "have the team actually sit with this overnight anyway" —
+      protects against Osborne misjudging a casually-phrased but
+      genuinely deep question as shallow.
+    - Input surface should be a curated prompt menu + one short
+      freeform note, not an open chat box — unconstrained free text
+      turns this into "ask the AI anything" and defeats the premise.
+    - Unify with the Quick Record memo "set a reminder" mechanism from
+      the memo backlog entry above — one inbox for "leave a note for
+      later," two entry points, not two separate systems.
+    - Personas must be allowed to answer "not enough data yet" rather
+      than always producing a confident answer — the credibility of the
+      other 90% of transcripts depends on the system being willing to
+      say this sometimes.
+    - "Equip engines/personas with ECC" was asked and rejected: ECC
+      (this development harness's agents/skills) is dev-time tooling for
+      building Prosodic, not something that ships into a production
+      backend — it assumes file/bash access and a single developer
+      footing the bill, neither of which fits a multi-tenant mobile
+      backend. The real equivalent, confirmed as the design: each
+      persona is one LLM call with a defined role plus a short list of
+      narrow, read-only, per-user-scoped lookup functions (native
+      API tool-use) — never file/bash access, never open-ended action-
+      taking. The 8 silent analysis engines need none of this; only the
+      talking layer (Osborne, his inner hemispheres, the dream
+      personas) ever calls an LLM.
+    - Osborne's access scope, reconfirmed: matches the "AI Mentor" line
+      already locked under V1 scope above — read access to all app
+      sections/data by default, with personal info and a handful of
+      specific user settings as the only carve-outs (enumerated at
+      Step 8, not before). Do not scope him down to a narrow hand-picked
+      tool list in the name of caution — the carve-out list is the
+      control, not a short allowlist of what he's permitted to see.
 
 ## Reference: old Prosodic codebase
 
@@ -273,26 +427,56 @@ this build. Old code is a logic reference only through build order step
 ## Current step
 
 **Step 5 — Audio analysis, which now also carries the unfinished audio
-half of step 2.** Steps 0-4 are built. Step 2 is text-only.
+half of step 2.** Steps 0-4 are built. Step 2's text half is built.
+Step 5's first slice — record a take, play it back, list it under the
+song — is code-complete and unverified on a device (see below).
 
 Verified by running the checks, not by self-report:
 
 - `npx tsc --noEmit` — exit 0.
-- `npx jest` — all suites pass.
+- `npx jest` — 24 suites, 156 tests, all pass.
 - Calibration boundary is wired: `persistCalibratedSession` is called
   from the Song View save path, seeds canonical metrics on DB open, and
   writes `analysis_calibrated` events plus fingerprint rows.
 - `src/services/persistCalibratedSession.test.ts` fails if a raw engine
   score reaches any SQL parameter, or if a metric_id outside the
   canonical namespace is emitted.
+- `expo-audio` (~57.0.4) is installed, `app.json` declares the
+  microphone permission plugin (`NSMicrophoneUsageDescription` on iOS,
+  `RECORD_AUDIO` on Android).
+- `voice_takes` table exists (migration v4), FK'd to `song_context`,
+  append-only like Events — a bad take is deleted, never corrected in
+  place. `src/data/repositories/voiceTakes.test.ts` covers insert/list/
+  delete against the fake DB harness.
+- `src/hooks/useVoiceRecorder.ts` is the one file that touches
+  `expo-audio` directly — permission request, start/stop, live
+  duration — so the native surface stays in one place.
+- `PlannerModal`'s "Voice Vault" now renders real takes for the active
+  song and records real ones; the record button flips to a live "Stop
+  (0:07)" state and a fresh take appears in the list on save. The
+  hardcoded sample takes are gone.
+- Voice takes reload on song switch and reset on new-song creation,
+  handled explicitly in `handleSelectSong`/`handleCreateNewSong` rather
+  than an effect — an effect that read `activeSong.id` and called
+  `setVoiceTakes` synchronously was caught by
+  `react-hooks/set-state-in-effect` during this build and removed.
+
+**Not yet verified — flagged explicitly per the Verification protocol,
+not rounded up to done:**
+
+- **Never run on a real device or emulator.** Permission prompts,
+  actual microphone capture, and file playback have not been observed
+  by a human. This is not possible from this Windows dev machine
+  without Android Studio/a physical device/EAS build. The Step 5 exit
+  criterion — "record ten seconds on a real device, play it back, and
+  see the take listed in the vault after an app restart" — is not met
+  until someone does this on hardware.
+- Everything downstream of raw audio — on-device VAD, server-side heavy
+  DSP, BPM refinement into SongContext, MP3 import — is still unbuilt.
+  This slice only proves the app can capture and play back a voice.
 
 Known gaps, deliberately not rounded up to done:
 
-- **No audio anywhere.** No `expo-audio`/`expo-av`/`expo-file-system`
-  dependency, no microphone permission, no recording code. This is the
-  highest-risk unproven assumption in the project — the app has never
-  been shown to hear a voice, and CLAUDE.md's own scope calls audio the
-  primary signal. Do this before Goals, Flaw detection, or the Mentor.
 - **On-device SQLite is still unverified.** `jest-expo` mocks the native
   module, so every data-layer test proves the JS call graph and not real
   SQLite behaviour. Needs a device or emulator run.

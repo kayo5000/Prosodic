@@ -51,7 +51,9 @@ import {
 } from '@/data/repositories/voiceTakes';
 import type { PerformanceMode, SongContext, VoiceTake } from '@/data/types';
 import { useBackingTrackImport } from '@/hooks/useBackingTrackImport';
+import { useMasteryClock } from '@/hooks/useMasteryClock';
 import { useTheme } from '@/hooks/use-theme';
+import { splitRemaining } from '@/services/masteryClock';
 import { persistCalibratedSession } from '@/services/persistCalibratedSession';
 import { analyzeLyricsMaster } from '@/services/prosodicCore';
 import { logError } from '@/utils/logError';
@@ -312,6 +314,7 @@ export default function ThinkPadScreen() {
     [],
   );
 
+  const mastery = useMasteryClock();
   const trackImport = useBackingTrackImport();
 
   const handleImportTrack = useCallback(async () => {
@@ -341,6 +344,9 @@ export default function ThinkPadScreen() {
 
   const handleChangeText = useCallback(
     (text: string) => {
+      // Only typing moves the clock. Opening modals, reading stats and
+      // changing BPM deliberately do not.
+      mastery.registerTyping();
       setBodyText(text);
       latestBodyText.current = text;
       pushHistory(text);
@@ -352,7 +358,7 @@ export default function ThinkPadScreen() {
         persistBodyText(activeSong.id, text);
       }, AUTOSAVE_DELAY_MS);
     },
-    [activeSong.id, persistBodyText, pushHistory],
+    [activeSong.id, mastery, persistBodyText, pushHistory],
   );
 
   // AppState listener to flush autosave on backgrounding
@@ -364,6 +370,9 @@ export default function ThinkPadScreen() {
           autosaveTimer.current = null;
         }
         persistBodyText(activeSong.id, latestBodyText.current);
+        // Backgrounding ends the session: keep the seconds typed just before
+        // leaving instead of rolling them back for want of a final keystroke.
+        mastery.flush();
       }
     });
     return () => {
@@ -372,7 +381,7 @@ export default function ThinkPadScreen() {
         clearTimeout(autosaveTimer.current);
       }
     };
-  }, [activeSong.id, persistBodyText]);
+  }, [activeSong.id, mastery, persistBodyText]);
 
   // BPM change handler
   const handleChangeBpm = useCallback(
@@ -517,6 +526,22 @@ export default function ThinkPadScreen() {
             onImportTrack={handleImportTrack}
             onClearTrack={handleClearTrack}
           />
+
+          {/* Mastery Countdown — 10,000 hours, only active practice moves it */}
+          <View style={styles.masteryRow}>
+            <View
+              style={[styles.masteryDot, mastery.isCounting && styles.masteryDotActive]}
+            />
+            <Text style={styles.masteryTime}>
+              {(() => {
+                const { hours, minutes, seconds } = splitRemaining(mastery.remainingMs);
+                return `${hours.toLocaleString()}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+              })()}
+            </Text>
+            <Text style={styles.masteryLabel}>
+              {mastery.isCounting ? 'counting' : 'to mastery'}
+            </Text>
+          </View>
 
           {/* Active Track Bar */}
           <View style={styles.titleModeRow}>
@@ -712,6 +737,32 @@ const styles = StyleSheet.create({
   keyboardAvoider: {
     flex: 1,
     gap: Spacing.two,
+  },
+  masteryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one,
+    paddingHorizontal: Spacing.two,
+    paddingTop: Spacing.one,
+  },
+  masteryDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: '#334155',
+  },
+  masteryDotActive: {
+    backgroundColor: '#10B981',
+  },
+  masteryTime: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#CBD5E1',
+    fontVariant: ['tabular-nums'],
+  },
+  masteryLabel: {
+    fontSize: 11,
+    color: '#64748B',
   },
   titleModeRow: {
     flexDirection: 'row',

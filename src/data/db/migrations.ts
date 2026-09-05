@@ -168,6 +168,21 @@ export const migrations: Migration[] = [
       db.execSync(`ALTER TABLE voice_takes ADD COLUMN mode_set_at TEXT;`);
     },
   },
+  {
+    version: 8,
+    description:
+      'mastery_state — committed practice time toward the 10,000 hours (step 6). One row, ' +
+      'enforced by CHECK. Events keep the audit trail; this is the fast read.',
+    up: (db) => {
+      db.execSync(`
+        CREATE TABLE IF NOT EXISTS mastery_state (
+          id INTEGER PRIMARY KEY CHECK (id = 1),
+          committed_ms INTEGER NOT NULL,
+          updated_at TEXT NOT NULL
+        );
+      `);
+    },
+  },
 ];
 
 export function assertMigrationsWellFormed(list: Migration[]): void {
