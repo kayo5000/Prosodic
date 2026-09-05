@@ -146,6 +146,17 @@ export const migrations: Migration[] = [
       `);
     },
   },
+  {
+    version: 6,
+    description:
+      'song_context.backing_track_uri / audio_offset_ms — the imported instrumental. ' +
+      'SongContext has declared these fields since step 1 but no column ever existed, ' +
+      'so they type-checked and then silently vanished on save.',
+    up: (db) => {
+      db.execSync(`ALTER TABLE song_context ADD COLUMN backing_track_uri TEXT;`);
+      db.execSync(`ALTER TABLE song_context ADD COLUMN audio_offset_ms INTEGER;`);
+    },
+  },
 ];
 
 export function assertMigrationsWellFormed(list: Migration[]): void {

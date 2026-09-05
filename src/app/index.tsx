@@ -38,6 +38,7 @@ import {
   getSongContext,
   insertSongContext,
   listSongContexts,
+  setBackingTrack,
   setSongBpm,
   updateSongBodyText,
   updateSongTitle,
@@ -45,6 +46,7 @@ import {
 import { insertLineEdits } from '@/data/repositories/lineEdits';
 import { insertVoiceTake, listVoiceTakesBySongId } from '@/data/repositories/voiceTakes';
 import type { SongContext, VoiceTake } from '@/data/types';
+import { useBackingTrackImport } from '@/hooks/useBackingTrackImport';
 import { useTheme } from '@/hooks/use-theme';
 import { persistCalibratedSession } from '@/services/persistCalibratedSession';
 import { analyzeLyricsMaster } from '@/services/prosodicCore';
@@ -96,6 +98,10 @@ export default function ThinkPadScreen() {
   const [voiceTakes, setVoiceTakes] = useState<VoiceTake[]>(() =>
     listVoiceTakesBySongId(getDb(), activeSong.id),
   );
+  // Only the URI is persisted; the original filename is display-only and is
+  // not worth a column, so it lives for the session and falls back to a
+  // generic label after a reload.
+  const [backingTrackName, setBackingTrackName] = useState<string | null>(null);
   const [bodyText, setBodyText] = useState(() => activeSong.bodyText ?? '');
   const [bpm, setBpm] = useState<number>(() => activeSong.bpm ?? 90);
   const [timeSignature, setTimeSignature] = useState<TimeSignature>('4/4');
@@ -281,6 +287,33 @@ export default function ThinkPadScreen() {
     [activeSong.id],
   );
 
+  const trackImport = useBackingTrackImport();
+
+  const handleImportTrack = useCallback(async () => {
+    try {
+      const picked = await trackImport.pickTrack();
+      if (!picked) return; // user cancelled — not an error
+      const now = new Date().toISOString();
+      setBackingTrack(getDb(), activeSong.id, picked.uri, 0, now);
+      setActiveSong((prev) => ({ ...prev, backingTrackUri: picked.uri, audioOffsetMs: 0 }));
+      setBackingTrackName(picked.name);
+    } catch (error) {
+      logError(`beat import failed for song ${activeSong.id}`, error);
+      Alert.alert('Import failed', 'That file could not be opened.');
+    }
+  }, [activeSong.id, trackImport]);
+
+  const handleClearTrack = useCallback(() => {
+    try {
+      const now = new Date().toISOString();
+      setBackingTrack(getDb(), activeSong.id, null, null, now);
+      setActiveSong((prev) => ({ ...prev, backingTrackUri: null, audioOffsetMs: null }));
+      setBackingTrackName(null);
+    } catch (error) {
+      logError(`clearing beat failed for song ${activeSong.id}`, error);
+    }
+  }, [activeSong.id]);
+
   const handleChangeText = useCallback(
     (text: string) => {
       setBodyText(text);
@@ -342,6 +375,7 @@ export default function ThinkPadScreen() {
         setHistory([nextBody]);
         setHistoryIndex(0);
         lastPersistedText.current = { songId: loaded.id, text: nextBody };
+        setBackingTrackName(null); // filename is session-only; the new song's URI drives the label
         try {
           setVoiceTakes(listVoiceTakesBySongId(getDb(), loaded.id));
         } catch (error) {
@@ -370,6 +404,7 @@ export default function ThinkPadScreen() {
     setHistoryIndex(0);
     setVoiceTakes([]); // a freshly created song has no takes yet
     lastPersistedText.current = { songId: newSong.id, text: '' };
+    setBackingTrackName(null);
     setDrawerVisible(false);
   }, [activeSong.id, persistBodyText]);
 
@@ -450,6 +485,12 @@ export default function ThinkPadScreen() {
             canRedo={historyIndex < history.length - 1}
             onUndo={handleUndo}
             onRedo={handleRedo}
+            backingTrackName={
+              backingTrackName ?? (activeSong.backingTrackUri ? 'Beat attached' : null)
+            }
+            isImportingTrack={trackImport.isImporting}
+            onImportTrack={handleImportTrack}
+            onClearTrack={handleClearTrack}
           />
 
           {/* Active Track Bar */}
