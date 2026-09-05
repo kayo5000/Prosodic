@@ -44,8 +44,12 @@ import {
   updateSongTitle,
 } from '@/data/repositories/songContext';
 import { insertLineEdits } from '@/data/repositories/lineEdits';
-import { insertVoiceTake, listVoiceTakesBySongId } from '@/data/repositories/voiceTakes';
-import type { SongContext, VoiceTake } from '@/data/types';
+import {
+  insertVoiceTake,
+  listVoiceTakesBySongId,
+  setPerformanceMode,
+} from '@/data/repositories/voiceTakes';
+import type { PerformanceMode, SongContext, VoiceTake } from '@/data/types';
 import { useBackingTrackImport } from '@/hooks/useBackingTrackImport';
 import { useTheme } from '@/hooks/use-theme';
 import { persistCalibratedSession } from '@/services/persistCalibratedSession';
@@ -274,6 +278,10 @@ export default function ThinkPadScreen() {
         uri: result.uri,
         durationMs: result.durationMs,
         recordedAt: now,
+        // Unclassified until the user answers. Never defaulted to freestyle:
+        // a wrong default would silently poison the freestyle baseline.
+        performanceMode: null,
+        modeSetAt: null,
         createdAt: now,
       };
       try {
@@ -285,6 +293,23 @@ export default function ThinkPadScreen() {
       }
     },
     [activeSong.id],
+  );
+
+  const handleSetPerformanceMode = useCallback(
+    (takeId: string, mode: PerformanceMode) => {
+      const now = new Date().toISOString();
+      try {
+        setPerformanceMode(getDb(), takeId, mode, now);
+        setVoiceTakes((prev) =>
+          prev.map((t) =>
+            t.id === takeId ? { ...t, performanceMode: mode, modeSetAt: now } : t,
+          ),
+        );
+      } catch (error) {
+        logError(`could not record performance mode for take ${takeId}`, error);
+      }
+    },
+    [],
   );
 
   const trackImport = useBackingTrackImport();
@@ -664,6 +689,7 @@ export default function ThinkPadScreen() {
           }}
           takes={voiceTakes}
           onTakeRecorded={handleTakeRecorded}
+          onSetPerformanceMode={handleSetPerformanceMode}
         />
       </SafeAreaView>
     </ThemedView>

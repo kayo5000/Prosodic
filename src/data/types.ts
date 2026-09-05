@@ -109,6 +109,17 @@ export interface Goal {
 }
 
 /**
+ * What a take actually was. Asked, never inferred — the same performance
+ * judged as a freestyle and as a written verse yields opposite conclusions,
+ * so guessing wrong inverts every reading built on it.
+ *
+ * `other_artist` exists so quoting or practising someone else's verse has a
+ * truthful answer. Without it an honest user has no correct option, and the
+ * system has taught them to lie to it.
+ */
+export type PerformanceMode = 'freestyle' | 'written' | 'other_artist' | 'mixed';
+
+/**
  * A recorded audio take attached to a song. A song can hold many takes
  * (record, try again, compare) — this is not a single field on
  * SongContext because "how many takes exist" and "which one is current"
@@ -120,6 +131,10 @@ export interface VoiceTake {
   uri: string; // local file:// URI from expo-audio; never a remote URL in v1
   durationMs: number;
   recordedAt: string; // ISO 8601, when recording finished
+  /** Null until the user answers. Null is never treated as freestyle. */
+  performanceMode: PerformanceMode | null;
+  /** When the mode was last set — a later correction moves this forward. */
+  modeSetAt: string | null;
   createdAt: string; // ISO 8601, when the row was written
 }
 

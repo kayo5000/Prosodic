@@ -157,6 +157,17 @@ export const migrations: Migration[] = [
       db.execSync(`ALTER TABLE song_context ADD COLUMN audio_offset_ms INTEGER;`);
     },
   },
+  {
+    version: 7,
+    description:
+      'voice_takes.performance_mode — freestyle vs written vs someone else\'s. Cannot be ' +
+      'backfilled: nobody can say later whether a take from months ago was off the top. ' +
+      'Null means unclassified, which is honest — it is never assumed to be freestyle.',
+    up: (db) => {
+      db.execSync(`ALTER TABLE voice_takes ADD COLUMN performance_mode TEXT;`);
+      db.execSync(`ALTER TABLE voice_takes ADD COLUMN mode_set_at TEXT;`);
+    },
+  },
 ];
 
 export function assertMigrationsWellFormed(list: Migration[]): void {
