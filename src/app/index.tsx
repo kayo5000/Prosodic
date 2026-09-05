@@ -42,11 +42,14 @@ import {
   updateSongBodyText,
   updateSongTitle,
 } from '@/data/repositories/songContext';
-import type { SongContext } from '@/data/types';
+import { insertLineEdits } from '@/data/repositories/lineEdits';
+import { insertVoiceTake, listVoiceTakesBySongId } from '@/data/repositories/voiceTakes';
+import type { SongContext, VoiceTake } from '@/data/types';
 import { useTheme } from '@/hooks/use-theme';
 import { persistCalibratedSession } from '@/services/persistCalibratedSession';
 import { analyzeLyricsMaster } from '@/services/prosodicCore';
 import { logError } from '@/utils/logError';
+import { diffLines } from '@/utils/lineDiff';
 import { analyzeLyricsLines } from '@/utils/syllableCounter';
 import {
   getBarMetrics,
@@ -87,6 +90,12 @@ function loadInitialSong(): SongContext {
 export default function ThinkPadScreen() {
   const theme = useTheme();
   const [activeSong, setActiveSong] = useState<SongContext>(loadInitialSong);
+  // Reads `activeSong.id` above rather than calling `loadInitialSong()` a
+  // second time — that function creates a new draft song as a side effect
+  // when none exists yet, so calling it twice would silently create two.
+  const [voiceTakes, setVoiceTakes] = useState<VoiceTake[]>(() =>
+    listVoiceTakesBySongId(getDb(), activeSong.id),
+  );
   const [bodyText, setBodyText] = useState(() => activeSong.bodyText ?? '');
   const [bpm, setBpm] = useState<number>(() => activeSong.bpm ?? 90);
   const [timeSignature, setTimeSignature] = useState<TimeSignature>('4/4');
@@ -116,6 +125,13 @@ export default function ThinkPadScreen() {
   // Guards against re-analysing identical text when a lifecycle event
   // (background, song switch, manual save) re-enters the same save path.
   const lastAnalyzed = useRef<{ songId: string; text: string } | null>(null);
+  // The last text actually written to the database, per song. diffLines needs
+  // a 'before' and the DB row has already been overwritten by the time we'd
+  // read it back, so the previous version is kept here.
+  const lastPersistedText = useRef<{ songId: string; text: string } | null>({
+    songId: activeSong.id,
+    text: activeSong.bodyText ?? '',
+  });
 
   useEffect(() => {
     latestBpm.current = bpm;
@@ -178,6 +194,22 @@ export default function ThinkPadScreen() {
   const persistBodyText = useCallback((songId: string, text: string) => {
     try {
       const now = new Date().toISOString();
+      // Diffed before the write, against the last version we persisted — the
+      // row is about to be overwritten, so this is the only moment the
+      // 'before' still exists. Capture only; nothing reads line_edits yet.
+      const previousText =
+        lastPersistedText.current?.songId === songId ? lastPersistedText.current.text : '';
+      const lineEdits = diffLines(previousText, text).map((edit) => ({
+        id: generateId(),
+        songId,
+        lineIndex: edit.lineIndex,
+        lineHash: edit.lineHash,
+        kind: edit.kind,
+        charsAdded: edit.charsAdded,
+        charsRemoved: edit.charsRemoved,
+        occurredAt: now,
+        createdAt: now,
+      }));
       withTransaction(getDb(), () => {
         const db = getDb();
         updateSongBodyText(db, songId, text, now);
@@ -193,7 +225,11 @@ export default function ThinkPadScreen() {
           createdAt: now,
           syncedAt: null,
         });
+        // Same transaction as the text itself: revision history must never
+        // disagree with the version it describes.
+        insertLineEdits(db, lineEdits);
       });
+      lastPersistedText.current = { songId, text };
     } catch (error) {
       // The user's text is the thing we cannot afford to lose, so a write
       // failure is recovered from rather than thrown — but it is never
@@ -222,6 +258,28 @@ export default function ThinkPadScreen() {
       logError(`calibrated analysis failed for song ${songId}`, error);
     }
   }, []);
+
+  const handleTakeRecorded = useCallback(
+    (result: { uri: string; durationMs: number }) => {
+      const now = new Date().toISOString();
+      const take: VoiceTake = {
+        id: generateId(),
+        songId: activeSong.id,
+        uri: result.uri,
+        durationMs: result.durationMs,
+        recordedAt: now,
+        createdAt: now,
+      };
+      try {
+        insertVoiceTake(getDb(), take);
+        setVoiceTakes((prev) => [take, ...prev]);
+      } catch (error) {
+        logError(`failed to save voice take for song ${activeSong.id}`, error);
+        Alert.alert('Take not saved', 'Something went wrong saving that recording.');
+      }
+    },
+    [activeSong.id],
+  );
 
   const handleChangeText = useCallback(
     (text: string) => {
@@ -283,6 +341,13 @@ export default function ThinkPadScreen() {
         setBpm(loaded.bpm ?? 90);
         setHistory([nextBody]);
         setHistoryIndex(0);
+        lastPersistedText.current = { songId: loaded.id, text: nextBody };
+        try {
+          setVoiceTakes(listVoiceTakesBySongId(getDb(), loaded.id));
+        } catch (error) {
+          logError(`failed to load voice takes for song ${loaded.id}`, error);
+          setVoiceTakes([]);
+        }
       }
       setDrawerVisible(false);
     },
@@ -303,6 +368,8 @@ export default function ThinkPadScreen() {
     setBpm(90);
     setHistory(['']);
     setHistoryIndex(0);
+    setVoiceTakes([]); // a freshly created song has no takes yet
+    lastPersistedText.current = { songId: newSong.id, text: '' };
     setDrawerVisible(false);
   }, [activeSong.id, persistBodyText]);
 
@@ -554,7 +621,8 @@ export default function ThinkPadScreen() {
             setPlannerModalVisible(false);
             setActiveTab('studio');
           }}
-          onRecordNewMemo={() => Alert.alert('Mic Active', 'Recording voice take to track timeline...')}
+          takes={voiceTakes}
+          onTakeRecorded={handleTakeRecorded}
         />
       </SafeAreaView>
     </ThemedView>

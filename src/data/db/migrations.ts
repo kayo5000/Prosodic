@@ -1,0 +1,160 @@
+import type { SQLiteDatabaseLike } from './types';
+
+export interface Migration {
+  version: number;
+  description: string;
+  up: (db: SQLiteDatabaseLike) => void;
+}
+
+// Ordered, additive. Never edit a migration once it has shipped to a real
+// device — add a new one instead, same as any other SQLite migration
+// discipline. `version` must be strictly increasing by 1.
+export const migrations: Migration[] = [
+  {
+    version: 1,
+    description:
+      'Initial data shape: metric_definitions, song_context, events, rollups, fingerprint, goals',
+    up: (db) => {
+      db.execSync(`
+        CREATE TABLE IF NOT EXISTS metric_definitions (
+          metric_id TEXT PRIMARY KEY,
+          family TEXT NOT NULL,
+          score_type TEXT NOT NULL,
+          unit TEXT,
+          direction TEXT NOT NULL,
+          aggregation TEXT NOT NULL,
+          display_json TEXT NOT NULL,
+          version INTEGER NOT NULL DEFAULT 1,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS song_context (
+          id TEXT PRIMARY KEY,
+          title TEXT NOT NULL,
+          input_mode TEXT NOT NULL,
+          bpm REAL,
+          bpm_source TEXT,
+          structure_json TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS events (
+          id TEXT PRIMARY KEY,
+          type TEXT NOT NULL,
+          song_id TEXT REFERENCES song_context(id),
+          occurred_at TEXT NOT NULL,
+          payload_json TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          synced_at TEXT
+        );
+        CREATE INDEX IF NOT EXISTS idx_events_song_id ON events(song_id);
+        CREATE INDEX IF NOT EXISTS idx_events_type_occurred_at ON events(type, occurred_at);
+
+        CREATE TABLE IF NOT EXISTS rollups (
+          id TEXT PRIMARY KEY,
+          metric_id TEXT NOT NULL REFERENCES metric_definitions(metric_id),
+          period TEXT NOT NULL,
+          period_start TEXT NOT NULL,
+          value REAL NOT NULL,
+          metric_version INTEGER NOT NULL,
+          computed_at TEXT NOT NULL,
+          UNIQUE(metric_id, period, period_start)
+        );
+
+        CREATE TABLE IF NOT EXISTS fingerprint (
+          metric_id TEXT PRIMARY KEY REFERENCES metric_definitions(metric_id),
+          value REAL NOT NULL,
+          metric_version INTEGER NOT NULL,
+          computed_at TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS goals (
+          id TEXT PRIMARY KEY,
+          metric_id TEXT NOT NULL REFERENCES metric_definitions(metric_id),
+          direction TEXT NOT NULL,
+          target_value REAL,
+          active INTEGER NOT NULL DEFAULT 1,
+          created_at TEXT NOT NULL,
+          archived_at TEXT
+        );
+        CREATE INDEX IF NOT EXISTS idx_goals_metric_active ON goals(metric_id, active);
+      `);
+    },
+  },
+  {
+    version: 2,
+    description: 'song_context.body_text — the actual written/transcribed content of a song',
+    up: (db) => {
+      db.execSync(`ALTER TABLE song_context ADD COLUMN body_text TEXT;`);
+    },
+  },
+  {
+    version: 3,
+    description: 'cmu_phonemes table — local SQLite pronouncing dictionary & phonetic resolver',
+    up: (db) => {
+      db.execSync(`
+        CREATE TABLE IF NOT EXISTS cmu_phonemes (
+          word TEXT PRIMARY KEY,
+          phonemes TEXT NOT NULL,
+          primary_vowel TEXT NOT NULL,
+          syllable_count INTEGER NOT NULL,
+          is_aave_variant INTEGER NOT NULL DEFAULT 0
+        );
+        CREATE INDEX IF NOT EXISTS idx_cmu_primary_vowel ON cmu_phonemes(primary_vowel);
+      `);
+    },
+  },
+  {
+    version: 4,
+    description: 'voice_takes table — recorded audio takes attached to a song (step 5)',
+    up: (db) => {
+      db.execSync(`
+        CREATE TABLE IF NOT EXISTS voice_takes (
+          id TEXT PRIMARY KEY,
+          song_id TEXT NOT NULL REFERENCES song_context(id),
+          uri TEXT NOT NULL,
+          duration_ms INTEGER NOT NULL,
+          recorded_at TEXT NOT NULL,
+          created_at TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_voice_takes_song_id ON voice_takes(song_id);
+      `);
+    },
+  },
+  {
+    version: 5,
+    description:
+      'line_edits table — per-line revision capture. Cannot be backfilled: which line an ' +
+      'edit touched and what kind of edit it was only exists at the moment of typing.',
+    up: (db) => {
+      db.execSync(`
+        CREATE TABLE IF NOT EXISTS line_edits (
+          id TEXT PRIMARY KEY,
+          song_id TEXT NOT NULL REFERENCES song_context(id),
+          line_index INTEGER NOT NULL,
+          line_hash TEXT NOT NULL,
+          kind TEXT NOT NULL,
+          chars_added INTEGER NOT NULL,
+          chars_removed INTEGER NOT NULL,
+          occurred_at TEXT NOT NULL,
+          created_at TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_line_edits_song_id ON line_edits(song_id);
+        CREATE INDEX IF NOT EXISTS idx_line_edits_song_line ON line_edits(song_id, line_index);
+      `);
+    },
+  },
+];
+
+export function assertMigrationsWellFormed(list: Migration[]): void {
+  for (let i = 0; i < list.length; i += 1) {
+    const expected = i + 1;
+    if (list[i].version !== expected) {
+      throw new Error(
+        `Migration list is out of order or has a gap: expected version ${expected} at index ${i}, got ${list[i].version}`,
+      );
+    }
+  }
+}

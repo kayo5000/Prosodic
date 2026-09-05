@@ -108,6 +108,44 @@ export interface Goal {
   archivedAt: string | null; // ISO 8601
 }
 
+/**
+ * A recorded audio take attached to a song. A song can hold many takes
+ * (record, try again, compare) — this is not a single field on
+ * SongContext because "how many takes exist" and "which one is current"
+ * are UI/user decisions, not spine state.
+ */
+export interface VoiceTake {
+  id: string;
+  songId: string;
+  uri: string; // local file:// URI from expo-audio; never a remote URL in v1
+  durationMs: number;
+  recordedAt: string; // ISO 8601, when recording finished
+  createdAt: string; // ISO 8601, when the row was written
+}
+
+/**
+ * One recorded revision to one line. Append-only.
+ *
+ * This is capture, not analysis — nothing reads it yet. It exists because the
+ * edit that produced a line cannot be recovered from the line afterwards, so
+ * any verse written before this table existed can never yield revision
+ * findings, no matter how good the analysis gets later.
+ *
+ * `lineHash` is what survives re-indexing: when a line moves, its content
+ * fingerprint still identifies it.
+ */
+export interface LineEdit {
+  id: string;
+  songId: string;
+  lineIndex: number;
+  lineHash: string;
+  kind: 'insert' | 'delete' | 'modify';
+  charsAdded: number;
+  charsRemoved: number;
+  occurredAt: string; // ISO 8601
+  createdAt: string; // ISO 8601
+}
+
 export type BpmSource = 'user' | 'detected';
 export type InputMode = 'text' | 'record' | 'import_mp3';
 
