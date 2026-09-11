@@ -1,0 +1,20 @@
+# Tierra calibration bench — audio/colour stack.
+# Deliberately separate from the app's requirements.txt: this is research
+# tooling for the CIELAB<->audio mapping, not a runtime dependency of api.py.
+colour-science>=0.4.7
+colorspacious>=1.1.2
+librosa>=0.11.0
+pyloudnorm>=0.1.1
+soundfile>=0.12
+scipy>=1.11
+numpy>=1.26
+
+# Named in the Foundations doc but NOT installable on Python 3.11 as-is:
+#   pymcd / mel-cepstral-distance  -> both pull fastdtw, whose C extension
+#       fails to build (longintrepr.h removed in CPython 3.11). MCD is
+#       implemented directly in tierra_bench.mcd() instead (Kubichek formula).
+#   crepe                          -> needs TensorFlow; librosa.pyin is used
+#       instead, which the Foundations doc lists as the accepted alternative.
+#   timbral_models (AudioCommons)  -> installs only after patching its 'sklearn'
+#       shim dep; at runtime brightness/sharpness work, warmth/depth need the
+#       pre-0.8 librosa positional API. Not imported by the bench.
