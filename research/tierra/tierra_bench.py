@@ -19,7 +19,6 @@ from scipy.stats import spearmanr
 
 SR = 22050
 DUR = 0.60
-rng = np.random.default_rng(7)
 
 DIV = '─' * 74
 def head(t):
@@ -166,7 +165,6 @@ def main():
     # ── STEP 2: the orthogonality test ───────────────────────────────────────
     head('STEP 2  Axis independence: does changing ONE audio property move only ONE Lab axis?')
 
-    base = dict(vowel='ER', f0_set=110, tilt=0.0, amp=0.12)
     b_ax = extract_axes(synth_vowel(110, VOWELS['ER'], 0.0, 0.12))
 
     def delta_report(label, ax2):
