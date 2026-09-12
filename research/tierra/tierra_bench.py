@@ -129,6 +129,52 @@ def map_evidence(ax, hue_deg):
     return np.array([L, C * np.cos(h), C * np.sin(h)])
 
 
+# Anikin & Johansson (2019) Table 4 effect sizes, as error-rate gaps in percent.
+# Used as RELATIVE WEIGHTS below rather than tuned by hand — see map_evidence_v2.
+AJ_EFFECT = {
+    ('pitch',    'L'): 3.2,
+    ('centroid', 'L'): 4.0,
+    ('loudness', 'L'): -3.9,     # negative: their listeners paired loud with DARK
+    ('pitch',    'C'): 4.9,
+    ('loudness', 'C'): 4.1,
+    ('centroid', 'C'): 3.5,
+}
+_WL = {k[0]: v for k, v in AJ_EFFECT.items() if k[1] == 'L'}
+_WC = {k[0]: v for k, v in AJ_EFFECT.items() if k[1] == 'C'}
+_SL = sum(abs(v) for v in _WL.values())
+_SC = sum(abs(v) for v in _WC.values())
+
+L_SPAN, L_MID = 70.0, 45.0
+C_SPAN, C_FLOOR = 85.0, 8.0
+
+
+def map_evidence_v2(ax, hue_deg):
+    '''
+    v1 gave each colour channel exactly one input. The direction test showed that
+    is too orthogonal to match people: Anikin's listeners couple pitch to BOTH
+    lightness and saturation, and loudness to BOTH saturation and darkness.
+
+    v2 lets L* and C* each take all three acoustic inputs, weighted in proportion
+    to Anikin's published effect sizes. Hue still carries identity alone, so the
+    stability that made v1 usable as a UI identifier is preserved exactly.
+
+    IMPORTANT: because the weights come from Anikin Table 4, scoring this mapping
+    against Anikin Table 4 is no longer an independent test — it is a check that
+    the implementation does what was intended. Real validation needs held-out
+    data (Reymore's colour selections, or new listeners).
+    '''
+    p = _norm(ax['f0'], 80, 320)
+    c = _norm(ax['centroid'], 200, 3000)
+    ld = _norm(ax['lufs'], -45, -8)
+    feat = {'pitch': p, 'centroid': c, 'loudness': ld}
+
+    L = L_MID + L_SPAN * sum(_WL[k] / _SL * feat[k] for k in _WL)
+    C = C_FLOOR + C_SPAN * sum(_WC[k] / _SC * feat[k] for k in _WC)
+    C = max(C, 0.0)
+    h = np.deg2rad(hue_deg)
+    return np.array([L, C * np.cos(h), C * np.sin(h)])
+
+
 # ── 4. Stimulus set ──────────────────────────────────────────────────────────
 
 VOWELS = {                       # (F1, F2) in Hz, canonical American English

@@ -18,9 +18,14 @@ warnings.filterwarnings('ignore')
 
 import numpy as np
 
+import pyloudnorm as pyln
+
 from tierra_bench import (
-    synth_vowel, extract_axes, map_tierra, map_evidence, VOWELS, HUE,
+    synth_vowel, extract_axes, map_tierra, map_evidence, map_evidence_v2,
+    VOWELS, HUE, SR,
 )
+
+_METER = pyln.Meter(SR)
 
 # A colour move smaller than this is treated as "no change". CIELAB's own
 # just-noticeable difference is ~1 unit; 2.0 keeps us clear of synthesis noise.
@@ -47,34 +52,80 @@ PREDICTIONS = [
     ('centroid', 'chroma', +1, '3.5%',  'high freq -> saturated'),
     ('F1',       'L*',      0, 'null',  'formant shift -> no colour change'),
     ('F2',       'L*',      0, 'null',  'formant shift -> no colour change'),
-    ('pitch',    'a*',      0, 'null',  'nothing registers on green-red'),
+    ('pitch',    'hue',     0, 'null',  'nothing registers on hue'),
+    ('loudness', 'hue',     0, 'null',  'nothing registers on hue'),
 ]
+
+# Why 'hue' and not 'a*': Anikin's hue contrasts pitted red against green at
+# CONSTANT luminance and saturation, so his null says "at fixed chroma, hue
+# carries no acoustic signal" — not "the a* coordinate never moves". Those are
+# different claims. a* = C·cos(h), so any mapping that legitimately raises
+# saturation also moves a* at a fixed hue; scoring a* would punish a mapping for
+# obeying Anikin's own saturation results. Hue angle is the faithful test.
 
 BASE = dict(f0=110, formants=VOWELS['ER'], tilt=0.0, amp=0.45)
 
 
-def _stim(**over):
+def _audio(**over):
     p = dict(BASE); p.update(over)
-    return extract_axes(synth_vowel(p['f0'], p['formants'], p['tilt'], p['amp']))
+    return synth_vowel(p['f0'], p['formants'], p['tilt'], p['amp'])
+
+
+def _match_loudness(sig, target_lufs):
+    '''
+    Renormalise sig to a target integrated loudness.
+
+    Needed because changing spectral tilt or formants also changes how loud a
+    sound measures — on the first version of this test the tilt contrast moved
+    loudness by -3.3 LUFS, so the "brightness" rows were really measuring a
+    loudness drop. Anikin controlled this in his stimuli; so should we.
+    '''
+    cur = _METER.integrated_loudness(sig)
+    out = sig * (10.0 ** ((target_lufs - cur) / 20.0))
+    peak = np.max(np.abs(out))
+    return out / peak * 0.98 if peak > 0.98 else out
 
 
 def contrasts():
-    '''One pair per acoustic property, moving only that property.'''
-    base = _stim()
+    '''
+    One pair per acoustic property, moving ONLY that property.
+
+    Every pair except the loudness pair is loudness-matched to the baseline, so
+    a colour shift cannot be loudness leaking in through the back door. The
+    loudness pair is deliberately left unmatched — loudness is its variable.
+    '''
+    base_sig = _audio()
+    base_lufs = _METER.integrated_loudness(base_sig)
+    base = extract_axes(base_sig)
+
     f1_formants = [(730, 60), (1350, 90), (1690, 120)]   # F1 only: 490 -> 730
     f2_formants = [(490, 60), (2290, 90), (2600, 120)]   # F2 only: 1350 -> 2290
+
+    def matched(**over):
+        return extract_axes(_match_loudness(_audio(**over), base_lufs))
+
     return {
-        'pitch':    (base, _stim(f0=220)),
-        'loudness': (base, _stim(amp=0.95)),
-        'centroid': (base, _stim(tilt=6.0)),
-        'F1':       (base, _stim(formants=f1_formants)),
-        'F2':       (base, _stim(formants=f2_formants)),
+        'pitch':    (base, matched(f0=220)),
+        'loudness': (base, extract_axes(_audio(amp=0.95))),   # unmatched on purpose
+        'centroid': (base, matched(tilt=6.0)),
+        'F1':       (base, matched(formants=f1_formants)),
+        'F2':       (base, matched(formants=f2_formants)),
     }
+
+
+def hue_deg(Lab):
+    return float(np.degrees(np.arctan2(Lab[2], Lab[1]))) % 360.0
 
 
 def axis_delta(lo, hi, mapper):
     a, b = mapper(lo), mapper(hi)
-    return {'L*': b[0] - a[0], 'a*': b[1] - a[1], 'chroma': chroma(b) - chroma(a)}
+    dh = (hue_deg(b) - hue_deg(a) + 180.0) % 360.0 - 180.0   # shortest way round
+    return {
+        'L*':     b[0] - a[0],
+        'a*':     b[1] - a[1],
+        'chroma': chroma(b) - chroma(a),
+        'hue':    dh,
+    }
 
 
 def score(mapper, pairs, label):
@@ -111,19 +162,26 @@ def main():
     for prop, (lo, hi) in pairs.items():
         print(f'  {prop:<10} {hi["f0"]-lo["f0"]:>9.1f} {hi["lufs"]-lo["lufs"]:>9.1f} '
               f'{hi["centroid"]-lo["centroid"]:>14.1f}')
-    print('\n  NOTE: the F1/F2 rows carry a centroid shift. Anikin minimised this and')
-    print('  still found nothing; here any colour movement on those rows may be the')
-    print('  centroid leaking in, not the formant. Read those two verdicts as soft.')
+    print('\n  Every row except loudness is loudness-matched to the baseline, so a')
+    print('  colour shift cannot be loudness leaking in. The F1/F2 rows still carry a')
+    print('  small centroid shift, which Anikin minimised too and still found nothing.')
 
     t = score(map_tierra, pairs, 'TIERRA as written  (timbre→X, loudness→Y, pitch→Z)')
-    e = score(lambda ax: map_evidence(ax, HUE['ER']), pairs,
-              'EVIDENCE-LED  (pitch+centroid→L*, loudness→C*, identity→hue)')
+    e1 = score(lambda ax: map_evidence(ax, HUE['ER']), pairs,
+               'EVIDENCE-LED v1  (one input per channel)')
+    e2 = score(lambda ax: map_evidence_v2(ax, HUE['ER']), pairs,
+               'EVIDENCE-LED v2  (L* and C* each take all three, weighted by AJ effect sizes)')
 
     print(f'\n{DIV}\n  RESULT vs. published human data\n{DIV}')
     print(f'  Tierra as written : {t} / {len(PREDICTIONS)}')
-    print(f'  Evidence-led      : {e} / {len(PREDICTIONS)}')
-    print('\n  This scorer contains no numbers we chose. The predictions are Anikin &')
-    print('  Johansson (2019) Table 4; the tolerance is CIELAB\'s own JND.')
+    print(f'  Evidence-led v1   : {e1} / {len(PREDICTIONS)}')
+    print(f'  Evidence-led v2   : {e2} / {len(PREDICTIONS)}')
+    print('\n  READ v2\'s SCORE CAREFULLY. v2 takes its weights from the same table this')
+    print('  test scores against, so its result is NOT independent evidence — it only')
+    print('  confirms the implementation does what was intended. v1 and the Tierra')
+    print('  mapping were written before this test existed, so their scores are real.')
+    print('  Validating v2 needs held-out data: Reymore\'s colour selections, or new')
+    print('  listeners of your own.')
 
 
 if __name__ == '__main__':
