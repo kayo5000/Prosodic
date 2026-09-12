@@ -86,20 +86,56 @@ def assert_matches_golden(name, data):
     if live == saved:
         return
 
-    # Build a compact top-level diff summary rather than dumping the whole
-    # (often large) structure into the assertion failure.
-    diffs = []
-    if isinstance(live, dict) and isinstance(saved, dict):
-        all_keys = sorted(set(live) | set(saved))
-        for key in all_keys:
-            if live.get(key) != saved.get(key):
-                diffs.append(key)
     message = (
         f'Golden master "{name}" no longer matches saved snapshot at {path}.\n'
-        f'Changed top-level key(s): {diffs or "(structure differs — not both dicts)"}\n'
+        f'{_summarise_diff(live, saved)}\n'
         f'If this change is real and intended, regenerate with:\n'
         f'  UPDATE_GOLDEN=1 pytest tests/test_golden_master.py -q\n'
         f'then review the resulting diff on {path.name} and explain it in the '
         f'commit — same discipline as any other behavior change.'
     )
     assert live == saved, message
+
+
+def _summarise_diff(live, saved, max_examples=4):
+    '''
+    Compact, actionable description of how two snapshots differ.
+
+    The previous version only described dict-vs-dict and printed
+    "(structure differs — not both dicts)" for everything else. Both /suggest
+    snapshots are LISTS, so every value difference in them produced that same
+    message — which names no field, no index and no value. A CI failure on
+    those tests was therefore undiagnosable without checking out the branch and
+    reproducing by hand; that is what this function exists to prevent.
+    '''
+    if type(live) is not type(saved):
+        return f'Type changed: live is {type(live).__name__}, saved is {type(saved).__name__}'
+
+    if isinstance(live, dict):
+        keys = sorted(k for k in set(live) | set(saved) if live.get(k) != saved.get(k))
+        return f'Changed top-level key(s): {keys}'
+
+    if isinstance(live, list):
+        if len(live) != len(saved):
+            return f'Length changed: live has {len(live)} item(s), saved has {len(saved)}'
+        fields, examples = set(), []
+        for i, (a, b) in enumerate(zip(live, saved)):
+            if a == b:
+                continue
+            if isinstance(a, dict) and isinstance(b, dict):
+                for k in sorted(set(a) | set(b)):
+                    if a.get(k) != b.get(k):
+                        fields.add(k)
+                        if len(examples) < max_examples:
+                            examples.append(f'  [{i}] {k}: live={a.get(k)!r} saved={b.get(k)!r}')
+            else:
+                fields.add(f'item[{i}]')
+                if len(examples) < max_examples:
+                    examples.append(f'  [{i}] live={a!r} saved={b!r}')
+        lines = [f'Same length ({len(live)}); changed field(s): {sorted(fields)}']
+        if examples:
+            lines.append('First differences:')
+            lines.extend(examples)
+        return '\n'.join(lines)
+
+    return f'Value changed: live={live!r} saved={saved!r}'

@@ -27,6 +27,42 @@ from application.suggest_enrichment import enrich_suggestions
 
 
 @pytest.fixture(autouse=True)
+def _isolated_concreteness_db():
+    '''
+    Builds a tiny concreteness DB and points CONCRETENESS_DB_PATH at it.
+
+    The docstring above said this test used "the real bundled concreteness.db".
+    That file has never existed in the repository — not gitignored, never
+    committed — so get_concreteness() degraded to None and this test could not
+    pass on a clean clone. It has been failing on main for anyone who checks
+    the project out.
+
+    Asserting a real Brysbaert score tested the presence of a data file rather
+    than the enrichment code. A fixture with one known row tests the code, runs
+    anywhere, and stays deterministic. Shipping the real norms is a separate
+    decision (licensing for commercial use, and the repo's own convention is a
+    setup script rather than a committed dataset — see setup_thesaurus.py).
+    '''
+    import sqlite3
+    tmp = tempfile.NamedTemporaryFile(suffix='.db', delete=False)
+    tmp.close()
+    conn = sqlite3.connect(tmp.name)
+    conn.execute('CREATE TABLE ratings (word TEXT, concreteness REAL)')
+    conn.execute("INSERT INTO ratings VALUES ('fire', 4.68)")
+    conn.commit()
+    conn.close()
+
+    os.environ['CONCRETENESS_DB_PATH'] = tmp.name
+    import concreteness_engine
+    importlib.reload(concreteness_engine)
+    concreteness_engine._cached_concreteness.cache_clear()
+    yield
+    os.environ.pop('CONCRETENESS_DB_PATH', None)
+    importlib.reload(concreteness_engine)
+    os.unlink(tmp.name)
+
+
+@pytest.fixture(autouse=True)
 def _isolated_usage_db():
     tmp = tempfile.NamedTemporaryFile(suffix='.db', delete=False)
     tmp.close()
