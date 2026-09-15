@@ -439,5 +439,50 @@ export function updateBlockFromText(
   });
 }
 
+/**
+ * Updates full paper sections from raw multiline lyrics (used in Bars Off / blank field mode).
+ * Keeps sections and cadence blocks perfectly synchronized with continuous text.
+ */
+export function updateSectionsFromLyrics(
+  existingSections: import('./types').PaperSection[],
+  rawLyrics: string,
+): import('./types').PaperSection[] {
+  if (!existingSections || existingSections.length === 0) {
+    return [createSection('verse', 'movement-1', [], 1)];
+  }
+
+  if (existingSections.length === 1) {
+    const sec = existingSections[0];
+    const newBlocks = lyricsToCadenceBlocks(rawLyrics, Math.max(1, sec.blocks.length));
+    return [
+      {
+        ...sec,
+        blocks: newBlocks,
+      },
+    ];
+  }
+
+  // Multiple sections: distribute lines based on sections' bar allocations
+  const lines = rawLyrics.split('\n');
+  let lineCursor = 0;
+  const updated = existingSections.map((sec, sIdx) => {
+    const totalBarsInSec = sec.blocks.reduce((acc, b) => acc + b.bars.length, 0);
+    const isLastSection = sIdx === existingSections.length - 1;
+    const secLines = isLastSection
+      ? lines.slice(lineCursor)
+      : lines.slice(lineCursor, lineCursor + totalBarsInSec);
+    lineCursor += totalBarsInSec;
+
+    const newBlocks = lyricsToCadenceBlocks(secLines.join('\n'), Math.max(1, sec.blocks.length));
+    return {
+      ...sec,
+      blocks: newBlocks,
+    };
+  });
+
+  return reindexSectionsGlobalBars(updated);
+}
+
+
 
 

@@ -6,6 +6,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 
@@ -22,7 +23,9 @@ import {
   toggleBarFormatting,
   updateBarText,
   updateBlockFromText,
+  updateSectionsFromLyrics,
 } from './cadenceFormat';
+import { dissectLineIntoSyllableTokens } from '../../../utils/perceptualFamilies';
 import { CadenceBarRow } from './CadenceBarRow';
 import { PhraseSelectorModal } from './PhraseSelectorModal';
 import { SectionTextureModal } from './SectionTextureModal';
@@ -138,6 +141,30 @@ export function CadencePaperStudio({
       setSections(reindexed);
       pushHistory(reindexed);
       onLyricsChange?.(sectionsToLyrics(reindexed));
+    },
+    [sections, pushHistory, onLyricsChange],
+  );
+
+  // Single blank text field state for Bars Off mode
+  const rawSongLyrics = useMemo(() => sectionsToLyrics(sections), [sections]);
+  const [blankText, setBlankText] = useState<string>(rawSongLyrics);
+  const blankInputRef = useRef<TextInput>(null);
+
+  // Synchronize blankText when sections change externally (e.g. undo/redo, initial lyrics, or Bars On edits)
+  React.useEffect(() => {
+    setBlankText((prev) => {
+      if (prev === rawSongLyrics) return prev;
+      return rawSongLyrics;
+    });
+  }, [rawSongLyrics]);
+
+  const handleBlankTextChange = useCallback(
+    (newText: string) => {
+      setBlankText(newText);
+      const updatedSections = updateSectionsFromLyrics(sections, newText);
+      setSections(updatedSections);
+      pushHistory(updatedSections);
+      onLyricsChange?.(newText);
     },
     [sections, pushHistory, onLyricsChange],
   );
@@ -551,19 +578,21 @@ export function CadencePaperStudio({
         />
       ) : (
         <>
-          {/* 2. Section Timeline & Movement Bar */}
-          <SectionTimelineBar
-            movements={movements}
-            sections={sections}
-            activeSectionId={activeSectionId}
-            onSelectSection={handleSelectSection}
-            onOpenTexture={(secId) => {
-              handleSelectSection(secId);
-              setViewMode('texture');
-            }}
-            onAddSection={handleAddNewSection}
-            onAddBeatSwitch={handleAddBeatSwitch}
-          />
+          {/* 2. Section Timeline & Movement Bar (Only shown in Bars On mode) */}
+          {showBars && (
+            <SectionTimelineBar
+              movements={movements}
+              sections={sections}
+              activeSectionId={activeSectionId}
+              onSelectSection={handleSelectSection}
+              onOpenTexture={(secId) => {
+                handleSelectSection(secId);
+                setViewMode('texture');
+              }}
+              onAddSection={handleAddNewSection}
+              onAddBeatSwitch={handleAddBeatSwitch}
+            />
+          )}
 
       {/* 3. Main Paper Canvas */}
       <ScrollView
@@ -591,7 +620,7 @@ export function CadencePaperStudio({
           <Text style={styles.dateText}>{formattedDateTime}</Text>
         </View>
 
-        {/* Column Labels: "Bar" on left, "Syllable" on right */}
+        {/* Column Labels: "Bar" on left, "Syllable" on right (Only shown in Bars On mode) */}
         {showBars && (
           <View style={styles.columnLabelsRow}>
             <Text style={styles.columnLabelLeft}>Bar</Text>
@@ -599,7 +628,54 @@ export function CadencePaperStudio({
           </View>
         )}
 
-        {/* 4. Movements & Sections Canvas */}
+        {/* 4. Canvas Content: Single Blank Field (Bars Off) vs Structured Measures (Bars On) */}
+        {!showBars ? (
+          <View style={styles.blankCanvasContainer}>
+            {showRhymeMap && blankText.length > 0 && (
+              <View style={styles.blankRhymeOverlay} pointerEvents="none">
+                {blankText.split('\n').map((lineText, lineIdx) => {
+                  const tokens = dissectLineIntoSyllableTokens(lineText);
+                  return (
+                    <Text key={lineIdx} style={styles.blankLineText}>
+                      {tokens.length === 0 ? (
+                        ' '
+                      ) : (
+                        tokens.map((tok, tokIdx) => (
+                          <Text
+                            key={tokIdx}
+                            style={{
+                              color: tok.isWord ? tok.color : 'rgba(255, 255, 255, 0.4)',
+                              fontWeight: tok.isWord ? '600' : '400',
+                            }}
+                          >
+                            {tok.text}
+                          </Text>
+                        ))
+                      )}
+                    </Text>
+                  );
+                })}
+              </View>
+            )}
+
+            <TextInput
+              ref={blankInputRef}
+              value={blankText}
+              onChangeText={handleBlankTextChange}
+              multiline
+              scrollEnabled={false}
+              autoCapitalize="sentences"
+              autoCorrect={false}
+              placeholder="Start writing freely..."
+              placeholderTextColor="rgba(255, 255, 255, 0.25)"
+              style={[
+                styles.blankTextInput,
+                showRhymeMap && blankText.length > 0 && styles.blankTextInputRhymeMode,
+                Platform.OS === 'web' ? ({ outlineStyle: 'none' } as any) : null,
+              ]}
+            />
+          </View>
+        ) : (
         <View style={styles.sectionsContainer}>
           {movements.map((movement, mIdx) => {
             const movementSections = sections.filter((s) => s.movementId === movement.id);
@@ -716,7 +792,8 @@ export function CadencePaperStudio({
               </View>
             );
           })}
-        </View>
+          </View>
+        )}
       </ScrollView>
     </>
   )}
@@ -1055,5 +1132,43 @@ const styles = StyleSheet.create({
   },
   cadenceGap: {
     height: 18,
+  },
+  blankCanvasContainer: {
+    marginTop: 8,
+    position: 'relative',
+    minHeight: 480,
+  },
+  blankRhymeOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1,
+  },
+  blankLineText: {
+    fontSize: 17,
+    lineHeight: 28,
+    fontFamily: Platform.select({
+      ios: 'System',
+      default: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    }),
+  },
+  blankTextInput: {
+    fontSize: 17,
+    lineHeight: 28,
+    color: '#FFFFFF',
+    padding: 0,
+    minHeight: 480,
+    fontFamily: Platform.select({
+      ios: 'System',
+      default: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    }),
+    zIndex: 2,
+    textAlignVertical: 'top',
+  },
+  blankTextInputRhymeMode: {
+    color: 'transparent',
+    ...(Platform.OS === 'web' ? ({ caretColor: '#FFFFFF' } as any) : {}),
   },
 });

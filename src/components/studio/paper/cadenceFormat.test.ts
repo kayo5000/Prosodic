@@ -11,6 +11,7 @@ import {
   setBlockBarCount,
   toggleBarFormatting,
   updateBarText,
+  updateSectionsFromLyrics,
 } from './cadenceFormat';
 
 describe('cadenceFormat tests', () => {
@@ -168,6 +169,23 @@ describe('cadenceFormat tests', () => {
     block.bars[1].rawText = 'Line 2';
     expect(blockToText(block)).toBe('Line 1\nLine 2');
   });
+
+  it('updates sections from continuous multiline text in Bars Off mode without data loss', () => {
+    const initial = createInitialSongState();
+    const rawLyrics = 'Line one\nLine two\nLine three\nLine four\nLine five';
+    const updated = updateSectionsFromLyrics(initial.sections, rawLyrics);
+
+    expect(updated).toHaveLength(1);
+    expect(updated[0].blocks[0].bars[0].rawText).toBe('Line one');
+    expect(updated[0].blocks[0].bars[1].rawText).toBe('Line two');
+    expect(updated[0].blocks[0].bars[2].rawText).toBe('Line three');
+    expect(updated[0].blocks[0].bars[3].rawText).toBe('Line four');
+    expect(updated[0].blocks[1].bars[0].rawText).toBe('Line five');
+
+    // Round-trip verification: converting back to lyrics matches input exactly
+    expect(sectionsToLyrics(updated)).toBe(rawLyrics);
+  });
 });
+
 
 
