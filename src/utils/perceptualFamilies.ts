@@ -303,11 +303,7 @@ export function classifyRFamily(rawWord: string): number {
  */
 export function areRClassesCompatible(classA: number, classB: number): boolean {
   if (classA === 0 || classB === 0) return true; // Non-rhotic words bypass the gate
-  if (classA === 1 && classB === 2) return false; // HARD BLOCKED (thirst <-> adhere)
-  if (classA === 2 && classB === 1) return false; // HARD BLOCKED (adhere <-> thirst)
-  if (classA === 1 && classB === 3) return false; // HARD BLOCKED (curse <-> rare)
-  if (classA === 3 && classB === 1) return false; // HARD BLOCKED (rare <-> curse)
-  return true; // 1<->1, 2<->2, 3<->3, or 2<->3 (slant bridge)
+  return classA === classB; // ER (1) != VR (2) != EH+R (3)
 }
 
 // ---------------------------------------------------------------------------

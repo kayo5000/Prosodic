@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Prosodic — Metric System Specification</title>
+<style>
+  @page {
+    size: letter;
+    margin: 18mm 15mm 18mm 15mm;
+    @bottom-right {
+      content: counter(page);
+      font-size: 9pt;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: #718096;
+    }
+    @bottom-left {
+      content: "Prosodic Metric Specification";
+      font-size: 9pt;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: #718096;
+    }
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #1a202c;
+    line-height: 1.55;
+    font-size: 10pt;
+    margin: 0;
+    padding: 0;
+  }
+
+  h1, h2, h3, h4 {
+    color: #0f172a;
+    font-weight: 700;
+    margin-top: 1.4em;
+    margin-bottom: 0.5em;
+    page-break-after: avoid;
+  }
+
+  h1 {
+    font-size: 22pt;
+    border-bottom: 2px solid #3b82f6;
+    padding-bottom: 8px;
+    margin-top: 0;
+    margin-bottom: 0.3em;
+  }
+
+  .subtitle {
+    font-size: 11pt;
+    color: #64748b;
+    margin-bottom: 1.8em;
+    font-weight: 500;
+  }
+
+  h2 {
+    font-size: 14pt;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 4px;
+    color: #1e3a8a;
+    margin-top: 1.8em;
+  }
+
+  h3 {
+    font-size: 11.5pt;
+    color: #2563eb;
+    margin-top: 1.2em;
+  }
+
+  p {
+    margin-top: 0.4em;
+    margin-bottom: 0.8em;
+  }
+
+  ul, ol {
+    margin-top: 0.3em;
+    margin-bottom: 0.8em;
+    padding-left: 1.5em;
+  }
+
+  li {
+    margin-bottom: 0.3em;
+  }
+
+  code {
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+    font-size: 8.5pt;
+    background-color: #f1f5f9;
+    color: #0f172a;
+    padding: 2px 5px;
+    border-radius: 4px;
+    border: 1px solid #e2e8f0;
+  }
+
+  pre {
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid #3b82f6;
+    padding: 10px 14px;
+    border-radius: 6px;
+    overflow-x: auto;
+    font-size: 8.5pt;
+    line-height: 1.45;
+    page-break-inside: avoid;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 0.8em;
+    margin-bottom: 1.2em;
+    font-size: 8.5pt;
+    page-break-inside: avoid;
+  }
+
+  th, td {
+    border: 1px solid #cbd5e1;
+    padding: 6px 10px;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  th {
+    background-color: #f1f5f9;
+    color: #0f172a;
+    font-weight: 600;
+  }
+
+  tr:nth-child(even) {
+    background-color: #f8fafc;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 7.5pt;
+    font-weight: 600;
+    font-family: monospace;
+  }
+
+  .badge-blue { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+  .badge-green { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+  .badge-purple { background: #f3e8ff; color: #6b21a8; border: 1px solid #e9d5ff; }
+  .badge-orange { background: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; }
+
+  .formula-box {
+    background-color: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 8px 14px;
+    margin: 8px 0;
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: 9pt;
+    color: #1e293b;
+    page-break-inside: avoid;
+  }
+
+  .section-container {
+    page-break-inside: avoid;
+    margin-bottom: 1em;
+  }
+
+  .toc {
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 12px 18px;
+    margin-bottom: 2em;
+    page-break-inside: avoid;
+  }
+
+  .toc-title {
+    font-weight: 700;
+    font-size: 11pt;
+    color: #1e293b;
+    margin-bottom: 8px;
+  }
+
+  .toc-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 20px;
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+    font-size: 9pt;
+  }
+
+  .toc-list li a {
+    color: #2563eb;
+    text-decoration: none;
+  }
+
+  .page-break {
+    page-break-before: always;
+  }
+</style>
+</head>
+<body>
+
+<h1>Prosodic — Metric System Specification</h1>
+<div class="subtitle">Definitive specification of all computational metrics, craft signals, algorithmic thresholds, and scoring models across the Prosodic analysis engine suite.</div>
+
+<div class="toc">
+  <div class="toc-title">Table of Contents</div>
+  <ul class="toc-list">
+    <li>1. <a href="#sec1">Architectural Framework & Normalization</a></li>
+    <li>2. <a href="#sec2">Rhyme & Phonetic Architecture</a></li>
+    <li>3. <a href="#sec3">Syllable & Rhyme Density</a></li>
+    <li>4. <a href="#sec4">Cadence, Pocket & Beat Grid Mechanics</a></li>
+    <li>5. <a href="#sec5">Compositional Structure & Phrase Packaging</a></li>
+    <li>6. <a href="#sec6">Visual Motifs & Pattern Reading</a></li>
+    <li>7. <a href="#sec7">Semantics, Concreteness & Suggestions</a></li>
+    <li>8. <a href="#sec8">Literary & Rhetorical Device Detection</a></li>
+    <li>9. <a href="#sec9">Phonoaffective Signature Framework</a></li>
+    <li>10. <a href="#sec10">Longitudinal Mastery & Progress Tracking</a></li>
+  </ul>
+</div>
+
+<!-- SECTION 1 -->
+<h2 id="sec1">1. Architectural Framework & Normalization</h2>
+<p>All raw engine outputs are mapped onto a unified, comparable scale through <code>domain/final_result_converter.py</code>, ensuring multi-engine blends do not distort or invert relative weights.</p>
+
+<ul>
+  <li><strong>Standard Scale Output Range:</strong> <code>0.0</code> to <code>1.0</code> (Continuous).</li>
+  <li><strong>Standard Polarity:</strong> Always <code>normal</code> (higher numerical value = stronger craft expression).</li>
+  <li><strong>Clipping:</strong> Clamped defensively to <code>[0.0, 1.0]</code>.</li>
+</ul>
+
+<h3>Source Metric Registry (<code>SCALES</code>)</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Source Key</th>
+      <th>Raw Range</th>
+      <th>Polarity</th>
+      <th>Originating Engine</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>phoneme_rhyme_score</code></td>
+      <td>0.0 &ndash; 1.0</td>
+      <td><span class="badge badge-blue">normal</span></td>
+      <td><code>phoneme_engine.py</code></td>
+      <td>Phonetic similarity between ARPABET nucleus & coda</td>
+    </tr>
+    <tr>
+      <td><code>perceptual_family_score</code></td>
+      <td>0.0 &ndash; 1.0</td>
+      <td><span class="badge badge-blue">normal</span></td>
+      <td><code>perceptual_family_engine.py</code></td>
+      <td>Confidence of vowel family membership</td>
+    </tr>
+    <tr>
+      <td><code>pattern_activity_score</code></td>
+      <td>0.0 &ndash; 1.0</td>
+      <td><span class="badge badge-blue">normal</span></td>
+      <td><code>pattern_reader_engine.py</code></td>
+      <td>Composite family activity (frequency, line span, stress)</td>
+    </tr>
+    <tr>
+      <td><code>semantic_similarity</code></td>
+      <td>0.0 &ndash; 1.0</td>
+      <td><span class="badge badge-blue">normal</span></td>
+      <td><code>semantics_engine.py</code></td>
+      <td>spaCy word-vector cosine distance</td>
+    </tr>
+    <tr>
+      <td><code>density_internal</code></td>
+      <td>0.0 &ndash; 100.0</td>
+      <td><span class="badge badge-blue">normal</span></td>
+      <td><code>density_engine.py</code></td>
+      <td>Percentage of syllables rhyming internally</td>
+    </tr>
+    <tr>
+      <td><code>density_multisyllabic</code></td>
+      <td>0.0 &ndash; 100.0</td>
+      <td><span class="badge badge-blue">normal</span></td>
+      <td><code>density_engine.py</code></td>
+      <td>Percentage of syllables in compound rhyme blocks</td>
+    </tr>
+    <tr>
+      <td><code>density_motif</code></td>
+      <td>0.0 &ndash; 100.0</td>
+      <td><span class="badge badge-blue">normal</span></td>
+      <td><code>density_engine.py</code></td>
+      <td>Motif family palette coverage per bar</td>
+    </tr>
+    <tr>
+      <td><code>suggestion_rhyme_score</code></td>
+      <td>0.0 &ndash; 100.0</td>
+      <td><span class="badge badge-blue">normal</span></td>
+      <td><code>suggestion_engine.py</code></td>
+      <td>Phoneme rhyme score expanded to 0-100</td>
+    </tr>
+    <tr>
+      <td><code>suggestion_thesaurus_score</code></td>
+      <td>0.0 &ndash; 100.0</td>
+      <td><span class="badge badge-blue">normal</span></td>
+      <td><code>suggestion_engine.py</code></td>
+      <td>Moby Thesaurus tiered relevance score</td>
+    </tr>
+    <tr>
+      <td><code>suggestion_syllable_priority</code></td>
+      <td>0.0 &ndash; 2.0</td>
+      <td><span class="badge badge-blue">normal</span></td>
+      <td><code>suggestion_engine.py</code></td>
+      <td>Ordinal priority: 0 (off), 1 (&plusmn;1 syl), 2 (exact)</td>
+    </tr>
+    <tr>
+      <td><code>stress_signal_confidence</code></td>
+      <td>0.0 &ndash; 1.0</td>
+      <td><span class="badge badge-blue">normal</span></td>
+      <td><code>stress_signals.py</code></td>
+      <td>Confidence score for stress mismatch detection</td>
+    </tr>
+    <tr>
+      <td><code>phrase_boundary_weight</code></td>
+      <td>1.5 &ndash; 3.0</td>
+      <td><span class="badge badge-blue">normal</span></td>
+      <td><code>phrase_container_engine.py</code></td>
+      <td>Combined weight of fired boundary signals</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- SECTION 2 -->
+<h2 id="sec2">2. Rhyme & Phonetic Architecture</h2>
+
+<h3>Core Thresholds & Classifications</h3>
+<ul>
+  <li><strong>Phoneme Rhyme Score:</strong> Continuous float in <code>[0.0, 1.0]</code> measuring phonetic alignment.</li>
+  <li><strong>Rhyme Edge Threshold (<code>RHYME_THRESHOLD = 0.78</code>):</strong> Minimum similarity score required to establish a valid rhyme edge in graph clustering.</li>
+  <li><strong>Near-Rhyme Same Vowel Score (<code>NEAR_RHYME_SAME_VOWEL_SCORE = 0.75</code>):</strong> Baseline for near-rhymes sharing vowel base with different stress digit or rhotic coloring (e.g. <code>ER1</code> vs <code>ER2</code>).</li>
+</ul>
+
+<h3>Qualitative Rhyme Classifications (<code>RhymeType</code>)</h3>
+<ul>
+  <li><code>PERFECT</code> &mdash; Identical vowel nucleus and identical coda consonants (e.g., <em>mind / blind</em>).</li>
+  <li><code>SLANT</code> &mdash; Shared vowel nucleus with phonetically proximate coda consonants.</li>
+  <li><code>NEAR</code> &mdash; Shared vowel with minor coda divergence.</li>
+  <li><code>FAMILY</code> &mdash; Membership in the same perceptual vowel sound family.</li>
+  <li><code>NONE</code> &mdash; Disparate phonetics (&lt;0.78).</li>
+</ul>
+
+<h3>The 12 Canonical Perceptual Vowel Families</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Family Identifier</th>
+      <th>ARPABET Nucleus</th>
+      <th>Anchor Words</th>
+      <th>Example Members</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>R_FAMILY</code></td>
+      <td><code>ER</code></td>
+      <td>worst, curse, verse, first, birth</td>
+      <td>hurt, rehearsal, church, merch, turnt, diverse</td>
+    </tr>
+    <tr>
+      <td><code>AY_FAMILY</code></td>
+      <td><code>EY</code></td>
+      <td>day, way, name, face, change</td>
+      <td>flame, rain, train, late, state, claim</td>
+    </tr>
+    <tr>
+      <td><code>EE_FAMILY</code></td>
+      <td><code>IY</code></td>
+      <td>see, free, feel, real, deep</td>
+      <td>street, dream, clean, scene, believe</td>
+    </tr>
+    <tr>
+      <td><code>OW_FAMILY</code></td>
+      <td><code>OW</code></td>
+      <td>know, flow, soul, cold, road</td>
+      <td>home, phone, stone, throne, grown</td>
+    </tr>
+    <tr>
+      <td><code>AH_FAMILY</code></td>
+      <td><code>AH</code></td>
+      <td>blood, love, tough, run, trust</td>
+      <td>young, done, dust, rush, club, sub</td>
+    </tr>
+    <tr>
+      <td><code>AY2_FAMILY</code></td>
+      <td><code>AY</code></td>
+      <td>life, night, mind, time, light</td>
+      <td>sky, high, drive, alive, desire, fire</td>
+    </tr>
+    <tr>
+      <td><code>OO_FAMILY</code></td>
+      <td><code>UW</code></td>
+      <td>through, true, move, cool, truth</td>
+      <td>choose, rules, school, groove, mood</td>
+    </tr>
+    <tr>
+      <td><code>AW_FAMILY</code></td>
+      <td><code>AW</code></td>
+      <td>down, found, ground, sound, out</td>
+      <td>crowd, loud, town, power, cloud</td>
+    </tr>
+    <tr>
+      <td><code>AE_FAMILY</code></td>
+      <td><code>AE</code></td>
+      <td>back, track, rap, trap, black</td>
+      <td>stand, brand, plan, slam, exam</td>
+    </tr>
+    <tr>
+      <td><code>OH_FAMILY</code></td>
+      <td><code>AO</code></td>
+      <td>talk, call, fall, thought, law</td>
+      <td>raw, cause, wall, long, strong, wrong</td>
+    </tr>
+    <tr>
+      <td><code>IH_FAMILY</code></td>
+      <td><code>IH</code></td>
+      <td>win, begin, spin, king, think</td>
+      <td>skin, bring, distinct, click, stick</td>
+    </tr>
+    <tr>
+      <td><code>EH_FAMILY</code></td>
+      <td><code>EH</code></td>
+      <td>head, dead, breath, best, death</td>
+      <td>chest, blessed, stressed, check, respect</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>AAVE Phonological Transformations (<code>aave_phonology.py</code>)</h3>
+<ol>
+  <li><strong>Consonant Cluster Reduction:</strong> Word-final stop deleted in homorganic clusters (e.g. <code>/P AE1 S T/ &rarr; /P AE1 S/</code> allowing <em>past</em> to rhyme with <em>class</em>; <em>hand</em> &rarr; <em>man</em>).</li>
+  <li><strong>Monophthongization:</strong> Glide weakening of <code>/AY/ &rarr; /AA/</code> (e.g. <code>/T AY1 M/ &rarr; /T AA1 M/</code> allowing <em>time</em> to rhyme with <em>calm</em>; <em>mine</em> &rarr; <em>man</em>).</li>
+  <li><strong>Postvocalic R-Vocalization:</strong> Deletion of rhotic codas (e.g. <code>/M AO1 R/ &rarr; /M AO1/</code> rhyming with <em>saw</em>; <code>/ER/ &rarr; /AH/</code> merging <em>bird</em> and <em>bud</em>).</li>
+</ol>
+
+<!-- SECTION 3 -->
+<div class="page-break"></div>
+<h2 id="sec3">3. Syllable & Rhyme Density</h2>
+
+<h3>Density Component Formulas</h3>
+<div class="formula-box">
+Internal Rhyme Density (%) = (Highlighted Rhyme Syllables / Total Syllables) &times; 100<br>
+Multisyllabic Density (%)   = (Deduplicated Compound Syllables / Total Syllables) &times; 100<br>
+Motif Recurrence Density (%) = (Distinct Colors in Bar / Total Palette in Verse) &times; 100
+</div>
+
+<h3>Syllabic Load & Pocketing Control</h3>
+<ul>
+  <li><strong>Syllables Per Beat (SPB):</strong> Syllable count distributed across quarter-note pulses.</li>
+  <li><strong>Density Control Window:</strong> Optimal hip-hop pocket sits in <code>2.5 &ndash; 4.5 SPB</code>.</li>
+</ul>
+
+<h3>Density Gradient Arc Shapes (<code>ArcType</code>)</h3>
+<ul>
+  <li><code>BUILDING</code> &mdash; Syllabic load rises steadily toward the close of a section.</li>
+  <li><code>RELEASING</code> &mdash; Syllabic load descends from high density to provide breath and resolution.</li>
+  <li><code>FLAT</code> &mdash; Variance across bars is &lt;20% (<code>FLAT_VARIANCE_RATIO = 0.20</code>).</li>
+  <li><code>PEAK_AND_RELEASE</code> &mdash; Sustained high-density peak (&ge;25% duration) followed by open release.</li>
+  <li><code>COMPLEX</code> &mdash; Undulating or multi-peak density profile.</li>
+</ul>
+
+<!-- SECTION 4 -->
+<h2 id="sec4">4. Cadence, Pocket & Beat Grid Mechanics</h2>
+
+<h3>The 16-Step Beat Grid</h3>
+<ul>
+  <li><strong>Resolution (<code>GRID_SIZE = 16</code>):</strong> 16 sixteenth-note slots per 4/4 bar.</li>
+  <li><strong>Strong Downbeats:</strong> Positions <code>0, 4, 8, 12</code> (Beats 1, 2, 3, 4).</li>
+  <li><strong>The Pocket:</strong> Positions <code>4</code> and <code>12</code> (Snare downbeats on Beats 2 and 4).</li>
+  <li><strong>Tolerances:</strong> <code>POCKET_WINDOW = 1</code> (&plusmn;1 sixteenth note); <code>NUDGE_WINDOW = 2</code>.</li>
+</ul>
+
+<h3>Flow Signatures</h3>
+<ul>
+  <li><code>On-Grid</code> &mdash; &gt;75% of stressed syllables land on strong downbeats (0, 4, 8, 12).</li>
+  <li><code>Syncopated</code> &mdash; &gt;50% of stressed syllables land on the snare pocket (4, 12).</li>
+  <li><code>Floating</code> &mdash; &lt;35% on-beat alignment; decoupled from the rigid pulse.</li>
+  <li><code>Pocket Jumper</code> &mdash; Dynamic alternation between on-beat landing and syncopated runs.</li>
+</ul>
+
+<h3>Cadence Signal Taxonomy (Stress Mismatches)</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Signal Identifier</th>
+      <th>Trigger Condition</th>
+      <th>Craft Meaning</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>promotion</code></td>
+      <td>Lexically weak syllable (0) lands on stressed grid position (&ge;1).</td>
+      <td>Performed rhythmic emphasis on structural word.</td>
+    </tr>
+    <tr>
+      <td><code>demotion</code></td>
+      <td>Lexically stressed syllable (1, 2) lands off-beat within <code>POCKET_WINDOW</code>.</td>
+      <td>Softened delivery adjacent to the downbeat.</td>
+    </tr>
+    <tr>
+      <td><code>syncopation</code></td>
+      <td>Lexically stressed syllable lands off-beat beyond <code>POCKET_WINDOW</code>.</td>
+      <td>Deliberate rhythmic displacement between pulses.</td>
+    </tr>
+    <tr>
+      <td><code>trochaic_inversion</code></td>
+      <td>Rising grid prominence over falling lexical stress.</td>
+      <td>Metrical reversal creating expressive tension.</td>
+    </tr>
+    <tr>
+      <td><code>stress_clash</code></td>
+      <td>Adjacent lexically stressed syllables colliding without unstressed buffer.</td>
+      <td>Trigger environment for English's Rhythm Rule.</td>
+    </tr>
+    <tr>
+      <td><code>stress_lapse</code></td>
+      <td>&ge;3 consecutive unstressed syllables (<code>LAPSE_RUN_LENGTH = 3</code>).</td>
+      <td>Rhythmic lull or rapid syllabic patter.</td>
+    </tr>
+    <tr>
+      <td><code>secondary_recruitment</code></td>
+      <td>Secondary stress (2) lands on strong beat while primary (1) does not.</td>
+      <td>Anchoring rhythm on secondary word syllable.</td>
+    </tr>
+    <tr>
+      <td><code>level_stress_ambiguity</code></td>
+      <td>Word has multiple dictionary pronunciations with contested stress.</td>
+      <td>Lexical ambiguity in CMU dictionary.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Deliberateness Gate</h3>
+<ul>
+  <li><code>likely_automatic</code> &mdash; Occurs within a <code>stress_clash</code> context (automatic Rhythm Rule retraction).</li>
+  <li><code>possible_deliberate</code> &mdash; Word recurs on &ge;2 other lines without clash context (<code>RECURRENCE_MIN = 2</code>).</li>
+  <li><code>uncertain</code> &mdash; Standard baseline; under-claims intent to avoid false assertions.</li>
+</ul>
+
+<!-- SECTION 5 -->
+<div class="page-break"></div>
+<h2 id="sec5">5. Compositional Structure & Phrase Packaging</h2>
+
+<h3>Boundary Detection Rules (<code>phrase_container_engine.py</code>)</h3>
+<p>A structural container break is declared when cumulative signal weight exceeds <code>BOUNDARY_THRESHOLD = 1.5</code> and at least <code>MIN_SIGNALS_FIRED = 2</code> individual signals fire:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Signal Name</th>
+      <th>Weight</th>
+      <th>Threshold Condition</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>rhyme_resolution</code></td>
+      <td>0.8</td>
+      <td>Terminal rhyme scheme completes and resolves on this bar.</td>
+    </tr>
+    <tr>
+      <td><code>rest_bar</code></td>
+      <td>0.7</td>
+      <td>Line has &le;3 words (<code>REST_BAR_MAX_WORDS = 3</code>).</td>
+    </tr>
+    <tr>
+      <td><code>density_drop</code></td>
+      <td>0.6</td>
+      <td>Prior line internal density &ge;40% and current line drops &gt;40% (<code>DENSITY_DROP_RATIO = 0.6</code>).</td>
+    </tr>
+    <tr>
+      <td><code>syllable_reset</code></td>
+      <td>0.5</td>
+      <td>Line syllable count drops to &lt;60% of prior line (<code>SYLLABLE_RESET_RATIO = 0.6</code>).</td>
+    </tr>
+    <tr>
+      <td><code>line_length_shift</code></td>
+      <td>0.4</td>
+      <td>Line word count differs by &gt;4 words from previous (<code>LINE_LENGTH_SHIFT_WORD_DIFF = 4</code>).</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- SECTION 6 -->
+<h2 id="sec6">6. Visual Motifs & Pattern Reading</h2>
+
+<h3>Perceptual Family Activity Score Formula</h3>
+<div class="formula-box">
+Activity Score = (Member Count Norm &times; 0.40) + (Line Spread &times; 0.35) + (Stress Ratio &times; 0.25)<br><br>
+Where:<br>
+&bull; Member Count Norm = min(Members, 10) / 10<br>
+&bull; Line Spread       = Unique Lines with Family / Total Lines<br>
+&bull; Stress Ratio       = Stressed Members / Total Members
+</div>
+
+<ul>
+  <li><strong>Active Family Threshold:</strong> <code>Activity Score &ge; 0.25</code> confirms intentional deployment.</li>
+  <li><strong>Parallel Pocketing:</strong> Flagged when top 2 active families have activity scores within 15% of each other.</li>
+  <li><strong>Motif Cluster Strength (<code>cluster_strength</code>):</strong> Continuous float in <code>[0.0, 1.0]</code> measuring semantic tightness around an anchor word.</li>
+</ul>
+
+<!-- SECTION 7 -->
+<h2 id="sec7">7. Semantics, Concreteness & Suggestions</h2>
+
+<h3>Lexical & Semantic Dimensions</h3>
+<ul>
+  <li><strong>Semantic Similarity (<code>semantic_similarity</code>):</strong> Cosine distance in <code>[0.0, 1.0]</code> using spaCy <code>en_core_web_md</code> vectors.</li>
+  <li><strong>Brysbaert Concreteness Score:</strong> Scale of <code>1.0 &ndash; 5.0</code> (1.0 = abstract concepts like "freedom"; 5.0 = tangible objects like "brick").</li>
+</ul>
+
+<h3>Suggestion Composite Ranking Score (<code>suggestion_engine.py</code>)</h3>
+<div class="formula-box">
+Composite Score = (Rhyme Score &times; 0.55) + (Thesaurus Score &times; 0.30) + (Syllable Priority &times; 0.15)
+</div>
+<ul>
+  <li><strong>Rhyme Score (55%):</strong> Raw phonetic similarity scaled to 0&ndash;100.</li>
+  <li><strong>Thesaurus Score (30%):</strong> Moby Thesaurus depth tiers: <code>0, 30&ndash;70, 85, 90, 100</code>.</li>
+  <li><strong>Syllable Priority (15%):</strong> 0 = off-target, 1 = &plusmn;1 syllable, 2 = exact syllable match.</li>
+</ul>
+
+<!-- SECTION 8 -->
+<div class="page-break"></div>
+<h2 id="sec8">8. Literary & Rhetorical Device Detection</h2>
+<p>Evaluated across 12 core rhetorical detectors in <code>device_detection_engine.py</code>. Frequency rates are computed as events per 100 lines.</p>
+
+<h3>Status Tiers</h3>
+<ul>
+  <li><code>untapped</code> &mdash; Below emerging threshold (&lt; em_threshold).</li>
+  <li><code>emerging</code> &mdash; Present occasionally (&ge; em_threshold).</li>
+  <li><code>signature</code> &mdash; Frequently deployed; core artistic fingerprint (&ge; sig_threshold).</li>
+  <li><code>overused</code> &mdash; Exceeds natural balance (&gt; overuse_threshold).</li>
+</ul>
+
+<h3>The 12 Detectors & Status Thresholds</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Device</th>
+      <th>Category</th>
+      <th>Detection Heuristic</th>
+      <th>Emerging</th>
+      <th>Signature</th>
+      <th>Overuse</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Alliteration</strong></td>
+      <td>Sound</td>
+      <td>&ge;2 consecutive non-stop words sharing initial consonant sound.</td>
+      <td>5.0</td>
+      <td>18.0</td>
+      <td>50.0</td>
+    </tr>
+    <tr>
+      <td><strong>Assonance</strong></td>
+      <td>Sound</td>
+      <td>&ge;3 non-stop words in a line sharing stressed vowel sound.</td>
+      <td>4.0</td>
+      <td>15.0</td>
+      <td>45.0</td>
+    </tr>
+    <tr>
+      <td><strong>Anaphora</strong></td>
+      <td>Structural</td>
+      <td>Same word opens &ge;2 consecutive lines (&ge;3 chars, non-stop).</td>
+      <td>2.0</td>
+      <td>8.0</td>
+      <td>30.0</td>
+    </tr>
+    <tr>
+      <td><strong>Epistrophe</strong></td>
+      <td>Structural</td>
+      <td>Same word closes &ge;2 consecutive lines.</td>
+      <td>1.5</td>
+      <td>5.0</td>
+      <td>20.0</td>
+    </tr>
+    <tr>
+      <td><strong>Anadiplosis</strong></td>
+      <td>Structural</td>
+      <td>Last word of line N matches first word of line N+1.</td>
+      <td>1.0</td>
+      <td>4.0</td>
+      <td>15.0</td>
+    </tr>
+    <tr>
+      <td><strong>Simile</strong></td>
+      <td>Comparison</td>
+      <td>Direct comparison: <em>"like a/an"</em>, <em>"as ... as"</em>, <em>"like the"</em>.</td>
+      <td>3.0</td>
+      <td>10.0</td>
+      <td>35.0</td>
+    </tr>
+    <tr>
+      <td><strong>Rhetorical Question</strong></td>
+      <td>Rhetorical</td>
+      <td>Line ending with a question mark (<code>?</code>).</td>
+      <td>1.5</td>
+      <td>6.0</td>
+      <td>20.0</td>
+    </tr>
+    <tr>
+      <td><strong>Repetition</strong></td>
+      <td>Emphasis</td>
+      <td>Key content word (&gt;3 chars) appears &ge;4 times in song.</td>
+      <td>1.0</td>
+      <td>3.0</td>
+      <td>8.0</td>
+    </tr>
+    <tr>
+      <td><strong>Enumeration</strong></td>
+      <td>Structural</td>
+      <td>&ge;2 commas in a line (stacking 3+ listed items).</td>
+      <td>2.0</td>
+      <td>8.0</td>
+      <td>25.0</td>
+    </tr>
+    <tr>
+      <td><strong>Polysyndeton</strong></td>
+      <td>Structural</td>
+      <td>&ge;3 coordinating conjunctions (<em>and / but / or</em>) in one line.</td>
+      <td>1.0</td>
+      <td>4.0</td>
+      <td>15.0</td>
+    </tr>
+    <tr>
+      <td><strong>Asyndeton</strong></td>
+      <td>Structural</td>
+      <td>&ge;2 commas in a line without coordinating conjunctions.</td>
+      <td>1.5</td>
+      <td>6.0</td>
+      <td>20.0</td>
+    </tr>
+    <tr>
+      <td><strong>Parallelism</strong></td>
+      <td>Structural</td>
+      <td>Consecutive lines sharing identical 2-word opening syntax.</td>
+      <td>1.5</td>
+      <td>6.0</td>
+      <td>20.0</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- SECTION 9 -->
+<h2 id="sec9">9. Phonoaffective Signature Framework</h2>
+<p>Formulated in <code>aspiration_gap.py</code> to measure emotional encoding and acoustic intentionality.</p>
+
+<h3>The 8-Component Formula</h3>
+<div class="formula-box">
+E = (PT &times; w1) + (PP &times; w2) + (SF &times; w3) + (CM &times; w4) + (IS &times; w5) + (TP &times; w6) + (SA &times; w7) + (SD &times; w8)
+</div>
+
+<ul>
+  <li><strong>PT (Phonemic Texture):</strong> Ratio of plosives/hard consonants vs liquids/fricatives, vowel openness.</li>
+  <li><strong>PP (Prosodic Pressure):</strong> Syllable density, delivery compression, stress inversion rate.</li>
+  <li><strong>SF (Semantic Field Gravity):</strong> Semantic valence, imagery clustering, thematic cohesion.</li>
+  <li><strong>CM (Cultural Memory):</strong> Vernacular frequency, regional marker density, AAVE bridges.</li>
+  <li><strong>IS (Intentionality Signal):</strong> Revision count, dictionary override telemetry.</li>
+  <li><strong>TP (Temporal Position):</strong> Section trajectory (Verse 1 setup vs Climax vs Outro).</li>
+  <li><strong>SA (Sonic Aspiration):</strong> Selected emotional target from the 15 canonical labels (<em>aggressive, celebratory, contemplative, defiant, desperate, grieving, hopeful, hungry, melancholic, nostalgic, peaceful, proud, raw, triumphant, vulnerable</em>).</li>
+  <li><strong>SD (Subtext Delta):</strong> Discrepancy between surface semantic sentiment and acoustic tension.</li>
+  <li><strong>Aspiration Gap Score (<code>aspiration_gap_score</code>):</strong> Euclidean distance bounded in <code>[0.0, 1.0]</code> (0.0 = perfect alignment).</li>
+</ul>
+
+<!-- SECTION 10 -->
+<div class="page-break"></div>
+<h2 id="sec10">10. Longitudinal Mastery & Progress Tracking</h2>
+<p>Evaluated across catalog history in <code>mastery_engine.py</code>.</p>
+
+<h3>Activation Gate (Unlock Thresholds)</h3>
+<ul>
+  <li>&ge;3 distinct songs analyzed</li>
+  <li>&ge;40 total rhyme events recorded</li>
+  <li>&ge;20 total cadence events recorded</li>
+  <li>&ge;15 total bars analyzed</li>
+</ul>
+
+<h3>Proficiency Tiers</h3>
+<ul>
+  <li><span class="badge badge-orange">Developing</span> &mdash; 0 to 39</li>
+  <li><span class="badge badge-orange">Approaching</span> &mdash; 40 to 64</li>
+  <li><span class="badge badge-blue">Competent</span> &mdash; 65 to 81</li>
+  <li><span class="badge badge-green">Exemplary</span> &mdash; 82 to 100</li>
+</ul>
+
+<h3>The 6 Core Skill Category Scoring Models</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Category</th>
+      <th>Sub-Metric Breakdown</th>
+      <th>Scoring Model</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Flow & Cadence</strong></td>
+      <td>Density control in 2.5&ndash;4.5 SPB, Inversion rate, Cadence class variety</td>
+      <td><code>Density Control &times; 0.55 + Inversion Score &times; 0.30 + Variety Bonus &times; 0.15</code></td>
+    </tr>
+    <tr>
+      <td><strong>Rhyme Architecture</strong></td>
+      <td>Average phonetic similarity, Rhyme type diversity, AAVE bridge %</td>
+      <td><code>Avg Similarity &times; 80 + Type Diversity Bonus (max 20)</code></td>
+    </tr>
+    <tr>
+      <td><strong>Internal Rhyme Density</strong></td>
+      <td>Density gradient mean, Peak density %, Cross-bar consistency</td>
+      <td><code>Avg Density &times; 70 + Consistency &times; 0.30</code></td>
+    </tr>
+    <tr>
+      <td><strong>Multisyllabic Flow</strong></td>
+      <td>Syllable compression rate %, High-density lines (&gt;3.5 SPB) %</td>
+      <td><code>Compression Rate &times; 0.60 + High Density Rate &times; 0.40</code></td>
+    </tr>
+    <tr>
+      <td><strong>Motif Architecture</strong></td>
+      <td>Semantic cluster strength, Unique semantic field diversity</td>
+      <td><code>Avg Cluster Strength &times; 75 + Field Diversity Bonus (max 25)</code></td>
+    </tr>
+    <tr>
+      <td><strong>Stress Architecture</strong></td>
+      <td>Inversion control (ideal 0.15&ndash;0.30), Stress pattern variety</td>
+      <td><code>Inversion Control &times; 0.65 + Pattern Diversity &times; 0.35</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Trend Tracking</h3>
+<ul>
+  <li><strong>Early Window:</strong> Earliest 40% of catalog by timestamp.</li>
+  <li><strong>Recent Window:</strong> Latest 40% of catalog by timestamp.</li>
+  <li><strong>Delta:</strong> <code>&Delta; = Score_recent - Score_early</code> (&ge;+5: <code>up</code>, &le;-5: <code>down</code>, otherwise: <code>neutral</code>).</li>
+</ul>
+
+</body>
+</html>

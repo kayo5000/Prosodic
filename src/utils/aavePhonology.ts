@@ -278,6 +278,17 @@ export const SLANG_PHONETIC_LEXICON: Record<string, string[]> = {
   boutta: ['B', 'AW1', 'T', 'AH0'],
   skrrt: ['S', 'K', 'R', 'ER1', 'T'],
   bussin: ['B', 'AH1', 'S', 'IH0', 'N'],
+  fussin: ['F', 'AH1', 'S', 'IH0', 'N'],
+  cookin: ['K', 'UH1', 'K', 'IH0', 'N'],
+  callin: ['K', 'AO1', 'L', 'IH0', 'N'],
+  runnin: ['R', 'AH1', 'N', 'IH0', 'N'],
+  trippin: ['T', 'R', 'IH1', 'P', 'IH0', 'N'],
+  drippin: ['D', 'R', 'IH1', 'P', 'IH0', 'N'],
+  winnin: ['W', 'IH1', 'N', 'IH0', 'N'],
+  losin: ['L', 'UW1', 'Z', 'IH0', 'N'],
+  stressin: ['S', 'T', 'R', 'EH1', 'S', 'IH0', 'N'],
+  deadass: ['D', 'EH1', 'D', 'AE2', 'S'],
+  nocap: ['N', 'OW1', 'K', 'AE2', 'P'],
   rizz: ['R', 'IH1', 'Z'],
   cap: ['K', 'AE1', 'P'],
   drip: ['D', 'R', 'IH1', 'P'],
@@ -292,8 +303,27 @@ export const SLANG_PHONETIC_LEXICON: Record<string, string[]> = {
   fam: ['F', 'AE1', 'M'],
   nah: ['N', 'AA1'],
   bro: ['B', 'R', 'OW1'],
+  bruh: ['B', 'R', 'AH1'],
+  dawg: ['D', 'AO1', 'G'],
   holler: ['HH', 'AA1', 'L', 'ER0'],
   flex: ['F', 'L', 'EH1', 'K', 'S'],
+  turnt: ['T', 'ER1', 'N', 'T'],
+  lit: ['L', 'IH1', 'T'],
+  bet: ['B', 'EH1', 'T'],
+  facts: ['F', 'AE1', 'K', 'T', 'S'],
+  slaps: ['S', 'L', 'AE1', 'P', 'S'],
+  hits: ['HH', 'IH1', 'T', 'S'],
+  fasho: ['F', 'AH0', 'SH', 'OW1'],
+  aight: ['AY1', 'T'],
+  ight: ['AY1', 'T'],
+  lemme: ['L', 'EH1', 'M', 'IY0'],
+  gimme: ['G', 'IH1', 'M', 'IY0'],
+  whatcha: ['W', 'AH1', 'CH', 'AH0'],
+  gotta: ['G', 'AA1', 'T', 'AH0'],
+  gonna: ['G', 'AO1', 'N', 'AH0'],
+  wanna: ['W', 'AA1', 'N', 'AH0'],
+  shawty: ['SH', 'AO1', 'T', 'IY0'],
+  inevitable: ['IH2', 'N', 'EH1', 'V', 'AH0', 'T', 'AH0', 'B', 'AH0', 'L'],
 };
 
 export const CORE_PHONETIC_LEXICON: Record<string, string[]> = {
@@ -338,6 +368,8 @@ export const CORE_PHONETIC_LEXICON: Record<string, string[]> = {
   care: ['K', 'EH1', 'R'],
   share: ['SH', 'EH1', 'R'],
   stare: ['S', 'T', 'EH1', 'R'],
+  rare: ['R', 'EH1', 'R'],
+  dare: ['D', 'EH1', 'R'],
   air: ['EH1', 'R'],
   fair: ['F', 'EH1', 'R'],
   hair: ['HH', 'EH1', 'R'],
@@ -363,10 +395,52 @@ export const CORE_PHONETIC_LEXICON: Record<string, string[]> = {
   // Wells Lexical Sets: NURSE (ER1)
   burn: ['B', 'ER1', 'N'],
   turn: ['T', 'ER1', 'N'],
+  turnt: ['T', 'ER1', 'N', 'T'],
   verse: ['V', 'ER1', 'S'],
+  reverse: ['R', 'IH0', 'V', 'ER1', 'S'],
+  diverse: ['D', 'IH0', 'V', 'ER1', 'S'],
+  converse: ['K', 'AA1', 'N', 'V', 'ER0', 'S'],
+  rehearsal: ['R', 'IH0', 'HH', 'ER1', 'S', 'AH0', 'L'],
+  merch: ['M', 'ER1', 'CH'],
+  cheers: ['CH', 'IH1', 'R', 'Z'],
+  chirp: ['CH', 'ER1', 'P'],
+  chirps: ['CH', 'ER1', 'P', 'S'],
   first: ['F', 'ER1', 'S', 'T'],
+  worst: ['W', 'ER1', 'S', 'T'],
+  curse: ['K', 'ER1', 'S'],
+  shirt: ['SH', 'ER1', 'T'],
+  birth: ['B', 'ER1', 'TH'],
   word: ['W', 'ER1', 'D'],
   hurt: ['HH', 'ER1', 'T'],
+  blessed: ['B', 'L', 'EH1', 'S', 'T'],
+  stress: ['S', 'T', 'R', 'EH1', 'S'],
+  stressin: ['S', 'T', 'R', 'EH1', 'S', 'IH0', 'N'],
+  stressing: ['S', 'T', 'R', 'EH1', 'S', 'IH0', 'NG'],
+  winnin: ['W', 'IH1', 'N', 'IH0', 'N'],
+  winning: ['W', 'IH1', 'N', 'IH0', 'NG'],
+  losin: ['L', 'UW1', 'Z', 'IH0', 'N'],
+  losing: ['L', 'UW1', 'Z', 'IH0', 'NG'],
+  thinnin: ['TH', 'IH1', 'N', 'IH0', 'N'],
+  thinning: ['TH', 'IH1', 'N', 'IH0', 'NG'],
+  naysayers: ['N', 'EY1', 'S', 'EY2', 'ER0', 'Z'],
+  naysayer: ['N', 'EY1', 'S', 'EY2', 'ER0'],
+  stream: ['S', 'T', 'R', 'IY1', 'M'],
+  streams: ['S', 'T', 'R', 'IY1', 'M', 'Z'],
+  begin: ['B', 'IH0', 'G', 'IH1', 'N'],
+  begins: ['B', 'IH0', 'G', 'IH1', 'N', 'Z'],
+  encore: ['AA1', 'N', 'K', 'AO2', 'R'],
+  money: ['M', 'AH1', 'N', 'IY0'],
+  nothing: ['N', 'AH1', 'TH', 'IH0', 'NG'],
+  fire: ['F', 'AY1', 'ER0'],
+  higher: ['HH', 'AY1', 'ER0'],
+  streets: ['S', 'T', 'R', 'IY1', 'T', 'S'],
+  beats: ['B', 'IY1', 'T', 'S'],
+  persevered: ['P', 'ER0', 'S', 'AH0', 'V', 'IH1', 'R', 'D'],
+  persevere: ['P', 'ER0', 'S', 'AH0', 'V', 'IH1', 'R'],
+  appeared: ['AH0', 'P', 'IH1', 'R', 'D'],
+  appear: ['AH0', 'P', 'IH1', 'R'],
+  adhere: ['AE0', 'D', 'HH', 'IH1', 'R'],
+  career: ['K', 'ER0', 'IH1', 'R'],
 };
 
 const CONSONANT_CHAR_MAP: Record<string, string> = {
@@ -375,20 +449,14 @@ const CONSONANT_CHAR_MAP: Record<string, string> = {
   s: 'S', t: 'T', v: 'V', w: 'W', x: 'K', y: 'Y', z: 'Z',
 };
 
-/**
- * Derives approximate ARPABET phonemes for any English word via onset-nucleus-coda decomposition.
- * Enables zero-dependency, instantaneous phonetic analysis when offline or without CMU dict.
- */
-export function estimateWordPhonemes(word: string): string[] {
-  const clean = word.toLowerCase().replace(/[^a-z]/g, '');
+function estimateSingleSyllablePhonemes(syllableStr: string, isPrimaryStress: boolean = true): string[] {
+  const clean = syllableStr.toLowerCase().replace(/[^a-z]/g, '');
   if (!clean) return [];
-  if (SLANG_PHONETIC_LEXICON[clean]) return SLANG_PHONETIC_LEXICON[clean];
-  if (CORE_PHONETIC_LEXICON[clean]) return CORE_PHONETIC_LEXICON[clean];
 
   const vowelMatch = clean.match(/[aeiouy]+/);
   if (!vowelMatch || vowelMatch.index === undefined) {
     const singleConsonants = clean.split('').map((c) => CONSONANT_CHAR_MAP[c] || 'K');
-    return singleConsonants.length > 0 ? singleConsonants : ['K', 'AE1', 'T'];
+    return singleConsonants.length > 0 ? singleConsonants : ['K', isPrimaryStress ? 'AE1' : 'AH0', 'T'];
   }
 
   const onsetStr = clean.slice(0, vowelMatch.index);
@@ -396,6 +464,7 @@ export function estimateWordPhonemes(word: string): string[] {
   const codaStr = clean.slice(vowelMatch.index + vowelStr.length);
 
   const result: string[] = [];
+  const sNum = isPrimaryStress ? '1' : '0';
 
   // 1. Onset
   if (onsetStr) {
@@ -434,26 +503,26 @@ export function estimateWordPhonemes(word: string): string[] {
   }
 
   // 2. Vowel nucleus (Rhotic Wells Sets prioritized)
-  let nucleus = 'AH1';
-  if (/oor|ore|oar|our$/.test(clean)) nucleus = 'AO1';
-  else if (/eer|ier$|ear$/.test(clean) && !/bear|wear|pear|tear/.test(clean)) nucleus = 'IH1';
-  else if (/air|are$|ear$|eir$/.test(clean)) nucleus = 'EH1';
-  else if (/er|ir|ur/.test(clean)) nucleus = 'ER1';
+  let nucleus = `AH${sNum}`;
+  if (/oor|ore|oar|our$/.test(clean)) nucleus = `AO${sNum}`;
+  else if (/eer|ier$|ear$/.test(clean) && !/bear|wear|pear|tear/.test(clean)) nucleus = `IH${sNum}`;
+  else if (/air|are$|ear$|eir$/.test(clean)) nucleus = `EH${sNum}`;
+  else if (/er|ir|ur/.test(clean)) nucleus = `ER${sNum}`;
   else if (/ar/.test(clean)) {
-    result.push('AA1', 'R');
+    result.push(`AA${sNum}`, 'R');
     nucleus = '';
-  } else if (/ight|y$|ine|ime|ike|ite|ind|igh/.test(clean)) nucleus = 'AY1';
-  else if (/ee|ea|ie|eat|eep|eam/.test(clean)) nucleus = 'IY1';
-  else if (/ay|ai|ake|ate|ame|ane/.test(clean)) nucleus = 'EY1';
-  else if (/ow|oe|oa|old|ole|one|ose|ote|ode/.test(clean)) nucleus = 'OW1';
-  else if (/oo|ue|ew|uit/.test(clean)) nucleus = 'UW1';
-  else if (/oy|oi/.test(clean)) nucleus = 'OY1';
-  else if (/aw|au|ought|all/.test(clean)) nucleus = 'AO1';
-  else if (vowelStr === 'a') nucleus = 'AE1';
-  else if (vowelStr === 'e') nucleus = 'EH1';
-  else if (vowelStr === 'i') nucleus = 'IH1';
-  else if (vowelStr === 'o') nucleus = 'AA1';
-  else if (vowelStr === 'u') nucleus = 'AH1';
+  } else if (/ight|y$|ine|ime|ike|ite|ind|igh/.test(clean)) nucleus = `AY${sNum}`;
+  else if (/ee|ea|ie|eat|eep|eam/.test(clean)) nucleus = `IY${sNum}`;
+  else if (/ay|ai|ake|ate|ame|ane/.test(clean)) nucleus = `EY${sNum}`;
+  else if (/ow|oe|oa|old|ole|one|ose|ote|ode/.test(clean)) nucleus = `OW${sNum}`;
+  else if (/oo|ue|ew|uit/.test(clean)) nucleus = `UW${sNum}`;
+  else if (/oy|oi/.test(clean)) nucleus = `OY${sNum}`;
+  else if (/aw|au|ought|all/.test(clean)) nucleus = `AO${sNum}`;
+  else if (vowelStr === 'a') nucleus = `AE${sNum}`;
+  else if (vowelStr === 'e') nucleus = `EH${sNum}`;
+  else if (vowelStr === 'i') nucleus = `IH${sNum}`;
+  else if (vowelStr === 'o') nucleus = `AA${sNum}`;
+  else if (vowelStr === 'u') nucleus = `AH${sNum}`;
 
   if (nucleus) result.push(nucleus);
 
@@ -483,7 +552,36 @@ export function estimateWordPhonemes(word: string): string[] {
     }
   }
 
-  return result.length > 0 ? result : ['AH1'];
+  return result.length > 0 ? result : [`AH${sNum}`];
+}
+
+/**
+ * Derives approximate ARPABET phonemes for any English word via onset-nucleus-coda decomposition.
+ * Handles both monosyllabic and multisyllabic words with stress distribution.
+ */
+export function estimateWordPhonemes(word: string): string[] {
+  const clean = word.toLowerCase().replace(/[^a-z]/g, '');
+  if (!clean) return [];
+  if (SLANG_PHONETIC_LEXICON[clean]) return SLANG_PHONETIC_LEXICON[clean];
+  if (CORE_PHONETIC_LEXICON[clean]) return CORE_PHONETIC_LEXICON[clean];
+
+  // Check prefix splitting for multisyllabic words (re-, de-, con-, in-, un-, dis-, mis-)
+  const prefixMatch = clean.match(/^(re|de|con|in|un|dis|mis|pre|pro|sub|ex)(.+)$/);
+  if (prefixMatch && prefixMatch[2].length >= 3 && /[aeiouy]/.test(prefixMatch[2])) {
+    const pPhonemes = estimateSingleSyllablePhonemes(prefixMatch[1], false);
+    const rootPhonemes = estimateWordPhonemes(prefixMatch[2]);
+    return [...pPhonemes, ...rootPhonemes];
+  }
+
+  // Suffix splitting (-ing, -ed, -er, -ers, -al, -ly, -ness, -ment, -tion, -sion)
+  const suffixMatch = clean.match(/^(.+)(ing|ers|er|ment|tion|sion|ness|ly|al|ful|less)$/);
+  if (suffixMatch && suffixMatch[1].length >= 3 && /[aeiouy]/.test(suffixMatch[1])) {
+    const rootPhonemes = estimateWordPhonemes(suffixMatch[1]);
+    const sPhonemes = estimateSingleSyllablePhonemes(suffixMatch[2], false);
+    return [...rootPhonemes, ...sPhonemes];
+  }
+
+  return estimateSingleSyllablePhonemes(clean, true);
 }
 
 export type PhonemeResolver = (w: string) => string[] | undefined;

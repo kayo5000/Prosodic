@@ -1,0 +1,820 @@
+'''
+API
+Flask REST API exposing the Prosodic analysis and suggestion pipeline.
+
+Endpoints:
+  POST /analyze         — full verse analysis, BPM required
+  POST /suggest         — top 10 rhyme suggestions for the next line
+  GET  /suggest/more    — ranks 11-20 from the last /suggest call (no API cost)
+  POST /veil/chat       — VEIL AI craft intelligence (claude-sonnet-4-6)
+  POST /autofill        — score verse words against existing color families
+  POST /suggest-family  — suggest which color family a word belongs to
+  POST /corrections     — record manual correction signals for learning
+  GET  /corrections     — retrieve top correction signals (for debug/review)
+  GET  /health          — liveness check
+  POST /auth/register   — create new account
+  POST /auth/login      — login, returns JWT
+  GET  /auth/me         — get current user (requires Bearer token)
+  POST /auth/update     — update profile fields (requires Bearer token)
+
+Part of the Prosodic hip-hop lyric analysis suite.
+'''
+
+import os
+import logging
+import sqlite3
+import datetime
+import jwt
+from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.middleware.proxy_fix import ProxyFix
+from flask import Flask, request, jsonify
+from dotenv import load_dotenv
+load_dotenv()
+
+from domain.feedback_engine import assemble_feedback
+from domain.suggestion_engine import get_suggestions, get_more_suggestions
+from application.suggest_enrichment import enrich_suggestions
+from application.thesaurus_related import get_related_synonyms
+from domain.family_scoring import score_verse_against_families, score_word_against_families
+from veil_prompt import VEIL_SYSTEM_PROMPT
+from learning_engine import record_signals_batch, get_top_signals
+from veil_revival_routes import veil_revival_bp
+import usage_history
+from domain.song_context import SongContext
+import infrastructure.users_repository as users_repository
+from rate_limiter import limiter, ANTHROPIC_ROUTE_LIMITS
+# No more direct `import anthropic` / anthropic_circuit_breaker here — VEIL
+# talks to the AI provider abstraction instead (Clean Architecture reorg;
+# see infrastructure/ai_providers/README.md). Circuit breaker protection
+# now lives inside ClaudeProvider itself, not wrapped per-route.
+from infrastructure.ai_providers import get_provider
+from domain.ai_provider import (
+    AIMessage, ReasoningRequest, AIProviderUnavailableError, AIProviderError,
+)
+from flask_limiter.errors import RateLimitExceeded
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s  %(levelname)-8s  %(message)s',
+    datefmt='%H:%M:%S',
+)
+log = logging.getLogger(__name__)
+
+JWT_SECRET = os.environ.get('JWT_SECRET')
+if not JWT_SECRET:
+    raise RuntimeError(
+        'JWT_SECRET environment variable is not set. Refusing to start — '
+        'a hardcoded fallback would let anyone forge auth tokens. '
+        'Set JWT_SECRET in your .env (dev) or environment (prod).'
+    )
+# mypy can't carry this not-None narrowing into _make_token/_verify_token
+# below — nested functions don't get flow-sensitive narrowing on a module
+# global. Re-asserted locally in each of those two functions instead.
+JWT_ALGO   = 'HS256'
+DB_PATH    = os.environ.get('PROSODIC_DB_PATH') or os.path.join(os.path.expanduser('~'), 'prosodic_data', 'prosodic.db')
+
+app = Flask(__name__)
+
+# Railway (like most PaaS) terminates TLS at a reverse proxy and forwards
+# requests with the real client IP in X-Forwarded-For — without this,
+# request.remote_addr (and therefore every IP-keyed rate limit below)
+# would see only the proxy's own address, putting every single caller in
+# the same bucket. x_for=1 trusts exactly one proxy hop, matching
+# Railway's setup — not a wildcard trust of arbitrary forwarded headers.
+# The standard Flask/Werkzeug middleware-wrapping idiom; mypy sees
+# app.wsgi_app as a bound method and flags any reassignment, but this is
+# how every Werkzeug middleware (ProxyFix included) is meant to be
+# installed. Known, disclosed false positive, not a real typing gap.
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)  # type: ignore[method-assign]
+
+limiter.init_app(app)
+
+@app.errorhandler(RateLimitExceeded)
+def _rate_limited(e):
+    # Flask-Limiter already attaches Retry-After / X-RateLimit-* response
+    # headers automatically — not duplicated into the JSON body here
+    # since guessing at this exception's exact attributes across versions
+    # is more likely to be wrong than reading the real headers.
+    return jsonify({'error': 'Too many requests. Please wait before trying again.'}), 429
+
+app.register_blueprint(veil_revival_bp)
+
+# ── Users DB ──────────────────────────────────────────────
+
+os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+users_repository.create_table(DB_PATH)
+usage_history.init_table()
+
+def _make_token(user_id):
+    # Module-level narrowing (the `if not JWT_SECRET: raise` above) doesn't
+    # carry into nested functions for mypy — re-asserted locally rather
+    # than relying on the cast() at module scope, which turned out not to
+    # stick either (mypy widens a global's type to the union of every
+    # assignment it sees, not just the last one).
+    assert JWT_SECRET is not None
+    payload = {
+        # PyJWT requires 'sub' to be a string (JWT spec: StringOrURI) — encoding
+        # a raw int makes every decode() fail with InvalidSubjectError.
+        'sub': str(user_id),
+        # Was 1 hour — fine for a web tab someone re-logs into, brutal for a
+        # mobile app someone opens once and expects to still be signed into
+        # a day later (there's no refresh-token flow to paper over it, so an
+        # expired token today just drops straight to a login screen mid-use).
+        # 30 days is the common mobile "stay signed in" convention; a real
+        # refresh-token rotation is the correct long-term fix if finer-
+        # grained revocation is ever needed, flagged here rather than built
+        # tonight.
+        'exp': datetime.datetime.utcnow() + datetime.timedelta(days=30),
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGO)
+
+def _verify_token(token):
+    assert JWT_SECRET is not None
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGO])
+        return int(payload['sub']), None
+    except jwt.ExpiredSignatureError:
+        return None, 'Token expired'
+    except jwt.InvalidTokenError:
+        return None, 'Invalid token'
+
+def _user_dict(row):
+    return {
+        'id':              row[0],
+        'email':           row[1],
+        'username':        row[2],
+        'veil_name':       row[4],
+        'gradient_index':  row[5],
+        'phone':           row[6],
+        'hometown':        row[7],
+        'geo_influences':  row[8].split(',') if row[8] else [],
+        'created_at':      row[9],
+    }
+
+def _auth_required():
+    auth = request.headers.get('Authorization', '')
+    if not auth.startswith('Bearer '):
+        return None, (jsonify({'error': 'Authorization required'}), 401)
+    token = auth[7:]
+    user_id, err = _verify_token(token)
+    if err:
+        return None, (jsonify({'error': err}), 401)
+    row = users_repository.get_by_id(DB_PATH, user_id)
+    if not row:
+        return None, (jsonify({'error': 'User not found'}), 401)
+    return row, None
+
+def _optional_user_id():
+    '''
+    Like _auth_required, but never blocks the request — returns None if no
+    valid token is present. Used by endpoints that work anonymously but add
+    extra features (usage history) when the caller happens to be logged in.
+    '''
+    auth = request.headers.get('Authorization', '')
+    if not auth.startswith('Bearer '):
+        return None
+    user_id, err = _verify_token(auth[7:])
+    return None if err else user_id
+
+# ── CORS ──────────────────────────────────────────────────
+
+@app.after_request
+def add_cors(response):
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, OPTIONS'
+    return response
+
+@app.route('/analyze', methods=['OPTIONS'])
+@app.route('/suggest', methods=['OPTIONS'])
+@app.route('/suggest/more', methods=['OPTIONS'])
+@app.route('/veil/chat', methods=['OPTIONS'])
+@app.route('/corrections', methods=['OPTIONS'])
+@app.route('/autofill', methods=['OPTIONS'])
+@app.route('/suggest-family', methods=['OPTIONS'])
+@app.route('/auth/register', methods=['OPTIONS'])
+@app.route('/auth/login', methods=['OPTIONS'])
+@app.route('/auth/me', methods=['OPTIONS'])
+@app.route('/auth/update', methods=['OPTIONS'])
+@app.route('/mastery', methods=['OPTIONS'])
+@app.route('/thesaurus/bridge', methods=['OPTIONS'])
+@app.route('/thesaurus/reverse', methods=['OPTIONS'])
+@app.route('/suggest-motif-words', methods=['OPTIONS'])
+@app.route('/thesaurus/synonyms', methods=['OPTIONS'])
+@app.route('/thesaurus/related', methods=['OPTIONS'])
+@app.route('/my-words', methods=['OPTIONS'])
+@app.route('/wordforms', methods=['OPTIONS'])
+def options():
+    return '', 204
+
+# ── Auth Endpoints ────────────────────────────────────────
+
+@app.route('/auth/register', methods=['POST'])
+def auth_register():
+    data, err = _parse_json()
+    if err:
+        return err
+    email    = (data.get('email') or '').strip().lower()
+    username = (data.get('username') or '').strip()
+    password = data.get('password') or ''
+    if not email or not username or not password:
+        return jsonify({'error': 'email, username, and password are required'}), 400
+    if len(password) < 6:
+        return jsonify({'error': 'Password must be at least 6 characters'}), 400
+    pw_hash = generate_password_hash(password)
+    try:
+        row = users_repository.create_user(DB_PATH, email, username, pw_hash)
+    except sqlite3.IntegrityError:
+        return jsonify({'error': 'Email or username already taken'}), 409
+    user_id = row[0]
+    token = _make_token(user_id)
+    log.info('POST /auth/register  user=%s  id=%d', username, user_id)
+    return jsonify({'token': token, 'user': _user_dict(row)}), 201
+
+
+@app.route('/auth/login', methods=['POST'])
+def auth_login():
+    data, err = _parse_json()
+    if err:
+        return err
+    identifier = (data.get('email') or data.get('username') or '').strip()
+    password   = data.get('password') or ''
+    if not identifier or not password:
+        return jsonify({'error': 'email/username and password are required'}), 400
+    row = users_repository.get_by_identifier(DB_PATH, identifier)
+    if not row or not check_password_hash(row[3], password):
+        return jsonify({'error': 'Invalid email or password'}), 401
+    token = _make_token(row[0])
+    log.info('POST /auth/login  user=%s', row[2])
+    return jsonify({'token': token, 'user': _user_dict(row)})
+
+
+@app.route('/auth/me', methods=['GET'])
+def auth_me():
+    row, err = _auth_required()
+    if err:
+        return err
+    return jsonify({'user': _user_dict(row)})
+
+
+@app.route('/auth/update', methods=['POST'])
+def auth_update():
+    row, err = _auth_required()
+    if err:
+        return err
+    data, err = _parse_json()
+    if err:
+        return err
+
+    user_id = row[0]
+    fields = {}
+    if 'username'        in data: fields['username']        = data['username']
+    if 'veil_name'       in data: fields['veil_name']       = data['veil_name']
+    if 'phone'           in data: fields['phone']            = data['phone']
+    if 'hometown'        in data: fields['hometown']         = data['hometown']
+    if 'gradient_index'  in data: fields['gradient_index']  = int(data['gradient_index'])
+    if 'geo_influences'  in data:
+        gi = data['geo_influences']
+        fields['geo_influences'] = ','.join(gi) if isinstance(gi, list) else gi
+
+    # Password change — requires current_password
+    new_password = data.get('new_password')
+    if new_password:
+        current_password = data.get('current_password') or ''
+        if not check_password_hash(row[3], current_password):
+            return jsonify({'error': 'Current password is incorrect'}), 403
+        if len(new_password) < 6:
+            return jsonify({'error': 'New password must be at least 6 characters'}), 400
+        fields['password_hash'] = generate_password_hash(new_password)
+
+    if not fields:
+        return jsonify({'user': _user_dict(row)})
+
+    try:
+        updated = users_repository.update_user(DB_PATH, user_id, fields)
+    except sqlite3.IntegrityError:
+        return jsonify({'error': 'Username already taken'}), 409
+    log.info('POST /auth/update  user_id=%d  fields=%s', user_id, list(fields.keys()))
+    return jsonify({'user': _user_dict(updated)})
+
+# ── Helpers ───────────────────────────────────────────────
+
+def _serializable(obj):
+    '''Recursively converts tuples → lists so the full object is JSON-safe.'''
+    if isinstance(obj, tuple):
+        return [_serializable(v) for v in obj]
+    if isinstance(obj, dict):
+        return {k: _serializable(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_serializable(v) for v in obj]
+    return obj
+
+def _parse_json():
+    data = request.get_json(silent=True)
+    if data is None:
+        return None, (jsonify({'error': 'Request body must be valid JSON'}), 400)
+    return data, None
+
+def _require_verse(data):
+    verse = data.get('verse_lines')
+    if not verse:
+        return None, (jsonify({'error': 'verse_lines is required'}), 400)
+    if not isinstance(verse, list) or len(verse) == 0:
+        return None, (jsonify({'error': 'verse_lines must be a non-empty array'}), 400)
+    if not all(isinstance(line, str) for line in verse):
+        return None, (jsonify({'error': 'Every item in verse_lines must be a string'}), 400)
+    return verse, None
+
+def _extract_content_words(text, n=5):
+    '''Naive content-word extraction — longest non-trivial words in the message.'''
+    from domain.phoneme_engine import FUNCTION_WORDS
+    seen = {}
+    for word in text.split():
+        clean = word.strip('.,!?;:"\'()-').lower()
+        if clean and clean not in FUNCTION_WORDS and len(clean) > 3:
+            seen[clean] = len(clean)
+    # key=seen[...] rather than seen.get — every key sorted here came from
+    # this same dict, so the lookup never misses; .get's Optional return
+    # type (for the possible-miss case) is what trips up static analysis
+    # here, not a real runtime possibility.
+    ranked = sorted(seen, key=lambda w: seen[w], reverse=True)
+    return ranked[:n]
+
+
+def _parse_bpm(data, required=True):
+    bpm = data.get('bpm')
+    if bpm is None:
+        if required:
+            return None, (jsonify({'error': 'bpm is required'}), 400)
+        return None, None
+    try:
+        bpm = float(bpm)
+    except (TypeError, ValueError):
+        return None, (jsonify({'error': 'bpm must be a number'}), 400)
+    if bpm <= 0:
+        return None, (jsonify({'error': 'bpm must be greater than 0'}), 400)
+    return bpm, None
+
+# ── Endpoints ─────────────────────────────────────────────
+
+@app.route('/health', methods=['GET'])
+def health():
+    return jsonify({'status': 'ok'})
+
+
+@app.route('/analyze', methods=['POST'])
+def analyze():
+    data, err = _parse_json()
+    if err:
+        return err
+
+    verse, err = _require_verse(data)
+    if err:
+        return err
+
+    bpm, err = _parse_bpm(data, required=True)
+    if err:
+        return err
+    ctx = SongContext(bpm=bpm)  # BUILD SPEC 01 Step 3: /analyze chain now reads bpm from here
+
+    log.info('POST /analyze  lines=%d  bpm=%s', len(verse), bpm)
+
+    try:
+        feedback = assemble_feedback(verse, ctx)
+        user_id = _optional_user_id()
+        if user_id is not None:
+            try:
+                usage_history.record_usage(user_id, feedback['rhyme_map'])
+            except Exception:
+                log.exception('Failed to record usage history (non-fatal)')
+        return jsonify(_serializable(feedback))
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        log.exception('Error in /analyze')
+        return jsonify({'error': 'Analysis failed', 'detail': str(e)}), 500
+
+
+@app.route('/suggest', methods=['POST'])
+def suggest():
+    data, err = _parse_json()
+    if err:
+        return err
+
+    verse, err = _require_verse(data)
+    if err:
+        return err
+
+    bpm, err = _parse_bpm(data, required=False)
+    if err:
+        return err
+    ctx = SongContext(bpm=bpm)  # BUILD SPEC 01 Step 3: /suggest chain now reads bpm from here
+
+    trigger_mode = data.get('trigger_mode', 'auto')
+    if trigger_mode not in ('auto', 'manual'):
+        return jsonify({'error': "trigger_mode must be 'auto' or 'manual'"}), 400
+
+    target_word   = data.get('target_word') or None
+    context_lines = data.get('context_lines') or None
+    motif_bank    = data.get('motif_bank') or None
+
+    log.info('POST /suggest  lines=%d  bpm=%s  mode=%s  target=%s  bank_clusters=%s',
+             len(verse), bpm, trigger_mode, target_word,
+             list(motif_bank.keys()) if motif_bank else None)
+
+    try:
+        suggestions = get_suggestions(
+            verse, ctx=ctx, trigger_mode=trigger_mode,
+            target_word=target_word, context_lines=context_lines,
+            motif_bank=motif_bank,
+        )
+
+        # Tag each suggestion with community_uses/used_before/concreteness —
+        # extracted to application/suggest_enrichment.py (Phase 1c, Clean
+        # Architecture reorg): this coordinates a domain computation with
+        # infrastructure reads for one specific use case, not framework
+        # glue, so it doesn't belong inline in the route body. Behavior
+        # unchanged — see that module's docstring for the exact quirks
+        # preserved from this original inline version.
+        user_id = _optional_user_id()
+        suggestions = enrich_suggestions(suggestions, user_id)
+
+        return jsonify(_serializable({
+            'suggestions': suggestions,
+            'count': len(suggestions),
+            'trigger_mode': trigger_mode,
+        }))
+    except Exception as e:
+        log.exception('Error in /suggest')
+        return jsonify({'error': 'Suggestion failed', 'detail': str(e)}), 500
+
+
+@app.route('/suggest/more', methods=['GET'])
+def suggest_more():
+    log.info('GET /suggest/more')
+    suggestions = get_more_suggestions()
+    return jsonify(_serializable({
+        'suggestions': suggestions,
+        'count': len(suggestions),
+    }))
+
+
+# ── VEIL ──────────────────────────────────────────────────
+
+@app.route('/veil/chat', methods=['POST'])
+@limiter.limit(ANTHROPIC_ROUTE_LIMITS)
+def veil_chat():
+    data, err = _parse_json()
+    if err:
+        return err
+
+    messages = data.get('messages')
+    if not messages or not isinstance(messages, list) or len(messages) == 0:
+        return jsonify({'error': 'messages is required and must be a non-empty array'}), 400
+
+    # Validate message shape
+    for m in messages:
+        if m.get('role') not in ('user', 'assistant'):
+            return jsonify({'error': 'Each message must have role "user" or "assistant"'}), 400
+        if not isinstance(m.get('content'), str):
+            return jsonify({'error': 'Each message must have a string content field'}), 400
+
+    # Optional Prosodic analysis context injected as a system addendum
+    analysis_context = data.get('analysis_context')
+    system = VEIL_SYSTEM_PROMPT
+    if analysis_context:
+        system += f"\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nCURRENT SONG ANALYSIS DATA\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n{analysis_context}"
+
+    # Ground word-choice discussion in real thesaurus data instead of letting
+    # the model invent synonyms — only for the message actually being replied to.
+    last_user_msg = next((m['content'] for m in reversed(messages) if m['role'] == 'user'), '')
+    content_words = _extract_content_words(last_user_msg)
+    if content_words:
+        from thesaurus_engine import lookup as thesaurus_lookup
+        grounding_lines = []
+        for w in content_words:
+            result = thesaurus_lookup(w)
+            if result['found'] and result['synonyms']:
+                grounding_lines.append(f"{w}: {', '.join(result['synonyms'][:8])}")
+        if grounding_lines:
+            system += (
+                "\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                "REFERENCE SYNONYM DATA (real thesaurus lookups for words in the user's "
+                "message — use these when suggesting alternate word choices, don't invent synonyms)\n"
+                "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                + "\n".join(grounding_lines)
+            )
+
+    log.info('POST /veil/chat  turns=%d', len(messages))
+
+    try:
+        provider = get_provider()  # Claude today — see infrastructure/ai_providers/README.md
+        result = provider.get_reasoning(ReasoningRequest(
+            messages=[AIMessage(role=m['role'], content=m['content']) for m in messages],
+            system=system,
+            max_tokens=2048,
+        ))
+        return jsonify({'reply': result.text})
+    except AIProviderUnavailableError as e:
+        log.warning('VEIL provider unavailable, rejecting without a full attempt: %s', e)
+        return jsonify({
+            'error': 'VEIL is temporarily unavailable — the AI service has been failing repeatedly. Please try again shortly.',
+        }), 503
+    except AIProviderError as e:
+        log.exception('AI provider error in /veil/chat')
+        return jsonify({'error': 'VEIL unavailable', 'detail': str(e)}), 502
+    except Exception as e:
+        log.exception('Error in /veil/chat')
+        return jsonify({'error': 'VEIL failed', 'detail': str(e)}), 500
+
+
+@app.route('/autofill', methods=['POST'])
+def autofill_route():
+    '''
+    POST /autofill
+    Scores every content word in the verse against existing color families.
+    Returns color assignments for all words that score >= threshold,
+    ordered by score. Caller decides which words to apply (e.g. uncolored only).
+
+    Body: {
+      verse_lines:  [str, ...],
+      families:     [{color_id, sample_words: [str, ...]}],
+      threshold:    float (default 0.75)
+    }
+    Response: { assignments: [{word, line_index, word_index, color_id, score}] }
+    '''
+    body       = request.get_json(silent=True) or {}
+    verse_lines = body.get('verse_lines', [])
+    families    = body.get('families', [])
+    threshold   = float(body.get('threshold', 0.60))
+
+    # Scoring logic extracted to domain/family_scoring.py (Phase 1d) — was
+    # real phonetic computation sitting inline in this route, never
+    # independently testable. See that module's docstring.
+    assignments = score_verse_against_families(verse_lines, families, threshold)
+    return jsonify({'assignments': assignments})
+
+
+@app.route('/suggest-family', methods=['POST'])
+def suggest_family():
+    '''
+    POST /suggest-family
+    Body: { word: str, families: [{color_id, sample_words: [str, ...]}] }
+    Scores the word's rhyme unit against each family's sample words.
+    Returns top matches with scores >= 0.65 (includes slant bridges).
+    '''
+    body = request.get_json(silent=True) or {}
+    word = body.get('word', '').strip()
+    families = body.get('families', [])
+
+    # Scoring logic extracted to domain/family_scoring.py (Phase 1d) — see
+    # that module's docstring. Top-3 truncation stays here — an API-
+    # contract decision, not a scoring one.
+    suggestions = score_word_against_families(word, families)
+    return jsonify({'word': word, 'suggestions': suggestions[:3]})
+
+
+@app.route('/thesaurus/bridge', methods=['POST'])
+def thesaurus_bridge():
+    '''
+    POST /thesaurus/bridge
+    Body: { word_a: str, word_b: str }
+    Finds words that connect two topics/images via the synonym graph —
+    useful for building an extended metaphor between two unrelated ideas.
+    '''
+    from thesaurus_engine import find_bridge_words
+
+    body = request.get_json(silent=True) or {}
+    word_a = (body.get('word_a') or '').strip()
+    word_b = (body.get('word_b') or '').strip()
+    if not word_a or not word_b:
+        return jsonify({'error': 'word_a and word_b are required'}), 400
+
+    result = find_bridge_words(word_a, word_b)
+    return jsonify(result)
+
+
+@app.route('/thesaurus/reverse', methods=['POST'])
+def thesaurus_reverse():
+    '''
+    POST /thesaurus/reverse
+    Body: { word: str }
+    Finds root words for which `word` appears as a synonym — useful for
+    discovering what concepts cluster around a word (e.g. "spark" turns up
+    as a synonym under "ignite", "inspire", "flint"...). The inverse
+    direction of /thesaurus/synonyms.
+    '''
+    from thesaurus_engine import reverse_lookup
+
+    body = request.get_json(silent=True) or {}
+    word = (body.get('word') or '').strip()
+    if not word:
+        return jsonify({'error': 'word is required'}), 400
+
+    roots = reverse_lookup(word)
+    return jsonify({'word': word.lower(), 'roots': roots, 'count': len(roots)})
+
+
+@app.route('/thesaurus/synonyms', methods=['POST'])
+def thesaurus_synonyms():
+    '''
+    POST /thesaurus/synonyms
+    Body: { word: str, target_syllables: int? }
+    Returns synonyms tagged with syllable count. If target_syllables is given,
+    results are sorted by closeness to it so the returned words actually fit
+    the bar's rhythm, not just a generic alphabetical dictionary dump.
+    '''
+    from thesaurus_engine import lookup as thesaurus_lookup
+    from domain.syllable_engine import get_syllable_count
+    from concreteness_engine import get_concreteness
+
+    body = request.get_json(silent=True) or {}
+    word = (body.get('word') or '').strip()
+    target = body.get('target_syllables')
+    if not word:
+        return jsonify({'error': 'word is required'}), 400
+
+    result = thesaurus_lookup(word)
+    if not result['found']:
+        return jsonify({'word': word, 'found': False, 'synonyms': []})
+
+    tagged = [
+        {
+            'word': syn,
+            'syllable_count': get_syllable_count(syn) or 1,
+            'concreteness': get_concreteness(syn),
+        }
+        for syn in result['synonyms']
+    ]
+    if target is not None:
+        try:
+            target = int(target)
+            tagged.sort(key=lambda s: abs(s['syllable_count'] - target))
+        except (TypeError, ValueError):
+            pass
+    else:
+        tagged.sort(key=lambda s: s['syllable_count'])
+
+    return jsonify({'word': word, 'found': True, 'synonyms': tagged})
+
+
+@app.route('/thesaurus/related', methods=['POST'])
+def thesaurus_related():
+    '''
+    POST /thesaurus/related
+    Body: { word: str, verse_lines: [str, ...]? }
+    Returns synonyms for the word, each tagged with whether it also rhymes
+    with one of the verse's active rhyme families — one view instead of
+    switching between the thesaurus and the rhyme suggester separately.
+    '''
+    body = request.get_json(silent=True) or {}
+    word = (body.get('word') or '').strip()
+    verse_lines = body.get('verse_lines') or []
+    if not word:
+        return jsonify({'error': 'word is required'}), 400
+
+    # Extracted to application/thesaurus_related.py (Phase 1d) — coordinates
+    # a domain computation with two infrastructure reads for one combined
+    # view, the shape of a use case. See that module's docstring.
+    result = get_related_synonyms(word, verse_lines)
+    return jsonify({'word': word, **result})
+
+
+@app.route('/suggest-motif-words', methods=['POST'])
+def suggest_motif_words():
+    '''
+    POST /suggest-motif-words
+    Body: { cluster_words: [str, ...], exclude: [str, ...]? }
+    Suggests more words to add to a motif_bank cluster, ranked by how many
+    existing cluster words the candidate is a synonym of (thematic centrality).
+    '''
+    from thesaurus_engine import suggest_cluster_words
+
+    body = request.get_json(silent=True) or {}
+    cluster_words = body.get('cluster_words', [])
+    exclude = body.get('exclude', [])
+    if not cluster_words or not isinstance(cluster_words, list):
+        return jsonify({'error': 'cluster_words array required'}), 400
+
+    suggestions = suggest_cluster_words(cluster_words, exclude=exclude)
+    return jsonify({'suggestions': suggestions})
+
+
+@app.route('/corrections', methods=['POST'])
+def record_corrections():
+    '''
+    POST /corrections
+    Body: { signals: [{word, correction_type, color_id?}, ...] }
+    Records manual correction signals for learning accumulation.
+    '''
+    body = request.get_json(silent=True) or {}
+    signals = body.get('signals', [])
+    if not signals or not isinstance(signals, list):
+        return jsonify({'error': 'signals array required'}), 400
+    try:
+        record_signals_batch(signals)
+        log.info('POST /corrections  recorded %d signals', len(signals))
+        return jsonify({'recorded': len(signals)})
+    except Exception as e:
+        log.exception('Error recording corrections')
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/corrections', methods=['GET'])
+def get_corrections():
+    '''GET /corrections — returns top correction signals for review.'''
+    limit = min(int(request.args.get('limit', 50)), 200)
+    signals = get_top_signals(limit)
+    return jsonify({'signals': signals, 'count': len(signals)})
+
+
+@app.route('/wordforms', methods=['POST'])
+def wordforms():
+    '''
+    POST /wordforms
+    Body: { word: str }
+    Returns words sharing this word's root — for polyptoton (repeating a
+    word's root in different grammatical forms across a verse).
+    '''
+    from wordform_engine import find_same_root_words
+
+    body = request.get_json(silent=True) or {}
+    word = (body.get('word') or '').strip()
+    if not word:
+        return jsonify({'error': 'word is required'}), 400
+
+    related = find_same_root_words(word)
+    return jsonify({'word': word, 'related': related})
+
+
+# ── Usage History ─────────────────────────────────────────
+
+@app.route('/my-words', methods=['GET'])
+def my_words():
+    '''
+    GET /my-words  (requires Bearer token)
+    Your personal word-choice fingerprint — the words you gravitate to
+    across everything you've analyzed. Query param `exclude` (comma-separated)
+    lets a caller exclude words already in the verse being written, so this
+    doubles as a suggestion source ("words you tend to reach for").
+    '''
+    row, err = _auth_required()
+    if err:
+        return err
+    user_id = row[0]
+
+    exclude_param = request.args.get('exclude', '')
+    exclude = [w.strip() for w in exclude_param.split(',') if w.strip()]
+
+    top_words = usage_history.get_user_top_words(user_id, exclude=exclude, limit=25)
+    return jsonify({'top_words': top_words})
+
+
+# ── Mastery ───────────────────────────────────────────────
+#
+# PULLED (not wired), decision made explicitly rather than left silently
+# broken. mastery_engine.py's compute_mastery() reads from 6 tables
+# (song_analyses, song_sections, rhyme_events, cadence_events,
+# motif_events, lyric_lines) that feature_store.py is the intended writer
+# for — but feature_store.py is not imported anywhere live, and more
+# fundamentally: writing those tables from /analyze needs a persistent
+# "song" identity to attach records to (song_id/section_label), and this
+# app has NO such concept anywhere today — /analyze takes verse_lines+bpm
+# per request with no stable identifier across edits (confirmed: zero
+# references to song_id anywhere in api.py or the frontend API client).
+#
+# That's real product design (what counts as "a song" vs. an in-progress
+# edit of the same song? when does a trackable record get created?), not
+# a wiring task — inventing an answer unilaterally here to make a number
+# go up would be exactly the "patch around it" outcome this was supposed
+# to avoid. mastery_engine.py's scoring logic itself is real, tested,
+# correct code — left completely untouched, ready to work the moment a
+# real song-identity concept + a mapping layer from assemble_feedback()'s
+# output into the prosodic_data_objects dataclasses exists.
+#
+# The route stays (frontend/src/pages/MasteryPage.js already calls it),
+# but returns an honest "not available yet" rather than
+# mastery_engine.py's own "Keep writing — mastery unlocks once you have
+# enough material" message — that message is false today: no amount of
+# writing unlocks it while nothing ever populates the tables it depends
+# on. Silently returning that indefinitely would be the misleading part.
+
+@app.route('/mastery', methods=['GET'])
+def mastery():
+    return jsonify({
+        'ready': False,
+        'reason': (
+            'Mastery tracking isn\'t wired up yet — it needs a persistent '
+            'song concept this app doesn\'t have yet, not just more usage. '
+            'Not a "keep writing" situation.'
+        ),
+        'missing': [],
+        'data_snapshot': None,
+    })
+
+
+# ── Entry point ───────────────────────────────────────────
+
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    app.run(debug=False, host='0.0.0.0', port=port, threaded=True)

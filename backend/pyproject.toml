@@ -1,0 +1,42 @@
+[tool.ruff]
+# Scoped like mypy.ini and .coveragerc — the live pipeline, not every
+# one-off script or the mobile app (its own eslint/tsc handle that).
+exclude = ["mobile", "node_modules", "cantos_data", ".venv", "venv"]
+
+[tool.ruff.lint]
+# Ruff's own default rule set (see docs) is broader than this in recent
+# versions — it includes pyupgrade (UP), bandit (S), pylint (PLR/PLW),
+# flake8-datetimez (DTZ), perflint (PERF), etc. Running that against an
+# existing, working, ~zero-prior-lint codebase in one pass would mean
+# hundreds of stylistic/modernization findings (checked: 907 on a bare
+# `ruff check .` before this config existed) with no bug-catching value
+# proportional to the noise — not what "add lint to CI" was asking for.
+# E4/E9/F is pyflakes' real-bug rules + pycodestyle's import/syntax-error
+# checks — every one of those findings got fixed or individually
+# reviewed and disclosed (see fingerprint_pipeline.py's one `# noqa:
+# F821`, and the git history of this commit for the ~15 real dead-
+# variable/dead-import removals it drove).
+#
+# E7 and E402 are deliberately OUT of scope for this pass, not silently
+# dropped — checked each pattern before excluding, not just muting the
+# noisiest categories:
+#   - E402 (module import not at top of file): api.py's 17 hits are
+#     REQUIRED ordering, not sloppiness — `load_dotenv()` must run
+#     before importing modules that read env vars at import time. The
+#     rest are scattered 1-2 hit files not worth a rule-wide exception
+#     just for those; deferred as a real, logged cleanup item
+#     (docs/BUILD_PLAN.md Phase 6) rather than hand-fixing ~20 files'
+#     import ordering in this pass.
+#   - E701 (multiple statements on one line): every hit is a
+#     deliberately hand-aligned if/elif ladder (e.g. suggestion_engine.py's
+#     star-rating thresholds) — an established, readable convention in
+#     this codebase, not disorganization. Reformatting working,
+#     intentional code to satisfy a linter would be exactly the wrong
+#     kind of change.
+#   - E741 (ambiguous variable name): all 30 hits are `l` as a line-loop
+#     variable (`for l in lines`) — a pervasive, harmless convention
+#     across this codebase and its tests. Renaming 30 sites for a purely
+#     cosmetic concern is disproportionate churn for what this pass
+#     asked for.
+select = ["E4", "E9", "F"]
+ignore = ["E402"]

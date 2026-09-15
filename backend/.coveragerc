@@ -1,0 +1,35 @@
+[run]
+source = .
+omit =
+    tests/*
+    mobile/*
+    .venv/*
+    venv/*
+    setup_*.py
+    test_api.py
+    test_family_engine.py
+    # ML-experiment scripts, confirmed (via grep, not assumed — see
+    # docs/BUILD_PLAN.md Phase 2c) to only import each other, never the
+    # live domain/application/infrastructure pipeline or api.py:
+    aave_phonology.py
+    aspiration_gap.py
+    bar_grid_linguistics.py
+    data_generator.py
+    density_gradient.py
+    device_detection_engine.py
+    ml_interface.py
+    ml/*
+    model_registry.py
+    phoneme_resolver.py
+    train_rhyme_model.py
+    # Real, tested, deliberately unwired code — see /mastery route's own
+    # docstring in api.py and docs/DECISIONS_NEEDED.md item 2. Not dead,
+    # just has no live caller until the song_id product decision lands.
+    mastery_engine.py
+
+[report]
+skip_covered = false
+precision = 1
+exclude_lines =
+    pragma: no cover
+    if __name__ == .__main__.:

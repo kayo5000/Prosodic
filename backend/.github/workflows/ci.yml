@@ -1,0 +1,80 @@
+name: CI
+
+# Phase 6, docs/BUILD_PLAN.md. Gated on Phases 1–4 (backend Clean
+# Architecture reorg, OpenAPI/mypy/pytest-cov, mobile TS-strict +
+# Ignite-inspired restructuring, mobile Jest/contract tests) all being
+# real and green first — wiring CI before that would just mean a red
+# pipeline from day one, teaching everyone to ignore it.
+#
+# Two independent jobs (backend, mobile) — separate codebases, separate
+# toolchains, no reason to serialize them or share a runner.
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  backend:
+    name: Backend (tests + mypy + ruff)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # Not a real secret — api.py refuses to boot without SOME value
+      # here (see its own startup check), and none of the tests need it
+      # to be a genuine credential. Obviously-fake on purpose.
+      JWT_SECRET: ci-test-secret-not-a-real-credential
+      # Deliberately NOT set: ANTHROPIC_API_KEY. Without it, the live-LLM
+      # tests skip cleanly (see CLAUDE.md's Testing section) instead of
+      # either costing real API spend on every push or risking the
+      # documented non-deterministic-model-output flakiness on a CI gate
+      # nobody's watching interactively. Local dev with a real key still
+      # gets full coverage of those paths.
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11.9' # matches runtime.txt / .python-version (production)
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Run tests (with coverage)
+        run: python -m pytest tests/ -q --cov --cov-report=term-missing:skip-covered
+
+      - name: mypy
+        run: python -m mypy domain application infrastructure api.py veil_revival_routes.py cantos behavior analysis
+
+      - name: ruff
+        run: python -m ruff check .
+
+  mobile:
+    name: Mobile (tsc + lint + jest)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22' # Expo SDK 57's documented minimum is 22.13.x
+          cache: 'npm'
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript check
+        run: npm run tsc
+
+      - name: ESLint
+        run: npm run lint
+
+      - name: Jest (with coverage)
+        run: npm run test:coverage

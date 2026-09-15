@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import {
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -9,8 +10,8 @@ import {
   View,
 } from 'react-native';
 
-import { dissectLineIntoSyllableTokens } from '../../../utils/perceptualFamilies';
 import type { CadenceBarLine } from './types';
+import type { VerseRhymeToken } from '../../../services/rhymeDetectionEngine';
 
 interface CadenceBarRowProps {
   bar: CadenceBarLine;
@@ -18,11 +19,13 @@ interface CadenceBarRowProps {
   isAlignedAcrossPage: boolean;
   showBarNumber?: boolean;
   showRhymeMap?: boolean;
+  rhymeTokens?: VerseRhymeToken[];
   onFocus: () => void;
   onChangeText: (newText: string) => void;
   onSubmitEditing: () => void;
   onBackspaceEmpty?: () => void;
   onGutterPress?: () => void;
+  onSelectSyllable?: (token: VerseRhymeToken) => void;
 }
 
 export function CadenceBarRow({
@@ -31,11 +34,13 @@ export function CadenceBarRow({
   isAlignedAcrossPage,
   showBarNumber = true,
   showRhymeMap = true,
+  rhymeTokens,
   onFocus,
   onChangeText,
   onSubmitEditing,
   onBackspaceEmpty,
   onGutterPress,
+  onSelectSyllable,
 }: CadenceBarRowProps) {
   const inputRef = useRef<TextInput>(null);
 
@@ -50,11 +55,12 @@ export function CadenceBarRow({
     fontWeight: isBold ? '700' : '500',
   };
 
-  // Dissect text into syllable tokens for syllable-level rhyme highlighting
-  const syllableTokens = React.useMemo(() => {
+  // Render vetted rhyme tokens or fall back
+  const tokensToRender = React.useMemo(() => {
     if (!showRhymeMap || !bar.rawText) return [];
-    return dissectLineIntoSyllableTokens(bar.rawText);
-  }, [showRhymeMap, bar.rawText]);
+    if (rhymeTokens && rhymeTokens.length > 0) return rhymeTokens;
+    return [];
+  }, [showRhymeMap, bar.rawText, rhymeTokens]);
 
   // Dynamic width calculation:
   // If aligned across page: flex 1 (full width)
@@ -72,113 +78,140 @@ export function CadenceBarRow({
   };
 
   return (
-    <Pressable
-      onPress={() => {
-        onFocus();
-        inputRef.current?.focus();
-      }}
-      style={[
-        styles.rowContainer,
-        !showBarNumber && styles.rowContainerBorderless,
-        isActive && styles.activeRowHighlight,
-      ]}
-    >
-      {/* 1. Bar Number Column - Tapping anywhere in this gutter opens phrase length */}
-      {showBarNumber && (
-        <Pressable
-          onPress={(e) => {
-            e.stopPropagation();
-            onGutterPress?.();
-          }}
-          style={styles.barNumberContainer}
-          hitSlop={{ top: 4, bottom: 4, left: 8, right: 8 }}
-          accessibilityRole="button"
-          accessibilityLabel={`Bar ${bar.barIndex}. Tap to configure section phrase length`}
-        >
-          <Text style={[styles.barNumberText, isActive && styles.activeBarNumberText]}>
-            {bar.barIndex}
-          </Text>
-        </Pressable>
-      )}
-
-      {/* 2. Measure Wrapper (starts as small gap or expands across full page) */}
-      <View
+    <View style={styles.barOuterWrapper}>
+      <Pressable
+        onPress={() => {
+          onFocus();
+          inputRef.current?.focus();
+        }}
         style={[
-          styles.measureContainer,
-          !showBarNumber || isAlignedAcrossPage
-            ? styles.measureFullWidth
-            : { width: dynamicMeasureWidth },
+          styles.rowContainer,
+          !showBarNumber && styles.rowContainerBorderless,
+          isActive && styles.activeRowHighlight,
         ]}
       >
-        {/* Left Repeat Barline Marker |• */}
+        {/* 1. Bar Number Column - Tapping anywhere in this gutter opens phrase length */}
         {showBarNumber && (
-          <View style={styles.markerContainer}>
-            <Text style={styles.markerText}>|•</Text>
-          </View>
+          <Pressable
+            onPress={(e) => {
+              e.stopPropagation();
+              onGutterPress?.();
+            }}
+            style={styles.barNumberContainer}
+            hitSlop={{ top: 4, bottom: 4, left: 8, right: 8 }}
+            accessibilityRole="button"
+            accessibilityLabel={`Bar ${bar.barIndex}. Tap to configure section phrase length`}
+          >
+            <Text style={[styles.barNumberText, isActive && styles.activeBarNumberText]}>
+              {bar.barIndex}
+            </Text>
+          </Pressable>
         )}
 
-        {/* Lyric Input Field with Syllable Rhyme Map Overlay */}
-        <View style={styles.inputWrapper}>
-          {showRhymeMap && bar.rawText.length > 0 && (
-            <View style={styles.rhymeOverlay} pointerEvents="none">
-              <Text style={[styles.rhymeOverlayText, textStyle]}>
-                {syllableTokens.map((tok, idx) => (
-                  <Text
-                    key={idx}
-                    style={{
-                      color: tok.isWord ? tok.color : 'rgba(255, 255, 255, 0.4)',
-                      fontWeight: isBold ? '700' : tok.isWord ? '600' : '400',
-                    }}
-                  >
-                    {tok.text}
-                  </Text>
-                ))}
-              </Text>
+        {/* 2. Measure Wrapper (starts as small gap or expands across full page) */}
+        <View
+          style={[
+            styles.measureContainer,
+            !showBarNumber || isAlignedAcrossPage
+              ? styles.measureFullWidth
+              : { width: dynamicMeasureWidth },
+          ]}
+        >
+          {/* Left Repeat Barline Marker |• */}
+          {showBarNumber && (
+            <View style={styles.markerContainer}>
+              <Text style={styles.markerText}>|•</Text>
             </View>
           )}
 
-          <TextInput
-            ref={inputRef}
-            value={bar.rawText}
-            onChangeText={onChangeText}
-            onFocus={onFocus}
-            onSubmitEditing={onSubmitEditing}
-            onKeyPress={handleKeyPress}
-            blurOnSubmit={false}
-            returnKeyType="next"
-            autoCorrect={false}
-            autoCapitalize="sentences"
-            placeholder=""
-            style={[
-              styles.textInput,
-              textStyle,
-              showRhymeMap && bar.rawText.length > 0 && styles.textInputRhymeMode,
-              Platform.OS === 'web' ? ({ outlineStyle: 'none' } as any) : null,
-            ]}
-          />
+          {/* Lyric Input Field: Crisp Native High-Contrast Text Input */}
+          <View style={styles.inputWrapper}>
+            <TextInput
+              ref={inputRef}
+              value={bar.rawText}
+              onChangeText={onChangeText}
+              onFocus={onFocus}
+              onSubmitEditing={onSubmitEditing}
+              onKeyPress={handleKeyPress}
+              blurOnSubmit={false}
+              returnKeyType="next"
+              autoCorrect={false}
+              autoCapitalize="sentences"
+              placeholder=""
+              style={[
+                styles.textInput,
+                textStyle,
+                Platform.OS === 'web' ? ({ outlineStyle: 'none' } as any) : null,
+              ]}
+            />
+          </View>
+
+          {/* Right Repeat Barline Marker •| */}
+          {showBarNumber && (
+            <View style={styles.markerContainer}>
+              <Text style={styles.markerText}>•|</Text>
+            </View>
+          )}
         </View>
 
-        {/* Right Repeat Barline Marker •| */}
-        {showBarNumber && (
-          <View style={styles.markerContainer}>
-            <Text style={styles.markerText}>•|</Text>
-          </View>
-        )}
-      </View>
+        {/* 3. Syllable Count Badge on Right */}
+        <View style={styles.syllableContainer}>
+          <Text
+            style={[
+              styles.syllableText,
+              bar.syllableCount > 0 ? styles.syllableTextActive : styles.syllableTextZero,
+              isActive && styles.syllableTextHighlight,
+            ]}
+          >
+            {bar.syllableCount}
+          </Text>
+        </View>
+      </Pressable>
 
-      {/* 3. Syllable Count Badge on Right */}
-      <View style={styles.syllableContainer}>
-        <Text
-          style={[
-            styles.syllableText,
-            bar.syllableCount > 0 ? styles.syllableTextActive : styles.syllableTextZero,
-            isActive && styles.syllableTextHighlight,
-          ]}
-        >
-          {bar.syllableCount}
-        </Text>
-      </View>
-    </Pressable>
+      {/* 4. Tactile Syllable Placement Ribbon (Rendered when Rhyme Map is Active) */}
+      {showRhymeMap && tokensToRender.length > 0 && (
+        <View style={styles.syllableRibbonContainer}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.syllableRibbonScroll}
+          >
+            {tokensToRender.filter((t) => t.isWord).map((tok, idx) => {
+              const isRhyming = tok.colorId > 0;
+              const hasColor = isRhyming ? tok.color : 'rgba(255, 255, 255, 0.4)';
+
+              return (
+                <Pressable
+                  key={idx}
+                  onPress={() => onSelectSyllable?.(tok)}
+                  style={[
+                    styles.syllablePill,
+                    isRhyming && {
+                      borderColor: tok.color,
+                      backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                    },
+                  ]}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Syllable ${tok.text}, Stress ${tok.stress}, Tap to inspect`}
+                >
+                  <View
+                    style={[
+                      styles.syllableColorDot,
+                      { backgroundColor: isRhyming ? tok.color : 'rgba(255, 255, 255, 0.2)' },
+                    ]}
+                  />
+                  <Text style={[styles.syllablePillText, { color: isRhyming ? tok.color : '#FFFFFF' }]}>
+                    {tok.text}
+                  </Text>
+                  {tok.stress === 1 && <Text style={styles.stressMarker}>*</Text>}
+                  {tok.stress === 2 && <Text style={styles.stressMarkerSecondary}>•</Text>}
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </View>
+      )}
+    </View>
   );
 }
 
@@ -234,29 +267,12 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.45)',
     letterSpacing: -0.5,
   },
+  barOuterWrapper: {
+    marginBottom: 2,
+  },
   inputWrapper: {
     flex: 1,
-    position: 'relative',
     justifyContent: 'center',
-  },
-  rhymeOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    zIndex: 1,
-  },
-  rhymeOverlayText: {
-    fontSize: 16,
-    lineHeight: 22,
-    paddingVertical: 8,
-    paddingHorizontal: 8,
-    fontFamily: Platform.select({
-      ios: 'System',
-      default: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-    }),
   },
   textInput: {
     flex: 1,
@@ -269,11 +285,47 @@ const styles = StyleSheet.create({
       ios: 'System',
       default: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     }),
-    zIndex: 2,
   },
-  textInputRhymeMode: {
-    color: 'transparent',
-    ...(Platform.OS === 'web' ? ({ caretColor: '#FFFFFF' } as any) : {}),
+  syllableRibbonContainer: {
+    paddingLeft: 46,
+    paddingRight: 12,
+    paddingBottom: 6,
+  },
+  syllableRibbonScroll: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  syllablePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    gap: 4,
+  },
+  syllableColorDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  syllablePillText: {
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: -0.2,
+  },
+  stressMarker: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#E5A50A',
+  },
+  stressMarkerSecondary: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: 'rgba(255, 255, 255, 0.4)',
   },
   syllableContainer: {
     width: 44,

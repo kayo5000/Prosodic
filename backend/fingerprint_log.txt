@@ -1,0 +1,2 @@
+2026-04-16 11:17:28,940 WARNING load_sources_from_file: /nonexistent/sources.txt not found
+2026-04-16 11:17:28,941 INFO Batch complete: 0/0 OK, 0 failed

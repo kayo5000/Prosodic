@@ -54,6 +54,14 @@ example
 # local scratch space — never part of the build
 scratch/
 
+# Database files & large logs
+*.db
+*.sqlite
+*.sqlite3
+*.log
+backend/*.db
+backend/**/*.db
+
 # JetBrains IDE
 .idea/
 .vercel
