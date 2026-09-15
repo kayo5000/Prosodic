@@ -30,7 +30,9 @@ Currently in Expo dev-preview stage (scan a QR code with Expo Go), not a store b
 
 ### Testing
 
-368 tests, golden-master regression coverage on the live pipeline (`tests/golden_master.py` — see `CLAUDE.md`), real concurrency tests, real end-to-end smoke tests against both a local server and the deployed Railway backend performed this session (not just unit-level).
+412 tests (396 passed, 3 failed, 13 skipped as of 2026-09-15), golden-master regression coverage on the live pipeline (`tests/golden_master.py` — see `CLAUDE.md`), real concurrency tests, and real end-to-end smoke tests against a local server (not just unit-level).
+
+The 3 failures — `test_golden_master.py::test_suggest_verse_a_manual`, `::test_suggest_verse_b_manual`, and `test_suggest_enrichment.py::test_enriches_with_all_three_fields` — share one cause: `concreteness.db` is not tracked in git and is absent on a clean clone, so `concreteness_engine` degrades every lookup to `None` by design. This is a missing data file, not a code defect. Note that the earlier claim of a smoke test "against the deployed Railway backend" could not have happened as written — that backend has never successfully deployed (see *Deployment, right now*).
 
 ---
 
@@ -64,7 +66,11 @@ Currently in Expo dev-preview stage (scan a QR code with Expo Go), not a store b
 
 ## Deployment, right now
 
-- **Backend: live on Railway**, `https://prosodic-production.up.railway.app` — verified this session with a real `POST /analyze` request against it, not just a health-check ping.
-- **Persistence state on Railway is not fully confirmed from this side.** Earlier work added a volume and set `PROSODIC_DB_PATH` via the dashboard (a manual step, not code), and the backend is confirmed live and responding — but a from-scratch "redeploy and prove data survives a redeploy" check hasn't been completed, and this session has no authenticated Railway CLI access to inspect current dashboard state directly. Treat persistence as "should be configured" rather than "proven" until that check happens.
+- **Backend: NOT deployed.** The Railway service (`loyal-smile` → service `Prosodic`, production env) has **never had a successful deployment** — querying deployments filtered to `SUCCESS` returns an empty list. Its most recent attempt failed on 2026-04-18 at the `BUILD_IMAGE` stage; every attempt before that is `FAILED` or `REMOVED`. Both `prosodic-beta.up.railway.app` (the real service domain) and `prosodic-production.up.railway.app` return **HTTP 404**, Railway's no-deployment page.
+  - A previous revision of this file claimed the backend was "live on Railway" at `prosodic-production.up.railway.app` and "verified this session with a real `POST /analyze`". That was wrong on both the hostname and the liveness; it has been corrected against the Railway API.
+  - **Root cause of the boot failures:** the service had exactly one environment variable, `ANTHROPIC_API_KEY`. `JWT_SECRET` was never set, and `api.py` raises `RuntimeError` on import without it, so any image that did build would still crash on start.
+  - **Fixed 2026-09-15:** `JWT_SECRET` and `PROSODIC_DB_PATH=/data/prosodic.db` are now set on the service, and a 5 GB volume (`prosodic-data`, `us-east4`) is mounted at `/data`. What remains is triggering a fresh build — see the size note below.
+  - **Open risk — image size.** The April failure was at image-build time, and the commit history around it reads *"Slim requirements.txt to fix 5.5GB image size on Railway"*, *"remove spacy"*, *"Make spacy import optional"*. Current `main` has spacy **and** `en_core_web_md` back in `requirements.txt`. Measured install footprint of the production deps is ~204 MB (`en_core_web_md` 53M, numpy 79M, blis 30M, spacy 28M, nltk 14M), on top of the 164 MB `moby_thesaurus.db` committed into the repo and shipped in the build context. Expect the next build to need this addressed.
+- **Persistence is configured but not yet proven.** The volume above exists and is mounted, but "redeploy and prove data survives" cannot be checked until there is a successful deployment to redeploy.
 - **Mobile app: Expo dev-preview only.** No production build, no store submission, no store accounts. Preview happens by running `npx expo start` on a dev machine and scanning the QR code with Expo Go — either on the same WiFi (LAN mode) or from anywhere once tunnel mode has a working ngrok token (see `docs/SETUP.md`).
 - **Cantos: off by default in every environment** (`FEATURE_CANTOS_ENABLED` unset). Its own persistence path (`CANTOS_DB_PATH`) depends on the same Railway volume as above if it's ever turned on in production.
