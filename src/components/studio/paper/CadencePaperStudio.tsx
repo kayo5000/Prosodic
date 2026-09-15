@@ -72,6 +72,7 @@ export function CadencePaperStudio({
   const [sections, setSections] = useState<PaperSection[]>(initialData.sections);
   const [activeSectionId, setActiveSectionId] = useState<string>(initialData.sections[0]?.id || '');
   const [viewMode, setViewMode] = useState<'cadence' | 'texture'>('cadence');
+  const [showBars, setShowBars] = useState<boolean>(true);
 
   // Formatted Date & Time
   const formattedDateTime = useMemo(() => {
@@ -440,42 +441,6 @@ export function CadencePaperStudio({
           </Pressable>
         </View>
 
-        {/* Nav Center: Cadence vs Texture Mode Switcher */}
-        <View style={styles.navCenter}>
-          <View style={styles.modeSegmented}>
-            <Pressable
-              onPress={() => setViewMode('cadence')}
-              style={[styles.modeSegmentBtn, viewMode === 'cadence' && styles.modeSegmentBtnActive]}
-              accessibilityRole="tab"
-              accessibilityLabel="Cadence View"
-            >
-              <Text
-                style={[
-                  styles.modeSegmentText,
-                  viewMode === 'cadence' && styles.modeSegmentTextActive,
-                ]}
-              >
-                Cadence
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() => setViewMode('texture')}
-              style={[styles.modeSegmentBtn, viewMode === 'texture' && styles.modeSegmentBtnActive]}
-              accessibilityRole="tab"
-              accessibilityLabel="Texture View"
-            >
-              <Text
-                style={[
-                  styles.modeSegmentText,
-                  viewMode === 'texture' && styles.modeSegmentTextActive,
-                ]}
-              >
-                Texture
-              </Text>
-            </Pressable>
-          </View>
-        </View>
-
         <View style={styles.navRight}>
           <Pressable
             onPress={handleUndo}
@@ -514,32 +479,16 @@ export function CadencePaperStudio({
             )}
           </Pressable>
 
-          {/* Inspiration / Texture Screen Toggle */}
+          {/* Bar Numbers On / Off Toggle */}
           <Pressable
-            onPress={() => setViewMode((m) => (m === 'texture' ? 'cadence' : 'texture'))}
-            style={[styles.navIconButton, viewMode === 'texture' && styles.navIconButtonActive]}
+            onPress={() => setShowBars((prev) => !prev)}
+            style={[styles.barToggleBtn, showBars && styles.barToggleBtnActive]}
             accessibilityRole="button"
-            accessibilityLabel="Toggle Texture Mode"
+            accessibilityLabel={showBars ? "Hide Bar Numbers" : "Show Bar Numbers"}
           >
-            {Platform.OS === 'web' ? (
-              <svg
-                width="21"
-                height="21"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke={viewMode === 'texture' ? '#D97706' : '#E5A50A'}
-                strokeWidth={viewMode === 'texture' ? '2.3' : '1.9'}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                style={{ display: 'block' }}
-              >
-                {/* 4-point inspiration star matching Apple Notes & Journal references */}
-                <path d="M12 2.5 L14.3 8.6 C14.7 9.6 15.5 10.4 16.5 10.8 L22.6 13 L16.5 15.2 C15.5 15.6 14.7 16.4 14.3 17.4 L12 23.5 L9.7 17.4 C9.3 16.4 8.5 15.6 7.5 15.2 L1.4 13 L7.5 10.8 C8.5 10.4 9.3 9.6 9.7 8.6 Z" />
-                <path d="M19 3.5 L19.7 5.2 L21.4 5.9 L19.7 6.6 L19 8.3 L18.3 6.6 L16.6 5.9 L18.3 5.2 Z" fill="#E5A50A" stroke="none" opacity="0.9" />
-              </svg>
-            ) : (
-              <Text style={styles.navActionIcon}>✦</Text>
-            )}
+            <Text style={[styles.barToggleText, showBars && styles.barToggleTextActive]}>
+              {showBars ? 'Bars On' : 'Bars Off'}
+            </Text>
           </Pressable>
 
           {/* Format Toolbar Button */}
@@ -631,7 +580,7 @@ export function CadencePaperStudio({
 
         {/* Column Labels: "Bar" on left, "Syllable" on right */}
         <View style={styles.columnLabelsRow}>
-          <Text style={styles.columnLabelLeft}>Bar</Text>
+          <Text style={styles.columnLabelLeft}>{showBars ? 'Bar' : ''}</Text>
           <Text style={styles.columnLabelRight}>Syllable</Text>
         </View>
 
@@ -715,6 +664,7 @@ export function CadencePaperStudio({
                                 bar={bar}
                                 isActive={isActive}
                                 isAlignedAcrossPage={isAlignedAcrossPage}
+                                showBarNumber={showBars}
                                 onFocus={() =>
                                   setActiveFocus({
                                     sectionId: sec.id,
@@ -824,7 +774,7 @@ export function CadencePaperStudio({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#000000',
   },
   topNavBar: {
     flexDirection: 'row',
@@ -833,8 +783,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: '#E5E5EA',
-    backgroundColor: '#FFFFFF',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: '#000000',
   },
   navLeft: {
     flexDirection: 'row',
@@ -845,37 +795,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  modeSegmented: {
-    flexDirection: 'row',
-    backgroundColor: '#F2F2F7',
-    borderRadius: 16,
-    padding: 2,
-  },
-  modeSegmentBtn: {
-    paddingVertical: 5,
-    paddingHorizontal: 14,
-    borderRadius: 14,
-  },
-  modeSegmentBtnActive: {
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.12,
-    shadowRadius: 2,
-  },
-  modeSegmentText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#8E8E93',
-  },
-  modeSegmentTextActive: {
-    color: '#E5A50A',
-    fontWeight: '700',
-  },
   navRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
+    gap: 12,
   },
   navIconButton: {
     flexDirection: 'row',
@@ -884,7 +807,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   navIconButtonActive: {
-    backgroundColor: '#FFF8E7',
+    backgroundColor: 'rgba(229, 165, 10, 0.15)',
   },
   navButtonDisabled: {
     opacity: 0.35,
@@ -910,6 +833,26 @@ const styles = StyleSheet.create({
     color: '#D97706',
     fontWeight: '800',
   },
+  barToggleBtn: {
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'transparent',
+  },
+  barToggleBtnActive: {
+    borderColor: '#E5A50A',
+    backgroundColor: 'rgba(229, 165, 10, 0.15)',
+  },
+  barToggleText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.5)',
+  },
+  barToggleTextActive: {
+    color: '#E5A50A',
+  },
   doneCheckButton: {
     width: 28,
     height: 28,
@@ -919,13 +862,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   doneCheckText: {
-    color: '#FFFFFF',
+    color: '#000000',
     fontSize: 15,
     fontWeight: '700',
   },
   paperScrollView: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#000000',
   },
   paperScrollContent: {
     paddingHorizontal: 20,
@@ -948,7 +891,7 @@ const styles = StyleSheet.create({
   titleHeading: {
     fontSize: 30,
     fontWeight: '700',
-    color: '#1C1C1E',
+    color: '#FFFFFF',
     letterSpacing: -0.5,
     flex: 1,
     fontFamily: Platform.select({
@@ -957,22 +900,22 @@ const styles = StyleSheet.create({
     }),
   },
   metaSettingsPill: {
-    backgroundColor: '#F2F2F7',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     paddingVertical: 5,
     paddingHorizontal: 10,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E5E5EA',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
   },
   metaSettingsPillText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#8E8E93',
+    color: 'rgba(255, 255, 255, 0.65)',
   },
   dateText: {
     fontSize: 13,
     fontWeight: '400',
-    color: '#8E8E93',
+    color: 'rgba(255, 255, 255, 0.4)',
     letterSpacing: -0.2,
   },
   columnLabelsRow: {
@@ -982,19 +925,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingBottom: 8,
     borderBottomWidth: 1.5,
-    borderBottomColor: '#D1D1D6',
+    borderBottomColor: 'rgba(255, 255, 255, 0.12)',
   },
   columnLabelLeft: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#8E8E93',
+    color: 'rgba(255, 255, 255, 0.45)',
     textTransform: 'uppercase',
     letterSpacing: 0.8,
   },
   columnLabelRight: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#8E8E93',
+    color: 'rgba(255, 255, 255, 0.45)',
     textTransform: 'uppercase',
     letterSpacing: 0.8,
   },
@@ -1013,20 +956,20 @@ const styles = StyleSheet.create({
   beatSwitchDividerLine: {
     flex: 1,
     height: 1.5,
-    backgroundColor: '#F39C12',
+    backgroundColor: 'rgba(229, 165, 10, 0.4)',
   },
   beatSwitchBadgeCanvas: {
-    backgroundColor: '#FFF8E7',
+    backgroundColor: 'rgba(229, 165, 10, 0.15)',
     paddingVertical: 4,
     paddingHorizontal: 12,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#F39C12',
+    borderColor: 'rgba(229, 165, 10, 0.4)',
   },
   beatSwitchBadgeText: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#D4AF37',
+    color: '#E5A50A',
     letterSpacing: 0.6,
   },
   sectionCanvasBlock: {
@@ -1048,7 +991,7 @@ const styles = StyleSheet.create({
   sectionTitleText: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#1C1C1E',
+    color: '#FFFFFF',
     letterSpacing: 0.5,
     textTransform: 'uppercase',
   },
@@ -1056,28 +999,28 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     paddingHorizontal: 8,
     borderRadius: 8,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderWidth: 1,
-    borderColor: '#E5E5EA',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
   },
   sectionPhrasePillText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#8E8E93',
+    color: 'rgba(255, 255, 255, 0.6)',
     letterSpacing: 0.5,
   },
   textureBadgeBtn: {
     paddingVertical: 3,
     paddingHorizontal: 8,
     borderRadius: 8,
-    backgroundColor: '#F9F9FB',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderWidth: 1,
-    borderColor: '#E5E5EA',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
   },
   textureBadgeText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#8E8E93',
+    color: 'rgba(255, 255, 255, 0.6)',
   },
   textureMoodTag: {
     flexDirection: 'row',
@@ -1087,7 +1030,7 @@ const styles = StyleSheet.create({
   textureMoodTagText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#3A3A3C',
+    color: 'rgba(255, 255, 255, 0.8)',
   },
   blockRowGroup: {
     marginBottom: 4,

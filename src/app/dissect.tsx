@@ -14,7 +14,7 @@ export default function DissectScreen() {
   }, []);
 
   return (
-    <ThemedView style={[styles.container, showIntro ? { backgroundColor: '#000000' } : { backgroundColor: '#FFFFFF' }]}>
+    <ThemedView style={[styles.container, { backgroundColor: '#000000' }]}>
       {showIntro && <AppIntroModal onDismiss={handleDismissIntro} />}
       {!showIntro && (
         <CadencePaperStudio
@@ -29,6 +29,6 @@ export default function DissectScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#000000',
   },
 });

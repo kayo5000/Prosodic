@@ -178,8 +178,8 @@ export function AppIntroModal({ onDismiss }: AppIntroModalProps) {
     hasEnteredRef.current = true;
     setIsFadingOut(true);
     if (typeof document !== 'undefined') {
-      document.body.style.backgroundColor = '#FFFFFF';
-      document.documentElement.style.backgroundColor = '#FFFFFF';
+      document.body.style.backgroundColor = '#000000';
+      document.documentElement.style.backgroundColor = '#000000';
     }
     setTimeout(onDismiss, 350);
   };

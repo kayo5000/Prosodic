@@ -15,6 +15,7 @@ interface CadenceBarRowProps {
   bar: CadenceBarLine;
   isActive: boolean;
   isAlignedAcrossPage: boolean;
+  showBarNumber?: boolean;
   onFocus: () => void;
   onChangeText: (newText: string) => void;
   onSubmitEditing: () => void;
@@ -26,6 +27,7 @@ export function CadenceBarRow({
   bar,
   isActive,
   isAlignedAcrossPage,
+  showBarNumber = true,
   onFocus,
   onChangeText,
   onSubmitEditing,
@@ -72,20 +74,22 @@ export function CadenceBarRow({
       ]}
     >
       {/* 1. Bar Number Column - Tapping anywhere in this gutter opens phrase length */}
-      <Pressable
-        onPress={(e) => {
-          e.stopPropagation();
-          onGutterPress?.();
-        }}
-        style={styles.barNumberContainer}
-        hitSlop={{ top: 4, bottom: 4, left: 8, right: 8 }}
-        accessibilityRole="button"
-        accessibilityLabel={`Bar ${bar.barIndex}. Tap to configure section phrase length`}
-      >
-        <Text style={[styles.barNumberText, isActive && styles.activeBarNumberText]}>
-          {bar.barIndex}
-        </Text>
-      </Pressable>
+      {showBarNumber && (
+        <Pressable
+          onPress={(e) => {
+            e.stopPropagation();
+            onGutterPress?.();
+          }}
+          style={styles.barNumberContainer}
+          hitSlop={{ top: 4, bottom: 4, left: 8, right: 8 }}
+          accessibilityRole="button"
+          accessibilityLabel={`Bar ${bar.barIndex}. Tap to configure section phrase length`}
+        >
+          <Text style={[styles.barNumberText, isActive && styles.activeBarNumberText]}>
+            {bar.barIndex}
+          </Text>
+        </Pressable>
+      )}
 
       {/* 2. Measure Wrapper (starts as small gap or expands across full page) */}
       <View
@@ -147,12 +151,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     height: 44,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA', // Apple Notes light gray ruled line
+    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
     paddingHorizontal: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#000000',
   },
   activeRowHighlight: {
-    backgroundColor: 'rgba(242, 242, 247, 0.45)',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
   },
   barNumberContainer: {
     width: 28,
@@ -162,11 +166,11 @@ const styles = StyleSheet.create({
   barNumberText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#8E8E93',
+    color: 'rgba(255, 255, 255, 0.4)',
     fontVariant: ['tabular-nums'],
   },
   activeBarNumberText: {
-    color: '#1C1C1E',
+    color: '#FFFFFF',
     fontWeight: '700',
   },
   measureContainer: {
@@ -186,13 +190,13 @@ const styles = StyleSheet.create({
   markerText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#3A3A3C',
+    color: 'rgba(255, 255, 255, 0.45)',
     letterSpacing: -0.5,
   },
   textInput: {
     flex: 1,
     fontSize: 16,
-    color: '#1C1C1E',
+    color: '#FFFFFF',
     paddingVertical: 8,
     paddingHorizontal: 8,
     fontFamily: Platform.select({
@@ -212,15 +216,15 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
   syllableTextActive: {
-    color: '#1C1C1E',
+    color: '#FFFFFF',
     fontWeight: '600',
   },
   syllableTextZero: {
-    color: '#C7C7CC',
+    color: 'rgba(255, 255, 255, 0.25)',
     fontWeight: '400',
   },
   syllableTextHighlight: {
-    color: '#E5A50A', // Apple Notes amber highlight when editing
+    color: '#E5A50A', // Amber highlight when editing
     fontWeight: '700',
   },
 });

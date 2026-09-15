@@ -133,17 +133,17 @@ export function AppleNotesFormatBar({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#F2F2F7',
+    backgroundColor: '#1C1C1E',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 24,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderColor: '#D1D1D6',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: -3 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.4,
     shadowRadius: 10,
     elevation: 8,
     gap: 14,
@@ -159,21 +159,21 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 17,
     fontWeight: '700',
-    color: '#1C1C1E',
+    color: '#FFFFFF',
     letterSpacing: -0.4,
   },
   closeButton: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#E5E5EA',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   closeIcon: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#8E8E93',
+    color: 'rgba(255, 255, 255, 0.6)',
   },
   stylePillsRow: {
     flexDirection: 'row',
@@ -184,22 +184,22 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     paddingHorizontal: 14,
     borderRadius: 18,
-    backgroundColor: '#E5E5EA',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
   },
   stylePillActive: {
-    backgroundColor: '#E5A50A', // Apple Notes amber active pill
+    backgroundColor: '#E5A50A', // Amber active pill
   },
   stylePillText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#3A3A3C',
+    color: 'rgba(255, 255, 255, 0.7)',
   },
   stylePillTextActive: {
-    color: '#FFFFFF',
+    color: '#000000',
   },
   buttonSegmentRow: {
     flexDirection: 'row',
-    backgroundColor: '#E5E5EA',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderRadius: 12,
     padding: 3,
     gap: 2,
@@ -212,19 +212,19 @@ const styles = StyleSheet.create({
     borderRadius: 9,
   },
   formatButtonActive: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.18)',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.25,
     shadowRadius: 3,
     elevation: 2,
   },
   formatButtonText: {
     fontSize: 17,
-    color: '#3A3A3C',
+    color: 'rgba(255, 255, 255, 0.6)',
   },
   formatButtonTextActive: {
-    color: '#000000',
+    color: '#FFFFFF',
     fontWeight: '700',
   },
   boldText: {
@@ -247,16 +247,16 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 18,
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderWidth: 1,
-    borderColor: '#E5E5EA',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
   },
   actionButtonPressed: {
-    backgroundColor: '#E5E5EA',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
   },
   actionButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#007AFF',
+    color: '#E5A50A',
   },
 });
