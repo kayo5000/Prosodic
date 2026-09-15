@@ -424,7 +424,7 @@ export function CadencePaperStudio({
         <View style={styles.navLeft}>
           <Pressable
             onPress={() => {
-              // Intentionally inert for now as requested
+              onClose?.();
             }}
             style={styles.navIconButton}
             accessibilityRole="button"
@@ -504,7 +504,7 @@ export function CadencePaperStudio({
           {/* Done Checkmark */}
           <Pressable
             onPress={() => {
-              // Intentionally inert for now as requested
+              onClose?.();
             }}
             style={styles.doneCheckButton}
             accessibilityRole="button"
@@ -579,10 +579,12 @@ export function CadencePaperStudio({
         </View>
 
         {/* Column Labels: "Bar" on left, "Syllable" on right */}
-        <View style={styles.columnLabelsRow}>
-          <Text style={styles.columnLabelLeft}>{showBars ? 'Bar' : ''}</Text>
-          <Text style={styles.columnLabelRight}>Syllable</Text>
-        </View>
+        {showBars && (
+          <View style={styles.columnLabelsRow}>
+            <Text style={styles.columnLabelLeft}>Bar</Text>
+            <Text style={styles.columnLabelRight}>Syllable</Text>
+          </View>
+        )}
 
         {/* 4. Movements & Sections Canvas */}
         <View style={styles.sectionsContainer}>
@@ -615,16 +617,18 @@ export function CadencePaperStudio({
                     <View style={styles.sectionHeaderBar}>
                       <View style={styles.sectionTitleRow}>
                         <Text style={styles.sectionTitleText}>{sec.name}</Text>
-                        <Pressable
-                          onPress={() => handleOpenPhraseSelector(sec.id, sec.blocks[0]?.blockIndex || 1)}
-                          style={styles.sectionPhrasePill}
-                          accessibilityLabel="Change section phrase length"
-                        >
-                          <Text style={styles.sectionPhrasePillText}>
-                            PHRASE {sec.blocks[0]?.phrasePreset || '4/4'} •{' '}
-                            {sec.blocks.reduce((acc, b) => acc + b.bars.length, 0)} BARS ▾
-                          </Text>
-                        </Pressable>
+                        {showBars && (
+                          <Pressable
+                            onPress={() => handleOpenPhraseSelector(sec.id, sec.blocks[0]?.blockIndex || 1)}
+                            style={styles.sectionPhrasePill}
+                            accessibilityLabel="Change section phrase length"
+                          >
+                            <Text style={styles.sectionPhrasePillText}>
+                              PHRASE {sec.blocks[0]?.phrasePreset || '4/4'} •{' '}
+                              {sec.blocks.reduce((acc, b) => acc + b.bars.length, 0)} BARS ▾
+                            </Text>
+                          </Pressable>
+                        )}
                       </View>
 
                       {/* Texture Button */}

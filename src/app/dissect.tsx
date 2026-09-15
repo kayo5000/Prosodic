@@ -20,6 +20,7 @@ export default function DissectScreen() {
         <CadencePaperStudio
           initialTitle="New Song"
           initialLyrics=""
+          onClose={() => setShowIntro(true)}
         />
       )}
     </ThemedView>

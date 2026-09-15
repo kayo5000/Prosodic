@@ -70,6 +70,7 @@ export function CadenceBarRow({
       }}
       style={[
         styles.rowContainer,
+        !showBarNumber && styles.rowContainerBorderless,
         isActive && styles.activeRowHighlight,
       ]}
     >
@@ -95,13 +96,17 @@ export function CadenceBarRow({
       <View
         style={[
           styles.measureContainer,
-          isAlignedAcrossPage ? styles.measureFullWidth : { width: dynamicMeasureWidth },
+          !showBarNumber || isAlignedAcrossPage
+            ? styles.measureFullWidth
+            : { width: dynamicMeasureWidth },
         ]}
       >
         {/* Left Repeat Barline Marker |• */}
-        <View style={styles.markerContainer}>
-          <Text style={styles.markerText}>|•</Text>
-        </View>
+        {showBarNumber && (
+          <View style={styles.markerContainer}>
+            <Text style={styles.markerText}>|•</Text>
+          </View>
+        )}
 
         {/* Lyric Input Field */}
         <TextInput
@@ -124,9 +129,11 @@ export function CadenceBarRow({
         />
 
         {/* Right Repeat Barline Marker •| */}
-        <View style={styles.markerContainer}>
-          <Text style={styles.markerText}>•|</Text>
-        </View>
+        {showBarNumber && (
+          <View style={styles.markerContainer}>
+            <Text style={styles.markerText}>•|</Text>
+          </View>
+        )}
       </View>
 
       {/* 3. Syllable Count Badge on Right */}
@@ -154,6 +161,10 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(255, 255, 255, 0.08)',
     paddingHorizontal: 12,
     backgroundColor: '#000000',
+  },
+  rowContainerBorderless: {
+    borderBottomWidth: 0,
+    borderBottomColor: 'transparent',
   },
   activeRowHighlight: {
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
