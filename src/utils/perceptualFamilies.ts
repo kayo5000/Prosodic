@@ -19,6 +19,8 @@
  * 6. Self-Rhyme Guard: Prevents spelling variants (Money/money, runnin'/Running) from claiming rhymes.
  */
 
+import { countWordSyllables } from './syllableCounter';
+
 export type VowelFamilyKey =
   | 'AY_FAMILY'   // /aɪ/ as in fly, night, sky, mind, life (AY2 in Python engine)
   | 'EE_FAMILY'   // /iː/ as in see, dream, deep, receive, perceive
@@ -478,4 +480,149 @@ export function isSelfRhyme(rawA: string, rawB: string): boolean {
   const normA = normalizeWord(rawA).replace(/in$/, 'ing');
   const normB = normalizeWord(rawB).replace(/in$/, 'ing');
   return normA.length > 0 && normA === normB;
+}
+
+// ---------------------------------------------------------------------------
+// 5. Syllable-by-Syllable Rhyme Mapping Engine (domain/syllable_engine.py)
+// ---------------------------------------------------------------------------
+
+export interface SyllableToken {
+  text: string;
+  isWord: boolean;
+  vowelFamily: VowelFamilyKey;
+  color: string;
+  syllableIndex: number;
+  totalSyllables: number;
+}
+
+/**
+ * Splits a word into character ranges [start, end] for each syllable,
+ * matching the Python syllable engine midpoint & single-consonant coda rules.
+ */
+export function getWordSyllableCharRanges(word: string, numSyllables: number): Array<[number, number]> {
+  const n = word.length;
+  if (numSyllables <= 0) return [];
+  if (numSyllables === 1) return [[0, n]];
+
+  const wLower = word.toLowerCase();
+  const vowelSet = new Set(['a', 'e', 'i', 'o', 'u', 'y']);
+
+  // Find start index of each vowel group
+  const vowelStarts: number[] = [];
+  let inVowel = false;
+  for (let i = 0; i < wLower.length; i++) {
+    if (vowelSet.has(wLower[i])) {
+      if (!inVowel) {
+        vowelStarts.push(i);
+      }
+      inVowel = true;
+    } else {
+      inVowel = false;
+    }
+  }
+
+  if (vowelStarts.length < numSyllables) {
+    const chunk = n / numSyllables;
+    return Array.from({ length: numSyllables }, (_, i) => [
+      Math.floor(i * chunk),
+      i === numSyllables - 1 ? n : Math.floor((i + 1) * chunk),
+    ]);
+  }
+
+  const anchors = vowelStarts.slice(0, numSyllables);
+
+  const getVowelGroupEnd = (pos: number): number => {
+    let p = pos;
+    while (p < n && vowelSet.has(wLower[p])) {
+      p++;
+    }
+    return p;
+  };
+
+  const ranges: Array<[number, number]> = [];
+  for (let i = 0; i < numSyllables; i++) {
+    const start = i === 0 ? 0 : ranges[ranges.length - 1][1];
+    let end: number;
+    if (i === numSyllables - 1) {
+      end = n;
+    } else {
+      const vEnd = getVowelGroupEnd(anchors[i]);
+      const inter = anchors[i + 1] - vEnd;
+      if (inter === 1) {
+        // Single consonant between vowels -> attach as coda
+        end = vEnd + 1;
+      } else {
+        // Multiple consonants -> split midpoint
+        end = Math.floor((anchors[i] + anchors[i + 1]) / 2) + 1;
+      }
+    }
+    ranges.push([start, Math.min(n, Math.max(start + 1, end))]);
+  }
+  return ranges;
+}
+
+/**
+ * Extracts syllable-by-syllable tokens for a line of text,
+ * associating each syllable with its exact perceptual vowel family and signature color.
+ */
+export function dissectLineIntoSyllableTokens(lineText: string): SyllableToken[] {
+  if (!lineText) return [];
+
+  // Match words vs non-word tokens (spaces, punctuation)
+  const tokens: SyllableToken[] = [];
+  const regex = /([a-zA-Z0-9'’]+)|([^a-zA-Z0-9'’]+)/g;
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(lineText)) !== null) {
+    const fullMatch = match[0];
+    const isWord = Boolean(match[1]);
+
+    if (!isWord) {
+      tokens.push({
+        text: fullMatch,
+        isWord: false,
+        vowelFamily: 'GENERAL',
+        color: 'transparent',
+        syllableIndex: 0,
+        totalSyllables: 0,
+      });
+      continue;
+    }
+
+    const cleanWord = fullMatch.replace(/[^a-zA-Z0-9']/g, '');
+    const sylCount = Math.max(1, countWordSyllables(cleanWord));
+    const ranges = getWordSyllableCharRanges(fullMatch, sylCount);
+
+    ranges.forEach(([start, end], sIdx) => {
+      const sylText = fullMatch.slice(start, end);
+      if (!sylText) return;
+
+      // Classify this specific syllable's vowel sound
+      let fam: VowelFamilyKey = 'GENERAL';
+      const rClass = classifyRFamily(sylText);
+      if (rClass === 1) fam = 'ER_FAMILY';
+      else if (rClass === 2) fam = 'EER_FAMILY';
+      else if (rClass === 3) fam = 'AIR_FAMILY';
+      else {
+        fam = extractVowelFamily(sylText);
+        // If syllable-level returned GENERAL, check whole word fallback
+        if (fam === 'GENERAL') {
+          fam = extractVowelFamily(cleanWord);
+        }
+      }
+
+      const color = VOWEL_FAMILIES[fam]?.color || '#E5A50A';
+
+      tokens.push({
+        text: sylText,
+        isWord: true,
+        vowelFamily: fam,
+        color,
+        syllableIndex: sIdx,
+        totalSyllables: sylCount,
+      });
+    });
+  }
+
+  return tokens;
 }

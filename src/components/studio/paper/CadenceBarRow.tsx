@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native';
 
+import { dissectLineIntoSyllableTokens } from '../../../utils/perceptualFamilies';
 import type { CadenceBarLine } from './types';
 
 interface CadenceBarRowProps {
@@ -16,6 +17,7 @@ interface CadenceBarRowProps {
   isActive: boolean;
   isAlignedAcrossPage: boolean;
   showBarNumber?: boolean;
+  showRhymeMap?: boolean;
   onFocus: () => void;
   onChangeText: (newText: string) => void;
   onSubmitEditing: () => void;
@@ -28,6 +30,7 @@ export function CadenceBarRow({
   isActive,
   isAlignedAcrossPage,
   showBarNumber = true,
+  showRhymeMap = true,
   onFocus,
   onChangeText,
   onSubmitEditing,
@@ -46,6 +49,12 @@ export function CadenceBarRow({
     textDecorationLine: isUnderline ? 'underline' : 'none',
     fontWeight: isBold ? '700' : '500',
   };
+
+  // Dissect text into syllable tokens for syllable-level rhyme highlighting
+  const syllableTokens = React.useMemo(() => {
+    if (!showRhymeMap || !bar.rawText) return [];
+    return dissectLineIntoSyllableTokens(bar.rawText);
+  }, [showRhymeMap, bar.rawText]);
 
   // Dynamic width calculation:
   // If aligned across page: flex 1 (full width)
@@ -108,25 +117,46 @@ export function CadenceBarRow({
           </View>
         )}
 
-        {/* Lyric Input Field */}
-        <TextInput
-          ref={inputRef}
-          value={bar.rawText}
-          onChangeText={onChangeText}
-          onFocus={onFocus}
-          onSubmitEditing={onSubmitEditing}
-          onKeyPress={handleKeyPress}
-          blurOnSubmit={false}
-          returnKeyType="next"
-          autoCorrect={false}
-          autoCapitalize="sentences"
-          placeholder=""
-          style={[
-            styles.textInput,
-            textStyle,
-            Platform.OS === 'web' ? ({ outlineStyle: 'none' } as any) : null,
-          ]}
-        />
+        {/* Lyric Input Field with Syllable Rhyme Map Overlay */}
+        <View style={styles.inputWrapper}>
+          {showRhymeMap && bar.rawText.length > 0 && (
+            <View style={styles.rhymeOverlay} pointerEvents="none">
+              <Text style={[styles.rhymeOverlayText, textStyle]}>
+                {syllableTokens.map((tok, idx) => (
+                  <Text
+                    key={idx}
+                    style={{
+                      color: tok.isWord ? tok.color : 'rgba(255, 255, 255, 0.4)',
+                      fontWeight: isBold ? '700' : tok.isWord ? '600' : '400',
+                    }}
+                  >
+                    {tok.text}
+                  </Text>
+                ))}
+              </Text>
+            </View>
+          )}
+
+          <TextInput
+            ref={inputRef}
+            value={bar.rawText}
+            onChangeText={onChangeText}
+            onFocus={onFocus}
+            onSubmitEditing={onSubmitEditing}
+            onKeyPress={handleKeyPress}
+            blurOnSubmit={false}
+            returnKeyType="next"
+            autoCorrect={false}
+            autoCapitalize="sentences"
+            placeholder=""
+            style={[
+              styles.textInput,
+              textStyle,
+              showRhymeMap && bar.rawText.length > 0 && styles.textInputRhymeMode,
+              Platform.OS === 'web' ? ({ outlineStyle: 'none' } as any) : null,
+            ]}
+          />
+        </View>
 
         {/* Right Repeat Barline Marker •| */}
         {showBarNumber && (
@@ -204,9 +234,34 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.45)',
     letterSpacing: -0.5,
   },
+  inputWrapper: {
+    flex: 1,
+    position: 'relative',
+    justifyContent: 'center',
+  },
+  rhymeOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    zIndex: 1,
+  },
+  rhymeOverlayText: {
+    fontSize: 16,
+    lineHeight: 22,
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    fontFamily: Platform.select({
+      ios: 'System',
+      default: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    }),
+  },
   textInput: {
     flex: 1,
     fontSize: 16,
+    lineHeight: 22,
     color: '#FFFFFF',
     paddingVertical: 8,
     paddingHorizontal: 8,
@@ -214,6 +269,11 @@ const styles = StyleSheet.create({
       ios: 'System',
       default: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     }),
+    zIndex: 2,
+  },
+  textInputRhymeMode: {
+    color: 'transparent',
+    ...(Platform.OS === 'web' ? ({ caretColor: '#FFFFFF' } as any) : {}),
   },
   syllableContainer: {
     width: 44,

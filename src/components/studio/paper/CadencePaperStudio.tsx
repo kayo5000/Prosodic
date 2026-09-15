@@ -73,6 +73,7 @@ export function CadencePaperStudio({
   const [activeSectionId, setActiveSectionId] = useState<string>(initialData.sections[0]?.id || '');
   const [viewMode, setViewMode] = useState<'cadence' | 'texture'>('cadence');
   const [showBars, setShowBars] = useState<boolean>(true);
+  const [showRhymeMap, setShowRhymeMap] = useState<boolean>(true);
 
   // Formatted Date & Time
   const formattedDateTime = useMemo(() => {
@@ -491,6 +492,18 @@ export function CadencePaperStudio({
             </Text>
           </Pressable>
 
+          {/* Rhymes On / Off Toggle */}
+          <Pressable
+            onPress={() => setShowRhymeMap((prev) => !prev)}
+            style={[styles.barToggleBtn, showRhymeMap && styles.barToggleBtnActive]}
+            accessibilityRole="button"
+            accessibilityLabel={showRhymeMap ? "Hide Syllable Rhymes" : "Show Syllable Rhymes"}
+          >
+            <Text style={[styles.barToggleText, showRhymeMap && styles.barToggleTextActive]}>
+              {showRhymeMap ? 'Rhymes On' : 'Rhymes Off'}
+            </Text>
+          </Pressable>
+
           {/* Format Toolbar Button */}
           <Pressable
             onPress={() => setShowFormatBar((v) => !v)}
@@ -669,6 +682,7 @@ export function CadencePaperStudio({
                                 isActive={isActive}
                                 isAlignedAcrossPage={isAlignedAcrossPage}
                                 showBarNumber={showBars}
+                                showRhymeMap={showRhymeMap}
                                 onFocus={() =>
                                   setActiveFocus({
                                     sectionId: sec.id,

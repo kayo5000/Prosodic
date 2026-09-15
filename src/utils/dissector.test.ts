@@ -5,6 +5,10 @@ import {
   classifyRhymePair,
   isSelfRhyme,
 } from './dissector';
+import {
+  dissectLineIntoSyllableTokens,
+  getWordSyllableCharRanges,
+} from './perceptualFamilies';
 
 describe('Forensic Lyrics Dissector Engine', () => {
   describe('extractVowelFamily', () => {
@@ -262,6 +266,64 @@ My life I see it in reverse`;
       expect(isSelfRhyme('money', 'honey')).toBe(false);
     });
   });
+
+  describe('Syllable-Level Rhyme Mapping Engine (domain/syllable_engine.py)', () => {
+    it('splits words into precise character ranges per syllable', () => {
+      // 1-syllable word
+      expect(getWordSyllableCharRanges('bars', 1)).toEqual([[0, 4]]);
+
+      // 2-syllable word: 'stressing' -> stres (0-5) / sing (5-9)
+      const ranges = getWordSyllableCharRanges('stressing', 2);
+      expect(ranges.length).toBe(2);
+      expect('stressing'.slice(ranges[0][0], ranges[0][1])).toBe('stres');
+      expect('stressing'.slice(ranges[1][0], ranges[1][1])).toBe('sing');
+
+      // 3-syllable word: 'persevered' -> per / sev / ered
+      const pRanges = getWordSyllableCharRanges('persevered', 3);
+      expect(pRanges.length).toBe(3);
+      expect('persevered'.slice(pRanges[0][0], pRanges[0][1])).toBe('per');
+      expect('persevered'.slice(pRanges[1][0], pRanges[1][1])).toBe('sev');
+      expect('persevered'.slice(pRanges[2][0], pRanges[2][1])).toBe('ered');
+    });
+
+    it('dissects lyric lines into colored syllable tokens', () => {
+      const line = "And though I'm blessed I seen you stressin'";
+      const tokens = dissectLineIntoSyllableTokens(line);
+
+      expect(tokens.length).toBeGreaterThan(0);
+      const wordTokens = tokens.filter((t) => t.isWord);
+
+      // Verify each syllable has a valid vowel family and signature color
+      wordTokens.forEach((token) => {
+        expect(token.vowelFamily).toBeDefined();
+        expect(token.color).toMatch(/^#[0-9A-Fa-f]{6}$/);
+      });
+
+      // Syllables in 'stressin' should be classified into respective families
+      const stressinSyllables = wordTokens.filter((t) =>
+        ['stres', "sin'", 'sin'].includes(t.text.toLowerCase()),
+      );
+      expect(stressinSyllables.length).toBe(2);
+    });
+
+    it('classifies distinct syllables within the same multisyllabic word to different vowel families', () => {
+      // 'persevered': 'per' (ER_FAMILY), 'se' (EH_FAMILY), 'vered' (EER_FAMILY)
+      const tokens = dissectLineIntoSyllableTokens('persevered');
+      const wordTokens = tokens.filter((t) => t.isWord);
+
+      expect(wordTokens.length).toBe(3);
+      expect(wordTokens[0].vowelFamily).toBe('ER_FAMILY');
+      expect(wordTokens[0].color).toBe(VOWEL_FAMILIES.ER_FAMILY.color);
+    });
+
+    it('faithfully preserves text reconstruction and non-word characters', () => {
+      const line = "Losin', winnin', bank account thinnin'";
+      const tokens = dissectLineIntoSyllableTokens(line);
+      const reconstructed = tokens.map((t) => t.text).join('');
+      expect(reconstructed).toBe(line);
+    });
+  });
 });
+
 
 

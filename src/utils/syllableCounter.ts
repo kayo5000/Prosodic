@@ -88,6 +88,9 @@ const SPECIAL_WORD_SYLLABLES: Record<string, number> = {
   interesting: 3,
   vegetable: 3,
   comfortable: 4,
+  persevere: 3,
+  persevered: 3,
+  persevering: 4,
 };
 
 /**
