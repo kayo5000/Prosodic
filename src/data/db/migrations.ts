@@ -183,6 +183,49 @@ export const migrations: Migration[] = [
       `);
     },
   },
+  {
+    version: 9,
+    description:
+      'fingerprint.value / rollups.value become nullable, plus not_measured_reason. ' +
+      'Both were REAL NOT NULL, which made the absence of a measurement unrepresentable: ' +
+      '"scored zero" and "never measured" were the same row. An empty song still produced ' +
+      'a full confident profile because every metric was obliged to have a number. ' +
+      'SQLite cannot drop NOT NULL in place, so both tables are rebuilt. Safe with ' +
+      'foreign_keys ON: both are children of metric_definitions and nothing references them.',
+    up: (db) => {
+      db.execSync(`
+        CREATE TABLE fingerprint_v9 (
+          metric_id TEXT PRIMARY KEY REFERENCES metric_definitions(metric_id),
+          value REAL,
+          not_measured_reason TEXT,
+          metric_version INTEGER NOT NULL,
+          computed_at TEXT NOT NULL,
+          CHECK (value IS NOT NULL OR not_measured_reason IS NOT NULL)
+        );
+        INSERT INTO fingerprint_v9 (metric_id, value, not_measured_reason, metric_version, computed_at)
+          SELECT metric_id, value, NULL, metric_version, computed_at FROM fingerprint;
+        DROP TABLE fingerprint;
+        ALTER TABLE fingerprint_v9 RENAME TO fingerprint;
+
+        CREATE TABLE rollups_v9 (
+          id TEXT PRIMARY KEY,
+          metric_id TEXT NOT NULL REFERENCES metric_definitions(metric_id),
+          period TEXT NOT NULL,
+          period_start TEXT NOT NULL,
+          value REAL,
+          not_measured_reason TEXT,
+          metric_version INTEGER NOT NULL,
+          computed_at TEXT NOT NULL,
+          UNIQUE(metric_id, period, period_start),
+          CHECK (value IS NOT NULL OR not_measured_reason IS NOT NULL)
+        );
+        INSERT INTO rollups_v9 (id, metric_id, period, period_start, value, not_measured_reason, metric_version, computed_at)
+          SELECT id, metric_id, period, period_start, value, NULL, metric_version, computed_at FROM rollups;
+        DROP TABLE rollups;
+        ALTER TABLE rollups_v9 RENAME TO rollups;
+      `);
+    },
+  },
 ];
 
 export function assertMigrationsWellFormed(list: Migration[]): void {

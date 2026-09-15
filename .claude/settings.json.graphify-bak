@@ -1,0 +1,19 @@
+{
+  "enabledPlugins": {
+    "expo@claude-plugins-official": true,
+    "ecc": false
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npm run verify --silent",
+            "timeout": 300
+          }
+        ]
+      }
+    ]
+  }
+}

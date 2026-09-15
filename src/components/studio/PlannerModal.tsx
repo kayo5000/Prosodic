@@ -120,14 +120,23 @@ function VoiceTakeRow({
         <TouchableOpacity
           style={[styles.playBtn, player.playing && styles.playBtnActive]}
           onPress={togglePlay}
+          accessibilityRole="button"
+          accessibilityLabel={player.playing ? "Pause" : "Play"}
         >
-          <Text style={styles.playBtnText}>{player.playing ? '⏸' : '▶'}</Text>
+          {player.playing ? (
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="#FFFFFF">
+              <rect x="6" y="4" width="4" height="16" rx="1" />
+              <rect x="14" y="4" width="4" height="16" rx="1" />
+            </svg>
+          ) : (
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="#FFFFFF">
+              <polygon points="5 3 19 12 5 21 5 3" />
+            </svg>
+          )}
         </TouchableOpacity>
 
         <View style={styles.memoInfo}>
-          <Text style={styles.memoTitle}>
-            {take.performanceMode ? MODE_LABEL[take.performanceMode] : 'Take'}
-          </Text>
+          <Text style={styles.memoTitle}>Take</Text>
           <Text style={styles.memoSub}>{formatRecordedAt(take.recordedAt)}</Text>
         </View>
 
@@ -146,7 +155,9 @@ export const PlannerModal: React.FC<PlannerModalProps> = ({
   onTakeRecorded,
   onSetPerformanceMode,
 }) => {
-  const recorder = useVoiceRecorder();
+  // A take cut short by a call or an app switch is still the user's take.
+  // It goes down the same path a normal stop does rather than vanishing.
+  const recorder = useVoiceRecorder({ onInterrupted: onTakeRecorded });
 
   const handleRecordPress = async () => {
     if (recorder.isRecording) {
@@ -183,22 +194,25 @@ export const PlannerModal: React.FC<PlannerModalProps> = ({
               <Text style={styles.title}>Planner &amp; Voice Vault</Text>
               <Text style={styles.subtitle}>Osborn AI Dynamic Schedule &amp; Memos</Text>
             </View>
-            <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
-              <Text style={styles.closeText}>✕</Text>
+            <TouchableOpacity style={styles.closeBtn} onPress={onClose} accessibilityRole="button" accessibilityLabel="Close Planner">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2.5" strokeLinecap="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
             </TouchableOpacity>
           </View>
 
           <ScrollView style={styles.bodyScroll} showsVerticalScrollIndicator={false}>
             {/* Upcoming Session Schedule Card */}
             <View style={styles.scheduleCard}>
-              <Text style={styles.scheduleLabel}>🗓️ UPCOMING PROSODIC SESSION</Text>
+              <Text style={styles.scheduleLabel}>UPCOMING PROSODIC SESSION</Text>
               <Text style={styles.scheduleTitle}>Studio Mix: Midnight Reverie</Text>
               <Text style={styles.scheduleSub}>
                 Today at 6:00 PM • With Osborn AI Assistant
               </Text>
               <View style={styles.agendaRow}>
-                <Text style={styles.agendaItem}>● Complete Bar 5-8 Rhyme Weave</Text>
-                <Text style={styles.agendaItem}>● Lock 90 BPM Tap Cadence</Text>
+                <Text style={styles.agendaItem}>Complete Bar 5-8 Rhyme Weave</Text>
+                <Text style={styles.agendaItem}>Lock 90 BPM Tap Cadence</Text>
               </View>
             </View>
 
@@ -225,12 +239,27 @@ export const PlannerModal: React.FC<PlannerModalProps> = ({
             style={[styles.recordBtn, recorder.isRecording && styles.recordBtnActive]}
             onPress={handleRecordPress}
             activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel={recorder.isRecording ? "Stop Recording" : "Record New Take"}
           >
-            <Text style={styles.recordBtnText}>
-              {recorder.isRecording
-                ? `⏹ Stop (${formatDurationMs(recorder.durationMs)})`
-                : '🎙️ Record New Take'}
-            </Text>
+            {recorder.isRecording ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="#FFFFFF" style={{ marginRight: 6 }}>
+                  <rect x="4" y="4" width="16" height="16" rx="2" />
+                </svg>
+                <Text style={styles.recordBtnText}>Stop ({formatDurationMs(recorder.durationMs)})</Text>
+              </View>
+            ) : (
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 8 }}>
+                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                  <line x1="12" y1="19" x2="12" y2="23" />
+                  <line x1="8" y1="23" x2="16" y2="23" />
+                </svg>
+                <Text style={styles.recordBtnText}>Record New Take</Text>
+              </View>
+            )}
           </TouchableOpacity>
         </View>
       </View>

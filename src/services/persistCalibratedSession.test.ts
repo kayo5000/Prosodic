@@ -37,6 +37,7 @@ describe('calibration boundary — toCanonicalMetrics', () => {
 
   test('every calibrated value sits on the canonical [0, 1] scale', () => {
     for (const metric of toCanonicalMetrics(buildEnvelope())) {
+      if (metric.value === null) continue; // an absence has no scale
       expect(metric.value).toBeGreaterThanOrEqual(0);
       expect(metric.value).toBeLessThanOrEqual(1);
     }
@@ -49,6 +50,7 @@ describe('calibration boundary — toCanonicalMetrics', () => {
       family: 'rhyme',
       rawScore: 42,
       calibratedScore: 0.5,
+      notMeasuredReason: null,
       unit: '0-1',
       direction: 'higher_is_better',
       version: 1,
@@ -128,6 +130,7 @@ describe('calibration boundary — persistCalibratedSession', () => {
         'direction',
         'metricId',
         'metricVersion',
+        'notMeasuredReason',
         'unit',
         'value',
       ]);

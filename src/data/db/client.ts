@@ -1,7 +1,9 @@
+import { Platform } from 'react-native';
 import * as SQLite from 'expo-sqlite';
 
 import { seedCanonicalMetrics } from '../seedCanonicalMetrics';
 import { assertMigrationsWellFormed, migrations } from './migrations';
+import { createFakeDb } from './testUtils';
 import { withTransaction } from './transaction';
 import type { SQLiteDatabaseLike } from './types';
 
@@ -59,6 +61,12 @@ let cachedDb: SQLiteDatabaseLike | null = null;
  * CLAUDE.md's Verification protocol).
  */
 export function getDb(): SQLiteDatabaseLike {
+  if (Platform.OS === 'web') {
+    if (!cachedDb) {
+      cachedDb = createFakeDb().db;
+    }
+    return cachedDb;
+  }
   if (!cachedDb) {
     cachedDb = toDatabaseLike(SQLite.openDatabaseSync(DATABASE_NAME));
     // SQLite ships with foreign keys off by default; every FK in the step 1

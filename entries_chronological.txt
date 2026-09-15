@@ -1,0 +1,272 @@
+Line    0 (p.  1): Abstract and Concrete               | Abstract and Concrete. A sentence is sometimes sai
+Line   30 (p.  1): Accent                              | Accent. See Meter.
+Line   31 (p.  1): Act                                 | Act. A major division of the action of a play. The
+Line   39 (p.  2): Aesthetic distance                  | Aesthetic distance. See Objective and Subjective.
+Line   40 (p.  2): Affective fallacy                   | Affective fallacy. See Criticism.
+Line   41 (p.  2): Alexandrine                         | Alexandrine. See Meter.
+Line   42 (p.  2): Allegory                            | Allegory. An allegory undertakes to make a doctrin
+Line   97 (p.  3): Alliteration                        | Alliteration is the repetition of consonants, espe
+Line  120 (p.  4): Allusion in poetry                  | Allusion in poetry is a brief reference to a perso
+Line  134 (p.  4): Ambiguity                           | Ambiguity. Since William Empson published Seven Ty
+Line  166 (p.  5): Anapest                             | Anapest. See Meter.
+Line  167 (p.  5): Anecdote                            | Anecdote. See Short story.
+Line  168 (p.  5): Annal                               | Annal. See Chronicle.
+Line  169 (p.  5): Antagonist                          | Antagonist. See Plot and Character.
+Line  170 (p.  5): Anticlimax                          | Anticlimax. See Pathos and Bathos.
+Line  171 (p.  5): Antistrophe                         | Antistrophe. See Ode.
+Line  172 (p.  5): Antithesis                          | Antithesis. See Couplet.
+Line  173 (p.  5): Apostrophe                          | Apostrophe. See Rhetorical figures.
+Line  174 (p.  5): Archaism                            | Archaism. See Diction.
+Line  175 (p.  5): Archetype                           | Archetype is a term much used since the 1930’s, wh
+Line  191 (p.  6): Article                             | Article. See Essay.
+Line  192 (p.  6): Assonance                           | Assonance. See Alliteration.
+Line  193 (p.  6): Atmosphere                          | Atmosphere is the mood pervading a literary work, 
+Line  202 (p.  6): Augustan Age                        | Augustan Age. In its original application, the Aug
+Line  212 (p.  6): Autobiography                       | Autobiography. See Biography.
+Line  213 (p.  6): Ballad                              | Ballad. A convenient thumbnail definition of the b
+Line  250 (p.  7): Bathos                              | Bathos. See Pathos and Bathos.
+Line  251 (p.  7): Biography                           | Biography. Late in the seventeenth century, Dryden
+Line  281 (p.  8): Blank verse                         | Blank verse is unrhymed iambic pentameter verse (s
+Line  323 (p.  9): Bombast                             | Bombast originally meant “cotton stuffing,” and th
+Line  340 (p.  9): Bourgeois tragedy                   | Bourgeois tragedy. See Tragedy.
+Line  341 (p.  9): Bowdlerize                          | Bowdlerize. To bowdlerize is to expurgate the part
+Line  348 (p.  9): Bucolic poetry                      | Bucolic poetry. See Pastoral.
+Line  349 (p.  9): Burlesque and Parody                | Burlesque and Parody. “Burlesque,” “parody,” “cari
+Line  407 (p. 11): Cacophony                           | Cacophony. See Euphony.
+Line  408 (p. 11): Caesura                             | Caesura. See Meter.
+Line  409 (p. 11): Caricature                          | Caricature. See Burlesque and Parody.
+Line  410 (p. 11): Caroline Period                     | Caroline Period is the name for the reign of Charl
+Line  416 (p. 11): Carpe diem                          | Carpe diem. See Motif.
+Line  417 (p. 11): Catastrophe                         | Catastrophe. See Plot and Character.
+Line  418 (p. 11): Catharsis                           | Catharsis. See Tragedy.
+Line  419 (p. 11): Cavalier Poets                      | Cavalier Poets. See Caroline Period.
+Line  420 (p. 11): Character                           | Character. For “the character” as a literary form,
+Line  422 (p. 11): Chiasmus                            | Chiasmus. See Rhetorical figures.
+Line  423 (p. 11): Chorus                              | Chorus. In early Greek times the chorus was a band
+Line  449 (p. 12): Chronicle                           | Chronicle. Chronicles, the predecessors of modern 
+Line  459 (p. 12): Chronicle plays                     | Chronicle plays are dramatic renderings of materia
+Line  473 (p. 12): Cliche                              | Cliche is French for the stereotype plate used in 
+Line  497 (p. 13): Climax                              | Climax. See Plot and Character.
+Line  498 (p. 13): Comedy                              | Comedy. The term “comedy” is now broadly applied t
+Line  561 (p. 15): Comedy of humors                    | Comedy of humors. See Wit and Humor.
+Line  562 (p. 15): Comic relief                        | Comic relief. See Tragedy.
+Line  571 (p. 15): Conceit                             | Conceit. Originally meaning simply an idea or imag
+Line  627 (p. 16): Concrete                            | Concrete. See Abstract and Concrete.
+Line  628 (p. 16): Confidant                           | Confidant. See Chorus.
+Line  629 (p. 16): Conflict                            | Conflict. See Plot and Character.
+Line  630 (p. 16): Connotation and Denotation          | Connotation and Denotation. The denotation of a wo
+Line  659 (p. 17): Consonance                          | Consonance. See Alliteration.
+Line  660 (p. 17): Convention and Tradition            | Convention and Tradition. In the broadest sense, t
+Line  742 (p. 19): Couplet                             | Couplet. Couplets are lines of poetry rhyming in p
+Line  795 (p. 20): Courtesy books                      | Courtesy books. See Renaissance.
+Line  796 (p. 20): Criterion                           | Criterion. See Criticism.
+Line  797 (p. 20): Criticism                           | Criticism is concerned with the exposition, analys
+Line  887 (p. 22): Dactyl                              | Dactyl. See Meter.
+Line  888 (p. 23): Decadence                           | Decadence. Decadence was a European movement, with
+Line  905 (p. 23): Decor                               | Decor. See Setting.
+Line  906 (p. 23): Decorum                             | Decorum. See Neoclassic and Romantic and Style.
+Line  907 (p. 23): Denotation                          | Denotation. See Connotation and Denotation.
+Line  908 (p. 23): Denouement                          | Denouement. See Plot and Character.
+Line  909 (p. 23): Deus ex machina                     | Deus ex machina. See Plot and Character.
+Line  910 (p. 23): Dialogue                            | Dialogue. See Plot and Character.
+Line  911 (p. 23): Diction                             | Diction refers to the selection of words, the “voc
+Line  967 (p. 25): Didactic                            | Didactic. A didactic work is one designed to demon
+Line  995 (p. 25): Dirge                               | Dirge. See Elegy.
+Line  996 (p. 25): Discovery                           | Discovery. See Plot and Character,
+Line  997 (p. 25): Drama                               | Drama. Drama is the literary form designed for the
+Line 1006 (p. 26): Dramatic monologue                  | Dramatic monologue. The dramatic monologue was a p
+Line 1039 (p. 26): Dream vision                        | Dream vision was a conventional narrative frame wi
+Line 1049 (p. 27): Duodecimo                           | Duodecimo. See Folio.
+Line 1050 (p. 27): Eclogue                             | Eclogue. See Pastoral.
+Line 1051 (p. 27): Elegy                               | Elegy. In Greek and Roman poetry, the elegy was an
+Line 1108 (p. 28): Elizabethan Age                     | Elizabethan Age denotes the period of Queen Elizab
+Line 1115 (p. 28): Emotive and Referential language    | Emotive and Referential language. See Connotation 
+Line 1116 (p. 28): Empathy and Sympathy                | Empathy and Sympathy. Empathy signifies an experie
+Line 1147 (p. 29): Encomiastic poems                   | Encomiastic poems. See Ode.
+Line 1148 (p. 29): End-stopped line                    | End-stopped line. See Meter.
+Line 1149 (p. 29): Enjambemenf                         | Enjambemenf. See Meter.
+Line 1150 (p. 29): Enlightenment                       | Enlightenment. See Renaissance.
+Line 1151 (p. 29): Epic                                | Epic. The epic, or heroic poem, is a long narrativ
+Line 1245 (p. 31): Epigram                             | Epigram originally meant an inscription, and was l
+Line 1273 (p. 32): Epithalamion (which                 | Epithalamion (which is also given the Latin spelli
+Line 1289 (p. 32): Epode                               | Epode. See Ode.
+Line 1290 (p. 32): Equivoque                           | Equivoque. See Figurative language.
+Line 1291 (p. 32): Essay                               | Essay. The essay is the most flexible and inclusiv
+Line 1334 (p. 33): Euphony and Cacophony               | Euphony and Cacophony. Euphony is attributed to a 
+Line 1360 (p. 34): Euphuism                            | Euphuism is the name for an elaborate and mannered
+Line 1382 (p. 35): Exemplum                            | Exemplum. See Allegory.
+Line 1383 (p. 35): Explication of text                 | Explication of text. See Criticism.
+Line 1384 (p. 35): Exposition                          | Exposition. See Plot and Character.
+Line 1385 (p. 35): Expressionism                       | Expressionism is a literary movement which began i
+Line 1420 (p. 36): Fable                               | Fable. See Allegory.
+Line 1421 (p. 36): Fabliau                             | Fabliau. See Short story.
+Line 1422 (p. 36): Falling action                      | Falling action. See Plot and Character.
+Line 1423 (p. 36): Farce                               | Farce. See Comedy.
+Line 1424 (p. 36): Feminine ending                     | Feminine ending. See Meter; for feminine rhyme, se
+Line 1425 (p. 36): Fiction                             | Fiction. See Novel.
+Line 1426 (p. 36): Figurative language                 | Figurative language is language which departs from
+Line 1528 (p. 38): Flashback                           | Flashback. See Plot and Character.
+Line 1529 (p. 38): Folio                               | Folio is a term used to describe the type of leaf 
+Line 1547 (p. 39): Folk tale                           | Folk tale. See Short story.
+Line 1548 (p. 39): Foot                                | Foot. See Meter.
+Line 1549 (p. 39): Format                              | Format. See Folio.
+Line 1575 (p. 40): General and Particular              | General and Particular. See Abstract and Concrete.
+Line 1576 (p. 40): Genre                               | Genre is a word imported from France to signify a 
+Line 1600 (p. 40): Gothic novel                        | Gothic novel is a type of fiction which was inaugu
+Line 1618 (p. 41): Hamartia                            | Hamartia. See Tragedy.
+Line 1619 (p. 41): Heroic drama                        | Heroic drama. See Tragedy.
+Line 1620 (p. 41): Hubris                              | Hubris. See Tragedy.
+Line 1621 (p. 41): Humanism                            | Humanism. When a term is employed so loosely and v
+Line 1719 (p. 43): Humor                               | Humor. See Wit and Humor.
+Line 1720 (p. 43): Hyperbole                           | Hyperbole. See Figurative language.
+Line 1721 (p. 43): lamb                                | lamb. See Meter.
+Line 1722 (p. 43): Idyll                               | Idyll. See Pastoral.
+Line 1723 (p. 43): Imagery                             | Imagery. This term is one of the most common in mo
+Line 1761 (p. 44): Imagism                             | Imagism was a poetic movement in England and the U
+Line 1781 (p. 45): Impressionism                       | Impressionism. For impressionistic criticism, see 
+Line 1783 (p. 45): In medias res                       | In medias res. See Epic.
+Line 1784 (p. 45): Incremental repetition              | Incremental repetition. See Ballad.
+Line 1785 (p. 45): Intentional fallacy                 | Intentional fallacy. See Criticism.
+Line 1786 (p. 45): Intrigue                            | Intrigue. See Plot and Character.
+Line 1787 (p. 45): Invective                           | Invective. See Irony.
+Line 1788 (p. 45): Invention                           | Invention. See Convention and Tradition.
+Line 1789 (p. 45): Invocation                          | Invocation. See Rhetorical figures.
+Line 1790 (p. 45): Irony                               | Irony. “Rhetorical” or “verbal irony” is a mode of
+Line 1886 (p. 47): Jacobean Age                        | Jacobean Age refers to the reign of James (in Lati
+Line 1893 (p. 47): Lai                                 | Lai. See Short story.
+Line 1894 (p. 47): Lampoon                             | Lampoon. See Burlesque and Parody.
+Line 1895 (p. 48): Light verse                         | Light verse. See Vers de societe.
+Line 1896 (p. 48): Local color                         | Local color. See Novel.
+Line 1897 (p. 48): Lyric                               | Lyric. Greek writers identified the lyric as a son
+Line 1930 (p. 48): Machinery                           | Machinery. See Epic.
+Line 1931 (p. 48): Marchen                             | Marchen. See Short story.
+Line 1932 (p. 48): Manifesto                           | Manifesto. See Neoclassic and Romantic.
+Line 1933 (p. 49): Masculine ending                    | Masculine ending. See Meter; for Masculine rhyme, 
+Line 1934 (p. 49): Masque                              | Masque. The masque was an elaborate form of court 
+Line 1950 (p. 49): Meiosis                             | Meiosis. See Irony.
+Line 1951 (p. 49): Melodrama                           | Melodrama. See Tragedy.
+Line 1952 (p. 49): Metaphor                            | Metaphor. See Figurative language.
+Line 1953 (p. 49): Metaphysical poets                  | Metaphysical poets. Dryden said in 1693 that John 
+Line 1982 (p. 50): Meter                               | Meter signifies the recurrence in a poetic line of
+Line 2059 (p. 51): lines                               | lines. Also, much English versification that under
+Line 2095 (p. 52): Metonymy                            | Metonymy. See Figurative language.
+Line 2096 (p. 52): Miracle and Morality plays          | Miracle and Morality plays were types of medieval 
+Line 2112 (p. 53): Mock epic                           | Mock epic. See Epic, Burlesque and Parody, and Sat
+Line 2113 (p. 53): Monody                              | Monody. See Elegy.
+Line 2114 (p. 53): Morality play                       | Morality play. See Miracle and Morality plays.
+Line 2115 (p. 53): Motif                               | Motif is a term now applied to a frequently recurr
+Line 2146 (p. 54): Motivation                          | Motivation. See Plot and Character.
+Line 2147 (p. 54): Mystery play                        | Mystery play. See Miracle and Morality plays.
+Line 2148 (p. 54): Myth                                | Myth. In its primary significance a myth is one st
+Line 2186 (p. 55): Naturalism                          | Naturalism. See Realism and Naturalism.
+Line 2187 (p. 55): Negative capability                 | Negative capability. See Objective and Subjective.
+Line 2188 (p. 55): Neoclassic and Romantic             | Neoclassic and Romantic. The simplest and safest u
+Line 2331 (p. 58): New Criticism                       | New Criticism. See Criticism.
+Line 2332 (p. 58): Novel                               | Novel. The term is now applied to a great variety 
+Line 2460 (p. 61): Novelette                           | Novelette. See Short story.
+Line 2461 (p. 61): Novella                             | Novella. See Novel and Short story.
+Line 2462 (p. 61): Objective correlative               | Objective correlative is a term rather casually in
+Line 2474 (p. 61): Objective and Subjective            | Objective and Subjective. John Ruskin complained i
+Line 2546 (p. 63): Occasional poems                    | Occasional poems are written to adorn or memoriali
+Line 2554 (p. 63): Octave                              | Octave. See Sonnet.
+Line 2555 (p. 63): Octavo                              | Octavo. See Folio.
+Line 2556 (p. 63): Ode                                 | Ode. The term “ode” is usually employed for a long
+Line 2592 (p. 64): Onomatopoeia                        | Onomatopoeia is the use of words whose sounds seem
+Line 2611 (p. 65): Originality                         | Originality. See Convention and Tradition.
+Line 2612 (p. 65): Ottava rima                         | Ottava rima. See Stanza.
+Line 2613 (p. 65): Oxymoron                            | Oxymoron. See Figurative language.
+Line 2614 (p. 65): Parable                             | Parable. See Allegory.
+Line 2615 (p. 65): Paradox                             | Paradox. See Figurative language.
+Line 2616 (p. 65): Paranomasia                         | Paranomasia. See Figurative language.
+Line 2617 (p. 65): Parody                              | Parody. See Burlesque and Parody.
+Line 2618 (p. 65): Pastoral                            | Pastoral. A pastoral poem was originally about “pa
+Line 2661 (p. 66): Pathetic fallacy                    | Pathetic fallacy was a phrase invented by John Rus
+Line 2683 (p. 66): Pathos and Bathos                   | Pathos and Bathos. Pathos in the Greek means suffe
+Line 2723 (p. 67): Periodic sentence                   | Periodic sentence. See Style.
+Line 2724 (p. 67): Peripety                            | Peripety. See Plot and Character.
+Line 2725 (p. 67): Periphrasis                         | Periphrasis. See Diction.
+Line 2726 (p. 67): Personification                     | Personification. See Figurative language and Pathe
+Line 2727 (p. 68): Picaresque story                    | Picaresque story. See Novel.
+Line 2728 (p. 68): Platonic love                       | Platonic love. In Plato’s Symposium, Socrates reco
+Line 2769 (p. 69): Plot and Character                  | Plot and Character. The plot is the system of acti
+Line 2942 (p. 72): Poetic diction                      | Poetic diction. See Diction.
+Line 2943 (p. 73): Poetic justice                      | Poetic justice. See Tragedy.
+Line 2944 (p. 73): Poetic license                      | Poetic license. Dryden defined poetic license as “
+Line 2964 (p. 73): Point of view                       | Point of view refers to the outlook from which the
+Line 2984 (p. 74): Portmanteau word                    | Portmanteau word. See Ambiguity.
+Line 2985 (p. 74): Primitivism                         | Primitivism. A primitivist is someone who opposes 
+Line 3025 (p. 75): Problem play                        | Problem play. See Tragedy.
+Line 3026 (p. 75): Progress, The Idea of               | Progress, The Idea of. See Primitivism.
+Line 3027 (p. 75): Propaganda                          | Propaganda. See Didactic.
+Line 3028 (p. 75): Prosody                             | Prosody. The term “prosody” is used for the system
+Line 3031 (p. 75): Protagonist                         | Protagonist. See Plot and Character.
+Line 3032 (p. 75): Pun                                 | Pun. See Figurative language.
+Line 3033 (p. 75): Puritan Period                      | Puritan Period. See Commonwealth Period.
+Line 3034 (p. 75): Purple passage                      | Purple passage is a sudden heightening of style, i
+Line 3046 (p. 75): Quarto                              | Quarto. See Folio.
+Line 3047 (p. 75): Quatrain                            | Quatrain. See Stanza.
+Line 3048 (p. 75): Realism and Naturalism              | Realism and Naturalism. “Realistic fiction’ is oft
+Line 3129 (p. 77): Reformation                         | Reformation. See Renaissance.
+Line 3130 (p. 77): Refrain                             | Refrain. See Stanza.
+Line 3131 (p. 77): Renaissance                         | Renaissance means “rebirth,” and is the name appli
+Line 3276 (p. 81): Repartee                            | Repartee. See Wit and Humor.
+Line 3277 (p. 81): Restoration Period                  | Restoration Period. The period takes its name from
+Line 3292 (p. 81): Rhetorical figures                  | Rhetorical figures. It is convenient to list under
+Line 3350 (p. 83): Rhetorical question                 | Rhetorical question. See Rhetorical figures.
+Line 3351 (p. 83): Rhyme                               | Rhyme consists in the identity, in the rhyming wor
+Line 3426 (p. 84): Rime royal                          | Rime royal. See Stanza.
+Line 3427 (p. 84): Rising action                       | Rising action. See Plot and Character.
+Line 3428 (p. 84): Romance                             | Romance. See Novel and Realism and Naturalism.
+Line 3429 (p. 85): Romantic Period                     | Romantic Period. The limits of the Romantic Period
+Line 3436 (p. 85): Rondeau                             | Rondeau. See Stanza and Vers de societe.
+Line 3437 (p. 85): Rules                               | Rules. See Neoclassic and Romantic.
+Line 3438 (p. 85): Run-on line                         | Run-on line. See Meter.
+Line 3439 (p. 85): Sarcasm                             | Sarcasm. See Irony.
+Line 3440 (p. 85): Satire                              | Satire is the literary art of diminishing a subjec
+Line 3515 (p. 87): Scansion                            | Scansion. See Meter.
+Line 3516 (p. 87): Scene                               | Scene. See Act.
+Line 3517 (p. 87): Sensibiliiy and Sentimentalism      | Sensibiliiy and Sentimentalism. When a modern crit
+Line 3564 (p. 88): Sestet                              | Sestet. See Sonnet.
+Line 3565 (p. 88): Setting                             | Setting. The setting of a narrative or drama is th
+Line 3571 (p. 88): Short story                         | Short story. A short story is a work of prose fict
+Line 3641 (p. 90): Simile                              | Simile. See Figurative language.
+Line 3642 (p. 90): 5lapstick                           | 5lapstick. See Comedy.
+Line 3643 (p. 90): Soliloquy                           | Soliloquy. See Convention and Tradition and Dramat
+Line 3644 (p. 90): Sonnet                              | Sonnet is the name for a lyric stanza form consist
+Line 3687 (p. 91): Spenserian stanza                   | Spenserian stanza. See Stanza.
+Line 3688 (p. 91): Spondee                             | Spondee. See Meter.
+Line 3689 (p. 91): Sprung rhythm                       | Sprung rhythm. See Meter.
+Line 3690 (p. 91): Stanza                              | Stanza. A stanza is a division in the formal patte
+Line 3766 (p. 93): Stock characters                    | Stock characters are character types which recur r
+Line 3799 (p. 93): Stream of consciousness             | Stream of consciousness. See Novel.
+Line 3800 (p. 93): Stress                              | Stress. See Meter.
+Line 3801 (p. 93): Strophe                             | Strophe. See Ode.
+Line 3802 (p. 94): Structure and texture               | Structure and texture. Most modern critics agree i
+Line 3826 (p. 94): Style                               | Style is a characteristic manner of expression in 
+Line 3858 (p. 95): Subjective                          | Subjective. See Objective and Subjective.
+Line 3859 (p. 95): Suspense and Surprise               | Suspense and Surprise. See Plot and Character.
+Line 3860 (p. 95): Symbol                              | Symbol. A symbol, in the broadest use of the term,
+Line 3911 (p. 96): Sympathy                            | Sympathy. See Empathy and Sympathy.
+Line 3912 (p. 96): Synecdoche                          | Synecdoche. See Figurative language.
+Line 3913 (p. 96): Synesthesia                         | Synesthesia is the experience of two or more modes
+Line 3934 (p. 97): Tenor and vehicle                   | Tenor and vehicle. See metaphor under Figurative l
+Line 3935 (p. 97): Tension                             | Tension. The word “tension” has frequently been us
+Line 3953 (p. 97): Tercet                              | Tercet. See Stanza.
+Line 3954 (p. 97): Terza rima                          | Terza rima. See Stanza.
+Line 3955 (p. 97): Texture                             | Texture. See Structure and Texture.
+Line 3956 (p. 97): Theme                               | Theme. See Motif.
+Line 3957 (p. 97): Threnody                            | Threnody. See Elegy.
+Line 3958 (p. 97): Tone                                | Tone. In recent criticism “tone” is often employed
+Line 3965 (p. 98): Tradition                           | Tradition. See Convention and Tradition.
+Line 3966 (p. 98): Tragedy                             | Tragedy. The term “tragedy” is broadly applied to 
+Line 4129 (p.101): Travesty                            | Travesty. See Burlesque and Parody.
+Line 4130 (p.101): Triolet                             | Triolet. See Stanza.
+Line 4131 (p.101): Trochee                             | Trochee. See Meter,
+Line 4132 (p.102): Trope                               | Trope. See Figurative language.
+Line 4133 (p.102): Understatement                      | Understatement. See Irony.
+Line 4134 (p.102): Unities, Dramatic                   | Unities, Dramatic. See Plot and Character.
+Line 4152 (p.102): Verse                               | Verse. See Meter. For verse paragraph, see Blank v
+Line 4153 (p.102): Victorian Period                    | Victorian Period. The beginning of the Victorian P
+Line 4167 (p.102): Vilanelle                           | Vilanelle. See Stanza.
+Line 4168 (p.103): Wit and Humor                       | Wit and Humor. The word “wit” once meant “intellig
+Line 4261 (p.105): Zeugma                              | Zeugma. See Figurative language.

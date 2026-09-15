@@ -1,0 +1,458 @@
+p.  1: Abstract and Concrete               -> A sentence is sometimes said to be abstr
+p.  1: It                                  -> that sea to which all moves,
+p.  1: Accent                              -> See Meter.
+p.  1: Act                                 -> A major division of the action of a play
+p.  1: Modern plays                        -> commonly divided into three acts.
+p.  2: Acts                                -> subdivided into scenes, each of which co
+p.  2: Aesthetic distance                  -> See Objective and Subjective.
+p.  2: Affective fallacy                   -> See Criticism.
+p.  2: Alexandrine                         -> See Meter.
+p.  2: Allegory                            -> An allegory undertakes to make a doctrin
+p.  2: A fable                             -> a story, exemplifying a moral thesis, in
+p.  3: Alliteration                        -> the repetition of consonants, especially
+p.  3: Consonance                          -> the repetition of a pattern of consonant
+p.  3: Assonance                           -> the repetition of identical or related v
+p.  4: Allusion in poetry                  -> a brief reference to a person, place, or
+p.  4: Ambiguity                           -> Since William Empson published Seven Typ
+p.  5: Anapest                             -> See Meter.
+p.  5: Anecdote                            -> See Short story.
+p.  5: Annal                               -> See Chronicle.
+p.  5: Antagonist                          -> See Plot and Character.
+p.  5: Anticlimax                          -> See Pathos and Bathos.
+p.  5: Antistrophe                         -> See Ode.
+p.  5: Antithesis                          -> See Couplet.
+p.  5: Apostrophe                          -> See Rhetorical figures.
+p.  5: Archaism                            -> See Diction.
+p.  5: Archetype                           -> a term much used since the 1930’s, when 
+p.  5: lore and                            -> thought to evoke profound emotional resp
+p.  6: Article                             -> See Essay.
+p.  6: Assonance                           -> See Alliteration.
+p.  6: Atmosphere                          -> the mood pervading a literary work, sett
+p.  6: Augustan Age                        -> In its original application, the Augusta
+p.  6: Peace of the Augustans) the term    -> used to cover the whole eighteenth
+p.  6: Autobiography                       -> See Biography.
+p.  6: Ballad                              -> A convenient thumbnail definition of the
+p.  7: Bathos                              -> See Pathos and Bathos.
+p.  7: Biography                           -> Late in the seventeenth century, Dryden 
+p.  7: That the writing of biography       -> a literary art is indicated by the slow
+p.  7: Dickens                             -> In our own time biography has become a v
+p.  7: Autobiography                       -> a biography written by the subject himse
+p.  8: Boswell                             -> One of the greatest of autobiographies, 
+p.  8: Augustine,                          -> written as early as the fourth century a
+p.  8: Blank verse                         -> unrhymed iambic pentameter verse (see Me
+p.  8: Surrey in the sixteenth century, it -> adopted as the standard meter for
+p.  9: Bombast                             -> meant “cotton stuffing,” and the word wa
+p.  9: Bombast                             -> the staple of the conversation of Shakes
+p.  9: Bourgeois tragedy                   -> See Tragedy.
+p.  9: Bowdlerize                          -> To bowdlerize is to expurgate the parts 
+p.  9: Shakespeare, and the Bible          -> frequently bowdlerized in editions in¬
+p.  9: Bucolic poetry                      -> See Pastoral.
+p.  9: Burlesque and Parody                -> “Burlesque,” “parody,” “caricature,” and
+p.  9: literary works                      -> made ridiculous by an incongruous imitat
+p. 10: A bard whom there                   -> none to praise.
+p. 10: Caricature                          -> a type of portrait which makes a person 
+p. 11: Cacophony                           -> See Euphony.
+p. 11: Caesura                             -> See Meter.
+p. 11: Caricature                          -> See Burlesque and Parody.
+p. 11: Caroline Period                     -> the name for the reign of Charles I, 162
+p. 11: Carpe diem                          -> See Motif.
+p. 11: Catastrophe                         -> See Plot and Character.
+p. 11: Catharsis                           -> See Tragedy.
+p. 11: Cavalier Poets                      -> See Caroline Period.
+p. 11: Character                           -> For “the character” as a literary form, 
+p. 11: Chiasmus                            -> See Rhetorical figures.
+p. 11: Chorus                              -> In early Greek times the chorus was a ba
+p. 12: Henry V                             -> Modern scholars sometimes use the term c
+p. 12: Gostrey                             -> the confidante of Strether in Henry Jame
+p. 12: Chronicle                           -> Chronicles, the predecessors of modern “
+p. 12: Chronicle plays                     -> dramatic renderings of materials taken f
+p. 12: Cliche                              -> French for the stereotype plate used in 
+p. 13: Climax                              -> See Plot and Character.
+p. 13: Comedy                              -> The term “comedy” is now broadly applied
+p. 13: Terence                             -> Nicholas Udall’s Ralph Roister Doister (
+p. 13: Alchemist and Volpone,              -> masterpieces of satiric comedy, which ri
+p. 14: Sentimentalism)                     -> Good examples of this type are Richard S
+p. 14: A peak of high comedy               -> to be found in the wit combats of such i
+p. 14: Congreves Way of the World          -> Low comedy, on the other hand, makes no
+p. 15: Refer to A                          -> H. Thorndike, English Comedy (1929) and 
+p. 15: Comedy of humors                    -> See Wit and Humor.
+p. 15: Comic relief                        -> See Tragedy.
+p. 15: England                             -> ruled by Parliament under the control of
+p. 15: Oliver Cromwell                     -> Drama almost disappeared, because the Pu
+p. 15: Conceit                             -> Originally meaning simply an idea or ima
+p. 15: Coral                               -> far more red than her lips’ red:
+p. 16: Concrete                            -> See Abstract and Concrete.
+p. 16: Confidant                           -> See Chorus.
+p. 16: Conflict                            -> See Plot and Character.
+p. 16: Connotation and Denotation          -> The denotation of a word, in the usage o
+p. 17: Consonance                          -> See Alliteration.
+p. 17: Convention and Tradition            -> In the broadest sense, the word “convent
+p. 18: Pyramus, but Bottom the weaver      -> This will put them out of fear.
+p. 18: Conventions, in this first sense,   -> necessary or convenient ways of
+p. 18: Victorian Age                       -> A great many of the items listed in this
+p. 18: Even realism and naturalism         -> as much conventional ways of selecting
+p. 19: Couplet                             -> Couplets are lines of poetry rhyming in 
+p. 20: Rhetorical figures)                 -> The following passage from John Denham’s
+p. 20: Hill (1642)                         -> an early example of the artful managemen
+p. 20: My great example, as it             -> my theme!
+p. 20: Courtesy books                      -> See Renaissance.
+p. 20: Criterion                           -> See Criticism.
+p. 20: Criticism                           -> concerned with the exposition, analysis,
+p. 21: Practical criticism                 -> sometimes distinguished into impressioni
+p. 21: Ransom himself                      -> Often, however, the term has been used m
+p. 22: Icon (1954)                         -> (2) The principles of the new criticism 
+p. 22: Genre), though casually recognized, -> not essential in this criticism. The
+p. 22: language), Structure and Texture, Tension -> (4) The practical criticism
+p. 22: Dactyl                              -> See Meter.
+p. 23: Decadence                           -> Decadence was a European movement, with 
+p. 23: Aubrey Beardsley                    -> Walter Pater had earlier contributed sev
+p. 23: Ernest Dowson                       -> The influence of some decadent tendencie
+p. 23: Decor                               -> See Setting.
+p. 23: Decorum                             -> See Neoclassic and Romantic and Style.
+p. 23: Denotation                          -> See Connotation and Denotation.
+p. 23: Denouement                          -> See Plot and Character.
+p. 23: Deus ex machina                     -> See Plot and Character.
+p. 23: Dialogue                            -> See Plot and Character.
+p. 23: Diction                             -> to the selection of words, the “vocabula
+p. 23: literature                          -> The arrangement of these words into sent
+p. 24: Diction (1924), and M               -> H. Abrams, “Wordsworth and Coleridge on
+p. 25: Didactic                            -> A didactic work is one designed to demon
+p. 25: Dirge                               -> See Elegy.
+p. 25: Discovery                           -> See Plot and Character,
+p. 25: Drama                               -> Drama is the literary form designed for 
+p. 26: Dramatic monologue                  -> The dramatic monologue was a poetic form
+p. 26: Tradition)                          -> In its most complete form as employed by
+p. 26: Dream vision                        -> a conventional narrative frame widely em
+p. 27: Duodecimo                           -> See Folio.
+p. 27: Eclogue                             -> See Pastoral.
+p. 27: Elegy                               -> In Greek and Roman poetry, the elegy was
+p. 28: Elizabethan Age                     -> the period of Queen Elizabeth’s reign, 1
+p. 28: This                                -> a great—in drama, the greatest—age of En
+p. 28: Emotive and Referential language    -> See Connotation and Denotation.
+p. 28: Empathy and Sympathy                -> Empathy signifies an experience in which
+p. 29: Another                             -> the description of a wave in Keats’s End
+p. 29: Shelley (1949), Chap                -> 4.
+p. 29: Encomiastic poems                   -> See Ode.
+p. 29: End-stopped line                    -> See Meter.
+p. 29: Enjambemenf                         -> See Meter.
+p. 29: Enlightenment                       -> See Renaissance.
+p. 29: Epic                                -> The epic, or heroic poem, is a long narr
+p. 29: Paradise Lost                       -> Other poems influenced by the Aeneid are
+p. 30: There                               -> also numerous minor conventions in the e
+p. 31: Coming                              -> Thus Paradise Lost, although focused on 
+p. 31: Book I of Paradise Lost             -> These characters are later given set spe
+p. 31: Romance (1897), and E               -> M. W. Tillyard, The English Epic and Its
+p. 31: Epigram                             -> meant an inscription, and was later exte
+p. 31: Treason doth never prosper          -> What’s the reason?
+p. 32: But who pretender                   -> or who is king—
+p. 32: Humor                               -> Compare Lyric and Vers de societe, and r
+p. 32: Epithalamion (which                 -> also given the Latin spelling Epithalami
+p. 32: Sir Philip Sidney in about 1580     -> Fifteen years later Edmund Spenser
+p. 32: Here, Urania s Son                  -> See Robert H. Case, English Epithalamies
+p. 32: Epode                               -> See Ode.
+p. 32: Equivoque                           -> See Figurative language.
+p. 32: Essay                               -> The essay is the most flexible and inclu
+p. 33: Essays                              -> In the eighteenth century Addison and St
+p. 33: Essay and Essayists (1915), and W   -> F. Bryan and R. S. Crane, editois,
+p. 33: Euphony and Cacophony               -> Euphony is attributed to a passage in wh
+p. 34: Euphuism                            -> the name for an elaborate and mannered p
+p. 35: Exemplum                            -> See Allegory.
+p. 35: Explication of text                 -> See Criticism.
+p. 35: Exposition                          -> See Plot and Character.
+p. 35: Expressionism                       -> a literary movement which began in Germa
+p. 36: Fable                               -> See Allegory.
+p. 36: Fabliau                             -> See Short story.
+p. 36: Falling action                      -> See Plot and Character.
+p. 36: Farce                               -> See Comedy.
+p. 36: Feminine ending                     -> See Meter; for feminine rhyme, see Rhyme
+p. 36: Fiction                             -> See Novel.
+p. 36: Figurative language                 -> language which departs from what is take
+p. 37: Hyperbole                           -> an extravagant exaggeration of fact, use
+p. 37: Southwest                           -> a form of comic hyperbole. There was the
+p. 37: A pun (in Greek, paronomasia)       -> a play on words that are identical
+p. 38: Petrarchan sonneteers (see under Conceit) -> fond of the oxymoron
+p. 38: Flashback                           -> See Plot and Character.
+p. 38: Folio                               -> a term used to describe the type of leaf
+p. 39: Folk tale                           -> See Short story.
+p. 39: Foot                                -> See Meter.
+p. 39: Format                              -> See Folio.
+p. 40: General and Particular              -> See Abstract and Concrete.
+p. 40: Genre                               -> a word imported from France to signify a
+p. 40: Neoclassic and Romantic)            -> The development of new forms such as the
+p. 40: Gothic novel                        -> a type of fiction which was inaugurated 
+p. 41: Faulkner                            -> See Novel, and refer to Montague Summers
+p. 41: Hamartia                            -> See Tragedy.
+p. 41: Heroic drama                        -> See Tragedy.
+p. 41: Hubris                              -> See Tragedy.
+p. 41: Humanism                            -> When a term is employed so loosely and v
+p. 41: life of reason, for reason          -> the peculiar prerogative of man.” Many
+p. 42: Since with few exceptions Renaissance humanists -> professed and
+p. 42: Dr                                  -> Johnson, took exception to the scope Mil
+p. 42: Arnold s leading ideas              -> adaptations and restatements of the tene
+p. 43: Humor                               -> See Wit and Humor.
+p. 43: Hyperbole                           -> See Figurative language.
+p. 43: lamb                                -> See Meter.
+p. 43: Idyll                               -> See Pastoral.
+p. 43: Imagery                             -> This term is one of the most common in m
+p. 44: Motif)                              -> Since then many critics have joined the 
+p. 44: Imagism                             -> a poetic movement in England and the Uni
+p. 45: Impressionism                       -> For impressionistic criticism, see Criti
+p. 45: In medias res                       -> See Epic.
+p. 45: Incremental repetition              -> See Ballad.
+p. 45: Intentional fallacy                 -> See Criticism.
+p. 45: Intrigue                            -> See Plot and Character.
+p. 45: Invective                           -> See Irony.
+p. 45: Invention                           -> See Convention and Tradition.
+p. 45: Invocation                          -> See Rhetorical figures.
+p. 45: Irony                               -> “Rhetorical” or “verbal irony” is a mode
+p. 45: This                                -> a simple bit of irony, because it is obv
+p. 45: That                                -> why the use of irony by a writer carries
+p. 46: Examples                            -> Swift’s well-meaning but stupid economis
+p. 46: Irony                               -> related to other rhetorical modes. Invec
+p. 46: Sarcasm                             -> a caustic and heavy use of apparent prai
+p. 46: less than it really is              -> Swift wrote, “Last week I saw a woman fl
+p. 47: God or Destiny                      -> represented to be manipulating events as
+p. 47: Jacobean Age                        -> to the reign of James (in Latin, “Jacobu
+p. 47: Webster                             -> See Renaissance.
+p. 47: Lai                                 -> See Short story.
+p. 47: Lampoon                             -> See Burlesque and Parody.
+p. 48: Light verse                         -> See Vers de societe.
+p. 48: Local color                         -> See Novel.
+p. 48: Lyric                               -> Greek writers identified the lyric as a 
+p. 48: Machinery                           -> See Epic.
+p. 48: Marchen                             -> See Short story.
+p. 48: Manifesto                           -> See Neoclassic and Romantic.
+p. 49: Masculine ending                    -> See Meter; for Masculine rhyme, see Rhym
+p. 49: Masque                              -> The masque was an elaborate form of cour
+p. 49: Meiosis                             -> See Irony.
+p. 49: Melodrama                           -> See Tragedy.
+p. 49: Metaphor                            -> See Figurative language.
+p. 49: Metaphysical poets                  -> Dryden said in 1693 that John Donne in h
+p. 50: Donne to a position near Shakespeare -> The movement began with H. J. C.
+p. 50: Critics (see under Criticism)       -> Refer to George Williamson, The Donne
+p. 50: Tradition (1930), and R             -> C. Bald, Donne’s Influence in English Li
+p. 50: Meter                               -> the recurrence in a poetic line of a reg
+p. 50: line of poetry                      -> First, and most important, is the word a
+p. 50: It                                  -> possible to distinguish many degrees of 
+p. 51: A metric line                       -> called a verse. It is named according to
+p. 51: lines                               -> Also, much English versification that un
+p. 52: Lines 2-4, on the other hand,       -> called run-on lines, because the phrase
+p. 52: Quantitative meters in English      -> written in imitation of Greek and
+p. 52: Technique of English Verse (1930)   -> See also Rhyme and Stanza.
+p. 52: Metonymy                            -> See Figurative language.
+p. 52: Miracle and Morality plays          -> types of medieval verse drama. The
+p. 52: legends of the saints               -> (In the usage of some historians, howeve
+p. 53: Mock epic                           -> See Epic, Burlesque and Parody, and Sati
+p. 53: Monody                              -> See Elegy.
+p. 53: Morality play                       -> See Miracle and Morality plays.
+p. 53: Motif                               -> a term now applied to a frequently recur
+p. 53: Joyce, and Virginia Woolf           -> See also Archetype and Stock characters.
+p. 53: A motif                             -> sometimes called a theme, but the word “
+p. 53: Pope states it,                     -> to
+p. 54: Motivation                          -> See Plot and Character.
+p. 54: Mystery play                        -> See Miracle and Morality plays.
+p. 54: Myth                                -> In its primary significance a myth is on
+p. 54: Myth                                -> a very prominent word in modern criticis
+p. 55: Kimon Friar and J                   -> M. Brinnin, Modern Poetry (1951), and Ph
+p. 55: Naturalism                          -> See Realism and Naturalism.
+p. 55: Negative capability                 -> See Objective and Subjective.
+p. 55: Neoclassic and Romantic             -> The simplest and safest use of the troub
+p. 55: literature                          -> the literature written in approximately 
+p. 55: A more useful undertaking           -> to try to specify some attributes of
+p. 56: Typical                             -> their election, in many of their poems, 
+p. 57: Here                                -> some aspects in which romantic ideals an
+p. 57: lation of                           -> to foreseen ends emphasized by the neocl
+p. 58: Refer to A                          -> O. Lovejoy, Essays in the History of Ide
+p. 58: New Criticism                       -> See Criticism.
+p. 58: Novel                               -> The term is now applied to a great varie
+p. 59: Another important predecessor of the novel -> the picaresque story,
+p. 59: Picaro                              -> Spanish for rogue,” and the typical stor
+p. 59: Flanders                            -> Both of these are picaresque in type, in
+p. 59: Rewarded (1740)                     -> Pamela is the story of a sentimental but
+p. 60: Long passages of introspection      -> found in earlier novelists such as
+p. 60: Stream of consciousness             -> used occasionally by Virginia Woolf, Wil
+p. 60: Types of novels                     -> often distinguished on the basis of diff
+p. 61: Stock characters, Tragedy           -> See also Percy Lubbock, The Craft of Fic
+p. 61: Novelette                           -> See Short story.
+p. 61: Novella                             -> See Novel and Short story.
+p. 61: Objective correlative               -> a term rather casually introduced by T. 
+p. 61: Objective and Subjective            -> John Ruskin complained in 1856 that “Ger
+p. 62: It                                  -> often said that all lyric poetry is subj
+p. 62: Browning masquerading as a Duke     -> On the other hand we know, from
+p. 63: literary historian than of the critic -> If the subjective poem is a good poem,
+p. 63: Occasional poems                    -> written to adorn or memorialize a specif
+p. 63: Octave                              -> See Sonnet.
+p. 63: Octavo                              -> See Folio.
+p. 63: Ode                                 -> The term “ode” is usually employed for a
+p. 63: Crane, 1952)                        -> The Greek odes of Pindar, modeled on the
+p. 64: Onomatopoeia                        -> the use of words whose sounds seem to re
+p. 65: Originality                         -> See Convention and Tradition.
+p. 65: Ottava rima                         -> See Stanza.
+p. 65: Oxymoron                            -> See Figurative language.
+p. 65: Parable                             -> See Allegory.
+p. 65: Paradox                             -> See Figurative language.
+p. 65: Paranomasia                         -> See Figurative language.
+p. 65: Parody                              -> See Burlesque and Parody.
+p. 65: Pastoral                            -> A pastoral poem was originally about “pa
+p. 65: life                                -> The originator of the form was Theocritu
+p. 65: There                               -> the pastoral romance in prose (Sidney’s 
+p. 66: Pathetic fallacy                    -> a phrase invented by John Ruskin in 1856
+p. 66: Pathos and Bathos                   -> Pathos in the Greek means suffering or p
+p. 66: Ophelia                             -> imbued with pathos; in rendering the dea
+p. 67: Bathos                              -> Greek for “depth.” It has been an indisp
+p. 67: Sinking in Poetry                   -> In this work Pope solemnly assures his r
+p. 67: Periodic sentence                   -> See Style.
+p. 67: Peripety                            -> See Plot and Character.
+p. 67: Periphrasis                         -> See Diction.
+p. 67: Personification                     -> See Figurative language and Pathetic fal
+p. 68: Picaresque story                    -> See Novel.
+p. 68: Platonic love                       -> In Plato’s Symposium, Socrates recounts 
+p. 68: But only that                       -> permanent and free
+p. 68: That                                -> true beautie: that doth argue you
+p. 68: Of poets and romancers              -> . . .
+p. 68: See Renaissance, and refer to J     -> S. Harrison, Platonism in English Poetry
+p. 69: Plot and Character                  -> The plot is the system of actions repres
+p. 69: There                               -> a great variety of plot forms. For examp
+p. 70: lifelike                            -> E. M. Forster has introduced popular new
+p. 70: Falstaff                            -> And in many types of plot, such as the d
+p. 70: Dramatic irony                      -> that special kind of suspenseful expecta
+p. 71: But this action                     -> represented or alluded to only on the oc
+p. 72: Poetic diction                      -> See Diction.
+p. 73: Poetic justice                      -> See Tragedy.
+p. 73: Poetic license                      -> Dryden defined poetic license as “the li
+p. 73: Tradition)                          -> The great opening sentence of Milton’s P
+p. 73: Point of view                       -> to the outlook from which the events in 
+p. 73: Wuthering Heights)                  -> John Dos Passos’ USA, Virgina Woolfs Mrs
+p. 74: Portmanteau word                    -> See Ambiguity.
+p. 74: Primitivism                         -> A primitivist is someone who opposes “na
+p. 75: Problem play                        -> See Tragedy.
+p. 75: Progress, The Idea of               -> See Primitivism.
+p. 75: Propaganda                          -> See Didactic.
+p. 75: Prosody                             -> The term “prosody” is used for the syste
+p. 75: Protagonist                         -> See Plot and Character.
+p. 75: Pun                                 -> See Figurative language.
+p. 75: Puritan Period                      -> See Commonwealth Period.
+p. 75: Purple passage                      -> a sudden heightening of style, in rhythm
+p. 75: Harold, Canto III                   -> Often, however, the term connotes a snee
+p. 75: Quarto                              -> See Folio.
+p. 75: Quatrain                            -> See Stanza.
+p. 75: Realism and Naturalism              -> “Realistic fiction’ is often opposed to 
+p. 75: Casanova, T                         -> E. Lawrence, Winston Churchill are all p
+p. 76: Austen                              -> more realistic in subject and manner tha
+p. 76: Naturalism                          -> sometimes claimed to be an even more acc
+p. 77: Tragedy)                            -> Aspects of naturalistic subject and mann
+p. 77: Naturalism                          -> sometimes used, in a totally different s
+p. 77: Reformation                         -> See Renaissance.
+p. 77: Refrain                             -> See Stanza.
+p. 77: Renaissance                         -> “rebirth,” and is the name applied to th
+p. 78: literate audience                   -> The speed of the inauguration and spread
+p. 79: Church, priest, or sacrament        -> For this reason Protestantism is sometim
+p. 79: Greek idea that the world           -> a globe, sailed West to find a new com¬
+p. 80: Refer to J                          -> Burckhardt, Civilization of the Renaissa
+p. 81: Repartee                            -> See Wit and Humor.
+p. 81: Restoration Period                  -> The period takes its name from the resto
+p. 81: Pepys and Sir William Temple        -> See also Neoclassic and Romantic and
+p. 81: Rhetorical figures                  -> It is convenient to list under the headi
+p. 82: A rhetorical question               -> a question asked, not to evoke a reply, 
+p. 82: Chiasmus                            -> the use of phrases which are syntactical
+p. 82: Zeugma in Greek                     -> “yoking” and applies to the use of a sin
+p. 83: Rhetorical question                 -> See Rhetorical figures.
+p. 83: Rhyme                               -> in the identity, in the rhyming words, o
+p. 83: Long after it                       -> heard no more.
+p. 84: laughter (see Poetic license)       -> Many modern poets, however, deliberately
+p. 84: Rime royal                          -> See Stanza.
+p. 84: Rising action                       -> See Plot and Character.
+p. 84: Romance                             -> See Novel and Realism and Naturalism.
+p. 85: Romantic Period                     -> The limits of the Romantic Period are us
+p. 85: Rondeau                             -> See Stanza and Vers de societe.
+p. 85: Rules                               -> See Neoclassic and Romantic.
+p. 85: Run-on line                         -> See Meter.
+p. 85: Sarcasm                             -> See Irony.
+p. 85: Satire                              -> the literary art of diminishing a subjec
+p. 85: Yet malice never                    -> his aim;
+p. 85: But what all mortals may correct    -> . . .
+p. 85: Satire                              -> frequently found as an incidental elemen
+p. 86: One                                 -> a satiric mode of the prose novel. Ben J
+p. 87: Burns and Blake                     -> Consult Hugh Walker, English Satire and 
+p. 87: Scansion                            -> See Meter.
+p. 87: Scene                               -> See Act.
+p. 87: Sensibiliiy and Sentimentalism      -> When a modern critic talks of Donnes
+p. 87: literature                          -> (See T. S. Eliot, “The Metaphysical Poet
+p. 87: lence, or wishing others well,      -> innate in man; that virtue is mainly
+p. 87: Comedy)                             -> In this form, as Goldsmith said, “the vi
+p. 88: Sestet                              -> See Sonnet.
+p. 88: Setting                             -> The setting of a narrative or drama is t
+p. 88: Short story                         -> A short story is a work of prose fiction
+p. 89: Another early form                  -> the folk tale, or, in the German term, M
+p. 89: Germany                             -> The short story, as the staple of “pulp,
+p. 90: Henry S                             -> Canby, The Short Story in English (1909)
+p. 90: Simile                              -> See Figurative language.
+p. 90: 5lapstick                           -> See Comedy.
+p. 90: Soliloquy                           -> See Convention and Tradition and Dramati
+p. 90: Sonnet                              -> the name for a lyric stanza form consist
+p. 90: lution in the sestet                -> The English form sometimes falls into a 
+p. 91: Sonnet Sequences (1938)             -> See also Lyric, Rhyme, and Stanza.
+p. 91: Spenserian stanza                   -> See Stanza.
+p. 91: Spondee                             -> See Meter.
+p. 91: Sprung rhythm                       -> See Meter.
+p. 91: Stanza                              -> A stanza is a division in the formal pat
+p. 92: Wyatt                               -> As the name indicates, this stanza has e
+p. 92: Juan                                -> taught from out the best edition.
+p. 92: A still longer stanza               -> the Spenserian, devised by Edmund Spense
+p. 92: A component in some stanzas         -> the refrain, which consists of one or
+p. 92: There                               -> also a number of elaborate stanza forms 
+p. 93: William Empson, and others          -> a sign of the renewed interest in metric
+p. 93: Stock characters                    -> character types which recur repeatedly i
+p. 93: literary genre, and so              -> recognizable as a convention of the form
+p. 93: Convention and Tradition)           -> Elizabethan romantic comedy almost invar
+p. 93: Falstaff                            -> a version of the familiar braggart soldi
+p. 93: Stock situations                    -> the counterparts in plot of stock charac
+p. 93: A stock response                    -> an habitual and stereotyped reaction to 
+p. 93: Practical Criticism (1930), Chap    -> 5, and compare Cliche.
+p. 93: Stream of consciousness             -> See Novel.
+p. 93: Stress                              -> See Meter.
+p. 93: Strophe                             -> See Ode.
+p. 94: Structure and texture               -> Most modern critics agree in the use of 
+p. 94: Critic, ed                          -> D. A. Stauffer (1941). In many critical 
+p. 94: Style                               -> a characteristic manner of expression in
+p. 94: Styles                              -> often classified according to a literary
+p. 95: Subjective                          -> See Objective and Subjective.
+p. 95: Suspense and Surprise               -> See Plot and Character.
+p. 95: Symbol                              -> A symbol, in the broadest use of the ter
+p. 96: Sympathy                            -> See Empathy and Sympathy.
+p. 96: Synecdoche                          -> See Figurative language.
+p. 96: Synesthesia                         -> the experience of two or more modes of s
+p. 96: It                                  -> felt like an odor within the sense.
+p. 97: Tenor and vehicle                   -> See metaphor under Figurative language.
+p. 97: Tension                             -> The word “tension” has frequently been u
+p. 97: Tercet                              -> See Stanza.
+p. 97: Terza rima                          -> See Stanza.
+p. 97: Texture                             -> See Structure and Texture.
+p. 97: Theme                               -> See Motif.
+p. 97: Threnody                            -> See Elegy.
+p. 97: Tone                                -> In recent criticism “tone” is often empl
+p. 98: Tradition                           -> See Convention and Tradition.
+p. 98: Tragedy                             -> The term “tragedy” is broadly applied to
+p. 99: Othello                             -> entirely amenable to Aristotelian catego
+p. 99: Macbeth, for example,               -> not a good man with a tragic flaw but a 
+p.101: Melodrama                           -> sometimes said to bear the same relation
+p.101: Nights in a Bar-room (1858)         -> still sometimes produced, but alas! no
+p.101: longer for thrills but for laughs   -> A melodrama usually ended, not with a
+p.101: Naturalism and Symbol)              -> Useful references are A. C. Bradley, Sha
+p.101: Travesty                            -> See Burlesque and Parody.
+p.101: Triolet                             -> See Stanza.
+p.101: Trochee                             -> See Meter,
+p.102: Trope                               -> See Figurative language.
+p.102: Understatement                      -> See Irony.
+p.102: Unities, Dramatic                   -> See Plot and Character.
+p.102: light and society verse             -> the Cavalier poets (see Caroline Period)
+p.102: Lampson, and the modern writers W   -> H. Auden, Morris Bishop, and
+p.102: Phyllis McGinley                    -> The limerick is the form of light verse 
+p.102: Verse                               -> See Meter. For verse paragraph, see Blan
+p.102: Victorian Period                    -> The beginning of the Victorian Period is
+p.102: Vilanelle                           -> See Stanza.
+p.103: Wit and Humor                       -> The word “wit” once meant “intelligence”
+p.103: literal and practical               -> The resulting laughter, in the phrase of
+p.103: Repartee                            -> a term aptly borrowed from fencing to si
+p.104: Humor, through the Renaissance period, -> a physiological term for
+p.105: Zeugma                              -> See Figurative language.

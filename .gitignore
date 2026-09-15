@@ -34,7 +34,13 @@ yarn-error.*
 .ingest/
 
 # local env files
+.env
+.env.*
+!.env.example
 .env*.local
+
+# local tooling scripts may hold API tokens; keep them out of history
+tools/.env
 
 # typescript
 *.tsbuildinfo
@@ -50,3 +56,5 @@ scratch/
 
 # JetBrains IDE
 .idea/
+.vercel
+.env*

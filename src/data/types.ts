@@ -82,7 +82,10 @@ export interface Rollup {
   metricId: string;
   period: RollupPeriod;
   periodStart: string; // ISO date, start of the week/month this rollup covers
-  value: number;
+  /** Null when the input could not support the measurement. See notMeasuredReason. */
+  value: number | null;
+  /** Why `value` is null. Null when the metric was measured. */
+  notMeasuredReason: string | null;
   metricVersion: number; // MetricDefinition.version at the time this was computed
   computedAt: string; // ISO 8601
 }
@@ -90,7 +93,15 @@ export interface Rollup {
 /** Current-state aggregate style profile — one row per metric, replaced (not appended) as it updates. */
 export interface Fingerprint {
   metricId: string;
-  value: number;
+  /**
+   * Null when the input could not support the measurement. A zero and an
+   * absence are different facts: "no internal rhyme" is a finding, "we
+   * never looked" is not, and collapsing them lets an empty song render
+   * as a full profile.
+   */
+  value: number | null;
+  /** Why `value` is null. Null when the metric was measured. */
+  notMeasuredReason: string | null;
   metricVersion: number;
   computedAt: string; // ISO 8601
 }

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { getDb } from '@/data/db/client';
 import { generateId } from '@/data/id';
@@ -125,5 +125,16 @@ export function useMasteryClock(): UseMasteryClock {
     };
   }, [persist]);
 
-  return { remainingMs, isCounting, registerTyping, flush };
+  // `registerTyping` and `flush` are stable across renders; `remainingMs` and
+  // `isCounting` change every tick. The memo keeps the object identity tied to
+  // exactly those two, but a consumer must NOT put the whole object in an
+  // effect's dependency list — it still changes once a second, and in the Song
+  // View that tore down the AppState effect every second, whose cleanup ran
+  // `clearTimeout` on the pending autosave. Depend on `flush`/`registerTyping`
+  // directly instead. Losing the last edit of a session is the one failure
+  // this app cannot have.
+  return useMemo(
+    () => ({ remainingMs, isCounting, registerTyping, flush }),
+    [remainingMs, isCounting, registerTyping, flush],
+  );
 }

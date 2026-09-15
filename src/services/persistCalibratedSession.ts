@@ -16,7 +16,10 @@ import type { MasterProsodicReport } from './prosodicCore';
  */
 export interface CanonicalMetricValue {
   metricId: string;
-  value: number;
+  /** Null when the input could not support the measurement. */
+  value: number | null;
+  /** Why `value` is null. Null when the metric was measured. */
+  notMeasuredReason: string | null;
   unit: string;
   direction: 'higher_is_better' | 'lower_is_better' | 'neutral';
   metricVersion: number;
@@ -45,6 +48,8 @@ export class CalibrationBoundaryError extends Error {
  *  - a metric_id outside the canonical namespace (nothing may mint ids)
  *  - a calibrated score outside [0, 1] (the canonical scale)
  *  - a non-finite score
+ *  - an absent score with no reason recorded for its absence
+ *  - a score and an absence reason at the same time
  *
  * These throw rather than clamp on purpose. A metric that fails here is a
  * defect in the adapter, and silently coercing it would reintroduce the
@@ -64,20 +69,38 @@ export function toCanonicalMetrics(envelope: CalibratedSessionEnvelope): Canonic
           'Add a MetricDefinition to canonicalMetrics.ts before emitting it.',
       );
     }
-    if (!Number.isFinite(score.calibratedScore)) {
-      throw new CalibrationBoundaryError(
-        `"${score.metricId}" calibrated to a non-finite value (${score.calibratedScore}).`,
-      );
-    }
-    if (score.calibratedScore < 0 || score.calibratedScore > 1) {
-      throw new CalibrationBoundaryError(
-        `"${score.metricId}" calibrated to ${score.calibratedScore}, outside the canonical [0, 1] scale.`,
-      );
+
+    if (score.calibratedScore === null) {
+      // An absence is a legitimate result, but an unexplained one is not:
+      // without a reason this is indistinguishable from a dropped value.
+      if (!score.notMeasuredReason) {
+        throw new CalibrationBoundaryError(
+          `"${score.metricId}" has no calibrated score and no reason for its absence.`,
+        );
+      }
+    } else {
+      if (score.notMeasuredReason) {
+        throw new CalibrationBoundaryError(
+          `"${score.metricId}" carries both a score (${score.calibratedScore}) and a ` +
+            `not-measured reason ("${score.notMeasuredReason}").`,
+        );
+      }
+      if (!Number.isFinite(score.calibratedScore)) {
+        throw new CalibrationBoundaryError(
+          `"${score.metricId}" calibrated to a non-finite value (${score.calibratedScore}).`,
+        );
+      }
+      if (score.calibratedScore < 0 || score.calibratedScore > 1) {
+        throw new CalibrationBoundaryError(
+          `"${score.metricId}" calibrated to ${score.calibratedScore}, outside the canonical [0, 1] scale.`,
+        );
+      }
     }
 
     return {
       metricId: score.metricId,
       value: score.calibratedScore,
+      notMeasuredReason: score.notMeasuredReason,
       unit: score.unit,
       direction: score.direction,
       metricVersion: CANONICAL_METRIC_VERSIONS.get(score.metricId) ?? score.version,
@@ -125,6 +148,7 @@ export function persistCalibratedSession(
       upsertFingerprint(db, {
         metricId: metric.metricId,
         value: metric.value,
+        notMeasuredReason: metric.notMeasuredReason,
         metricVersion: metric.metricVersion,
         computedAt: envelope.calibratedAt,
       });

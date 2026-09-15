@@ -83,8 +83,14 @@ export function TempoDensityHeader({
           <Pressable
             onPress={onOpenDrawer}
             style={({ pressed }) => [styles.drawerButton, pressed && styles.pressed]}
+            accessibilityRole="button"
+            accessibilityLabel="Open Navigation Menu"
           >
-            <Text style={styles.drawerIcon}>☰</Text>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1C1C1E" strokeWidth="2.2" strokeLinecap="round">
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
           </Pressable>
 
           <ThemedText type="subtitle">Think Pad</ThemedText>
@@ -127,7 +133,13 @@ export function TempoDensityHeader({
             {metrics.bpm} BPM • {metrics.timeSignature} • {metrics.barDurationSeconds}s • Target:{' '}
             {metrics.targetSyllables} syl
           </Text>
-          <Text style={styles.toggleIcon}>{showControls ? '▲' : '▼'}</Text>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 6 }}>
+            {showControls ? (
+              <polyline points="18 15 12 9 6 15" />
+            ) : (
+              <polyline points="6 9 12 15 18 9" />
+            )}
+          </svg>
         </Pressable>
       </View>
 
@@ -182,7 +194,7 @@ export function TempoDensityHeader({
                 pressed && styles.pressed,
               ]}
             >
-              <Text style={styles.tapTempoText}>🥁 TAP</Text>
+              <Text style={styles.tapTempoText}>TAP</Text>
             </Pressable>
 
             {/* Presets */}
