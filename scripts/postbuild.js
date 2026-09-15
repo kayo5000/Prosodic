@@ -6,6 +6,26 @@ if (fs.existsSync(distDir)) {
   const vercelJson = {
     cleanUrls: true,
     rewrites: [{ source: '/(.*)', destination: '/index.html' }],
+    headers: [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=0, must-revalidate',
+          },
+        ],
+      },
+      {
+        source: '/_expo/static/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+    ],
   };
   fs.writeFileSync(path.join(distDir, 'vercel.json'), JSON.stringify(vercelJson, null, 2));
 
