@@ -1,10 +1,14 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import {
+  Animated,
+  Easing,
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   Modal,
+  Platform,
+  Pressable,
 } from 'react-native';
 import { type TimeSignature } from '../../utils/tempoDensity';
 
@@ -33,15 +37,48 @@ export const CadenceBottomSheet: React.FC<CadenceBottomSheetProps> = ({
   onChangeTimeSignature,
   onChangeDensity,
 }) => {
+  const animValue = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (visible) {
+      Animated.timing(animValue, {
+        toValue: 1,
+        duration: 260,
+        easing: Easing.bezier(0.16, 1, 0.3, 1),
+        useNativeDriver: Platform.OS !== 'web',
+      }).start();
+    } else {
+      Animated.timing(animValue, {
+        toValue: 0,
+        duration: 180,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: Platform.OS !== 'web',
+      }).start();
+    }
+  }, [visible, animValue]);
+
+  const backdropOpacity = animValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 1],
+  });
+
+  const sheetTranslateY = animValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [60, 0],
+  });
+
+  if (!visible) return null;
+
   return (
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
+      animationType="none"
       onRequestClose={onClose}
     >
-      <View style={styles.sheetBackdrop}>
-        <View style={styles.sheetContainer}>
+      <Animated.View style={[styles.sheetBackdrop, { opacity: backdropOpacity }]}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+        <Animated.View style={[styles.sheetContainer, { transform: [{ translateY: sheetTranslateY }] }]}>
           {/* Draggable Handle */}
           <View style={styles.dragHandle} />
 
@@ -161,8 +198,8 @@ export const CadenceBottomSheet: React.FC<CadenceBottomSheetProps> = ({
           <TouchableOpacity style={styles.applyButton} onPress={onClose} accessibilityRole="button" accessibilityLabel="Apply Settings">
             <Text style={styles.applyButtonText}>Apply Settings</Text>
           </TouchableOpacity>
-        </View>
-      </View>
+        </Animated.View>
+      </Animated.View>
     </Modal>
   );
 };

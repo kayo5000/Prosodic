@@ -28,6 +28,7 @@ import {
 import { analyzeVerseRhymes, type VerseRhymeToken } from '../../../services/rhymeDetectionEngine';
 import { colorForFamily } from '../../../theme/theme';
 import { SyllableInspectorModal, type SyllableOverride } from '../SyllableInspectorModal';
+import type { EnunciationOption, EnunciationContext } from '../../../services/enunciationEngine';
 import { CadenceBarRow } from './CadenceBarRow';
 import { PhraseSelectorModal } from './PhraseSelectorModal';
 import { SectionTextureModal } from './SectionTextureModal';
@@ -204,6 +205,7 @@ export function CadencePaperStudio({
     wordIndex: number;
     syllables: VerseRhymeToken[];
     initialSyllableIndex: number;
+    surroundingContext?: EnunciationContext;
   }>({
     visible: false,
     wordText: '',
@@ -214,44 +216,6 @@ export function CadencePaperStudio({
   });
   const [isEditingBlankText, setIsEditingBlankText] = useState<boolean>(false);
   const [syllableOverrides, setSyllableOverrides] = useState<Map<string, SyllableOverride>>(new Map());
-
-  const handleOpenWordInspector = useCallback(
-    (
-      wordText: string,
-      lineIndex: number,
-      wordIndex: number,
-      syllables: VerseRhymeToken[],
-      initialSyllableIndex: number = 0,
-    ) => {
-      setInspectorModalData({
-        visible: true,
-        wordText,
-        lineIndex,
-        wordIndex,
-        syllables,
-        initialSyllableIndex,
-      });
-    },
-    [],
-  );
-
-  const handleSaveSyllableOverride = (tok: VerseRhymeToken, override: SyllableOverride) => {
-    const key = `${tok.lineIndex}:${tok.wordIndex}:${tok.syllableIndex}:${tok.text.trim().toLowerCase()}`;
-    setSyllableOverrides((prev) => {
-      const next = new Map(prev);
-      next.set(key, override);
-      return next;
-    });
-  };
-
-  const handleClearSyllableOverride = (tok: VerseRhymeToken) => {
-    const key = `${tok.lineIndex}:${tok.wordIndex}:${tok.syllableIndex}:${tok.text.trim().toLowerCase()}`;
-    setSyllableOverrides((prev) => {
-      const next = new Map(prev);
-      next.delete(key);
-      return next;
-    });
-  };
 
   const verseRhymeAnalysis = useMemo(() => {
     if (!showRhymeMap) return null;
@@ -314,6 +278,96 @@ export function CadencePaperStudio({
       lineSyllables: raw.lineSyllables.map((tokens) => tokens.map(applyOverride)),
     };
   }, [showRhymeMap, blankVerseLines, blankText, syllableOverrides]);
+
+  const handleOpenWordInspector = useCallback(
+    (
+      wordText: string,
+      lineIndex: number,
+      wordIndex: number,
+      syllables: VerseRhymeToken[],
+      initialSyllableIndex: number = 0,
+    ) => {
+      // Extract surrounding words for contextual likelihood ranking
+      const surroundingWords: string[] = [];
+      const allLines = showBars
+        ? flatBarLines.map((b) => b.lineText)
+        : blankText.split('\n');
+
+      const startLine = Math.max(0, lineIndex - 2);
+      const endLine = Math.min(allLines.length - 1, lineIndex + 2);
+
+      for (let l = startLine; l <= endLine; l += 1) {
+        const lineStr = allLines[l] || '';
+        const words = lineStr.split(/\s+/).filter(Boolean);
+        surroundingWords.push(...words);
+      }
+
+      const activeFamilies: number[] = [];
+      const analysis = showBars ? verseRhymeAnalysis : blankRhymeAnalysis;
+      if (analysis) {
+        analysis.rhymeGroups.forEach((g) => {
+          if (g.colorId > 0) activeFamilies.push(g.colorId);
+        });
+      }
+
+      const dominantFamilyId = analysis?.rhymeGroups[0]?.colorId;
+
+      setInspectorModalData({
+        visible: true,
+        wordText,
+        lineIndex,
+        wordIndex,
+        syllables,
+        initialSyllableIndex,
+        surroundingContext: {
+          activeVowelFamiliesInVerse: activeFamilies,
+          surroundingWords,
+          dominantFamilyId,
+          currentLineIndex: lineIndex,
+        },
+      });
+    },
+    [showBars, flatBarLines, blankText, verseRhymeAnalysis, blankRhymeAnalysis],
+  );
+
+  const handleApplyEnunciation = useCallback(
+    (enun: EnunciationOption) => {
+      const { lineIndex, wordIndex, syllables } = inspectorModalData;
+      setSyllableOverrides((prev) => {
+        const next = new Map(prev);
+        syllables.forEach((sylTok, idx) => {
+          const enunSyl = enun.syllables[idx] || enun.syllables[enun.syllables.length - 1];
+          if (enunSyl) {
+            const key = `${sylTok.lineIndex ?? lineIndex}:${sylTok.wordIndex ?? wordIndex}:${sylTok.syllableIndex ?? idx}:${sylTok.text.trim().toLowerCase()}`;
+            next.set(key, {
+              stress: enunSyl.stress,
+              colorId: enunSyl.vowelFamilyId,
+            });
+          }
+        });
+        return next;
+      });
+    },
+    [inspectorModalData],
+  );
+
+  const handleSaveSyllableOverride = (tok: VerseRhymeToken, override: SyllableOverride) => {
+    const key = `${tok.lineIndex}:${tok.wordIndex}:${tok.syllableIndex}:${tok.text.trim().toLowerCase()}`;
+    setSyllableOverrides((prev) => {
+      const next = new Map(prev);
+      next.set(key, override);
+      return next;
+    });
+  };
+
+  const handleClearSyllableOverride = (tok: VerseRhymeToken) => {
+    const key = `${tok.lineIndex}:${tok.wordIndex}:${tok.syllableIndex}:${tok.text.trim().toLowerCase()}`;
+    setSyllableOverrides((prev) => {
+      const next = new Map(prev);
+      next.delete(key);
+      return next;
+    });
+  };
 
   // 3. Modals State
   const [songSettingsVisible, setSongSettingsVisible] = useState<boolean>(false);
@@ -1098,11 +1152,13 @@ export function CadencePaperStudio({
         syllables={inspectorModalData.syllables}
         initialSyllableIndex={inspectorModalData.initialSyllableIndex}
         syllableOverrides={syllableOverrides}
+        surroundingContext={inspectorModalData.surroundingContext}
         onClose={() => {
           setInspectorModalData((prev) => ({ ...prev, visible: false }));
         }}
         onSaveOverride={handleSaveSyllableOverride}
         onClearOverride={handleClearSyllableOverride}
+        onApplyEnunciation={handleApplyEnunciation}
       />
     </KeyboardAvoidingView>
   );

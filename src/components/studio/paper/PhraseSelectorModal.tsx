@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
+  Animated,
+  Easing,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -92,19 +94,52 @@ export function PhraseSelectorModal({
     onClose();
   };
 
+  const animValue = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (visible) {
+      Animated.timing(animValue, {
+        toValue: 1,
+        duration: 260,
+        easing: Easing.bezier(0.16, 1, 0.3, 1),
+        useNativeDriver: Platform.OS !== 'web',
+      }).start();
+    } else {
+      Animated.timing(animValue, {
+        toValue: 0,
+        duration: 180,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: Platform.OS !== 'web',
+      }).start();
+    }
+  }, [visible, animValue]);
+
+  const backdropOpacity = animValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 1],
+  });
+
+  const cardScale = animValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.96, 1],
+  });
+
+  if (!visible) return null;
+
   return (
     <Modal
       visible={visible}
       transparent
-      animationType="fade"
+      animationType="none"
       onRequestClose={onClose}
     >
-      <Pressable style={styles.backdrop} onPress={onClose}>
+      <Animated.View style={[styles.backdrop, { opacity: backdropOpacity }]}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={styles.keyboardAvoider}
         >
-          <Pressable style={styles.sheetContainer} onPress={(e) => e.stopPropagation()}>
+          <Animated.View style={[styles.sheetContainer, { transform: [{ scale: cardScale }] }]}>
             {/* Header */}
             <View style={styles.headerRow}>
               <View>
@@ -194,9 +229,9 @@ export function PhraseSelectorModal({
                 </Pressable>
               </View>
             )}
-          </Pressable>
+          </Animated.View>
         </KeyboardAvoidingView>
-      </Pressable>
+      </Animated.View>
     </Modal>
   );
 }

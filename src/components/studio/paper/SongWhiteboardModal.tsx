@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
+  Animated,
+  Easing,
   Modal,
   Platform,
   Pressable,
@@ -94,10 +96,58 @@ export function SongWhiteboardModal({
     onClose();
   };
 
+  const animValue = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (visible) {
+      Animated.timing(animValue, {
+        toValue: 1,
+        duration: 260,
+        easing: Easing.bezier(0.16, 1, 0.3, 1),
+        useNativeDriver: Platform.OS !== 'web',
+      }).start();
+    } else {
+      Animated.timing(animValue, {
+        toValue: 0,
+        duration: 180,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: Platform.OS !== 'web',
+      }).start();
+    }
+  }, [visible, animValue]);
+
+  const backdropOpacity = animValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 1],
+  });
+
+  const sheetTranslateY = animValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [50, 0],
+  });
+
+  const sheetScale = animValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.97, 1],
+  });
+
+  if (!visible) return null;
+
   return (
-    <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
-        <View style={styles.sheetContainer}>
+    <Modal visible={visible} animationType="none" transparent={true} onRequestClose={onClose}>
+      <Animated.View style={[styles.modalOverlay, { opacity: backdropOpacity }]}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+        <Animated.View
+          style={[
+            styles.sheetContainer,
+            {
+              transform: [
+                { translateY: sheetTranslateY },
+                { scale: sheetScale },
+              ],
+            },
+          ]}
+        >
           {/* Drag Handle */}
           <View style={styles.dragHandleWrap}>
             <View style={styles.dragHandle} />
@@ -403,8 +453,8 @@ export function SongWhiteboardModal({
               <Text style={styles.footerSaveBtnText}>Save Song Whiteboard</Text>
             </Pressable>
           </View>
-        </View>
-      </View>
+        </Animated.View>
+      </Animated.View>
     </Modal>
   );
 }

@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import {
+  Animated,
+  Easing,
   View,
   Text,
   StyleSheet,
@@ -7,6 +9,8 @@ import {
   Modal,
   ScrollView,
   Alert,
+  Platform,
+  Pressable,
 } from 'react-native';
 import { useAudioPlayer } from 'expo-audio';
 
@@ -179,15 +183,63 @@ export const PlannerModal: React.FC<PlannerModalProps> = ({
     await recorder.start();
   };
 
+  const animValue = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (visible) {
+      Animated.timing(animValue, {
+        toValue: 1,
+        duration: 260,
+        easing: Easing.bezier(0.16, 1, 0.3, 1),
+        useNativeDriver: Platform.OS !== 'web',
+      }).start();
+    } else {
+      Animated.timing(animValue, {
+        toValue: 0,
+        duration: 180,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: Platform.OS !== 'web',
+      }).start();
+    }
+  }, [visible, animValue]);
+
+  const backdropOpacity = animValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 1],
+  });
+
+  const cardTranslateY = animValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [40, 0],
+  });
+
+  const cardScale = animValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.97, 1],
+  });
+
+  if (!visible) return null;
+
   return (
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
+      animationType="none"
       onRequestClose={onClose}
     >
-      <View style={styles.modalBackdrop}>
-        <View style={styles.modalCard}>
+      <Animated.View style={[styles.modalBackdrop, { opacity: backdropOpacity }]}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+        <Animated.View
+          style={[
+            styles.modalCard,
+            {
+              transform: [
+                { translateY: cardTranslateY },
+                { scale: cardScale },
+              ],
+            },
+          ]}
+        >
           {/* Header */}
           <View style={styles.headerRow}>
             <View>
@@ -261,8 +313,8 @@ export const PlannerModal: React.FC<PlannerModalProps> = ({
               </View>
             )}
           </TouchableOpacity>
-        </View>
-      </View>
+        </Animated.View>
+      </Animated.View>
     </Modal>
   );
 };

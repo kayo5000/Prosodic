@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
+  Animated,
+  Easing,
   Modal,
   Platform,
   Pressable,
@@ -11,6 +13,12 @@ import {
 
 import { colorForFamily } from '../../theme/theme';
 import type { VerseRhymeToken } from '../../services/rhymeDetectionEngine';
+import {
+  generateWordEnunciations,
+  FAMILY_METADATA,
+  type EnunciationOption,
+  type EnunciationContext,
+} from '../../services/enunciationEngine';
 
 export interface SyllableOverride {
   stress?: number;
@@ -28,9 +36,11 @@ export interface SyllableInspectorModalProps {
   initialSyllableIndex?: number;
   currentOverride?: SyllableOverride;
   syllableOverrides?: Map<string, SyllableOverride>;
+  surroundingContext?: EnunciationContext;
   onClose: () => void;
   onSaveOverride: (token: VerseRhymeToken, override: SyllableOverride) => void;
   onClearOverride: (token: VerseRhymeToken) => void;
+  onApplyEnunciation?: (enunciation: EnunciationOption) => void;
 }
 
 const PERCEPTUAL_FAMILY_NAMES: Array<{ id: number; name: string; nucleus: string; example: string }> = [
@@ -62,12 +72,14 @@ export function SyllableInspectorModal({
   initialSyllableIndex = 0,
   currentOverride,
   syllableOverrides,
+  surroundingContext,
   onClose,
   onSaveOverride,
   onClearOverride,
+  onApplyEnunciation,
 }: SyllableInspectorModalProps) {
   // Normalize word syllables list
-  const activeSyllablesList: VerseRhymeToken[] = React.useMemo(() => {
+  const activeSyllablesList: VerseRhymeToken[] = useMemo(() => {
     if (syllables && syllables.length > 0) return syllables;
     if (syllable) return [syllable];
     return [];
@@ -75,11 +87,35 @@ export function SyllableInspectorModal({
 
   const [selectedSyllableIdx, setSelectedSyllableIdx] = useState<number>(initialSyllableIndex);
 
+  // Smooth Motion Transition Animation
+  const animValue = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
     if (visible) {
       setSelectedSyllableIdx(Math.min(initialSyllableIndex, Math.max(0, activeSyllablesList.length - 1)));
+      Animated.timing(animValue, {
+        toValue: 1,
+        duration: 260,
+        easing: Easing.bezier(0.16, 1, 0.3, 1),
+        useNativeDriver: Platform.OS !== 'web',
+      }).start();
+    } else {
+      Animated.timing(animValue, {
+        toValue: 0,
+        duration: 180,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: Platform.OS !== 'web',
+      }).start();
     }
-  }, [visible, initialSyllableIndex, activeSyllablesList.length]);
+  }, [visible, initialSyllableIndex, activeSyllablesList.length, animValue]);
+
+  const displayWord = wordText || activeSyllablesList[0]?.word || activeSyllablesList[0]?.text || '';
+
+  // Generate phonological annunciation options ranked by context
+  const enunciationOptions = useMemo(() => {
+    if (!displayWord.trim()) return [];
+    return generateWordEnunciations(displayWord, surroundingContext);
+  }, [displayWord, surroundingContext]);
 
   if (!visible || activeSyllablesList.length === 0) return null;
 
@@ -91,7 +127,6 @@ export function SyllableInspectorModal({
   const activeColorId = activeOverride?.colorId !== undefined ? activeOverride.colorId : currentToken.colorId;
   const activeGridPos = activeOverride?.gridPos !== undefined ? activeOverride.gridPos : (currentToken.gridPosition || 0);
 
-  const displayWord = wordText || currentToken.word || currentToken.text;
   const totalWordSyllables = activeSyllablesList.length;
 
   const handleSelectFamily = (familyId: number) => {
@@ -115,15 +150,58 @@ export function SyllableInspectorModal({
     });
   };
 
+  const handleApplyEnunciationOption = (enun: EnunciationOption) => {
+    if (onApplyEnunciation) {
+      onApplyEnunciation(enun);
+    } else {
+      // Apply enunciation values across existing word syllables
+      activeSyllablesList.forEach((sylTok, idx) => {
+        const enunSyl = enun.syllables[idx] || enun.syllables[enun.syllables.length - 1];
+        if (enunSyl) {
+          onSaveOverride(sylTok, {
+            stress: enunSyl.stress,
+            colorId: enunSyl.vowelFamilyId,
+          });
+        }
+      });
+    }
+  };
+
+  const backdropOpacity = animValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 1],
+  });
+
+  const sheetTranslateY = animValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [40, 0],
+  });
+
+  const sheetScale = animValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.97, 1],
+  });
+
   return (
     <Modal
       visible={visible}
       transparent
-      animationType="fade"
+      animationType="none"
       onRequestClose={onClose}
     >
-      <Pressable style={styles.backdrop} onPress={onClose}>
-        <Pressable style={styles.sheetContainer} onPress={(e) => e.stopPropagation()}>
+      <Animated.View style={[styles.backdrop, { opacity: backdropOpacity }]}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+        <Animated.View
+          style={[
+            styles.sheetContainer,
+            {
+              transform: [
+                { translateY: sheetTranslateY },
+                { scale: sheetScale },
+              ],
+            },
+          ]}
+        >
           {/* Header: Word & Line context */}
           <View style={styles.headerRow}>
             <View style={styles.headerTitleGroup}>
@@ -151,7 +229,92 @@ export function SyllableInspectorModal({
           </View>
 
           <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
-            {/* Step 1: Individual Manual Syllable Selector */}
+            {/* Step 1: Annunciation & Delivery Variants (Ranked by Surrounding Rhyme Syllables) */}
+            {enunciationOptions.length > 0 && (
+              <View style={styles.sectionBlock}>
+                <View style={styles.sectionHeaderFlex}>
+                  <Text style={styles.sectionLabel}>
+                    ANNUNCIATION & DELIVERY VARIANTS (RANKED BY SURROUNDING CONTEXT)
+                  </Text>
+                </View>
+                <Text style={styles.sectionSublabel}>
+                  Likelihood scored against surrounding verse rhyme syllables and active vowel families.
+                </Text>
+
+                <View style={styles.enunciationList}>
+                  {enunciationOptions.map((enun, eIdx) => {
+                    const matchPercent = Math.round(enun.likelihoodScore * 100);
+                    const famColor = colorForFamily(enun.rhymeFamilyId);
+                    const isTop = enun.isRecommended || eIdx === 0;
+
+                    return (
+                      <Pressable
+                        key={enun.id}
+                        onPress={() => handleApplyEnunciationOption(enun)}
+                        style={[
+                          styles.enunciationCard,
+                          isTop && styles.enunciationCardTop,
+                        ]}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Enunciation option ${enun.label}, ${matchPercent}% match`}
+                      >
+                        <View style={styles.enunciationTopRow}>
+                          <View style={styles.enunciationRankBadgeGroup}>
+                            <View style={[styles.rankTag, isTop && styles.rankTagTop]}>
+                              <Text style={[styles.rankTagText, isTop && styles.rankTagTextTop]}>
+                                #{eIdx + 1} {isTop ? 'RECOMMENDED' : ''}
+                              </Text>
+                            </View>
+                            <Text style={styles.enunciationLabelText}>{enun.label}</Text>
+                          </View>
+                          <View style={[styles.matchPercentPill, isTop && styles.matchPercentPillTop]}>
+                            <Text style={[styles.matchPercentText, isTop && styles.matchPercentTextTop]}>
+                              {matchPercent}% Match
+                            </Text>
+                          </View>
+                        </View>
+
+                        <Text style={styles.enunciationDescText}>{enun.description}</Text>
+
+                        {/* IPA & Syllables Preview */}
+                        <View style={styles.enunciationDetailsRow}>
+                          <Text style={styles.ipaText}>{enun.ipa}</Text>
+                          <View style={styles.enunciationSyllablesPreview}>
+                            {enun.syllables.map((s, sIdx) => {
+                              const sColor = colorForFamily(s.vowelFamilyId);
+                              return (
+                                <View key={sIdx} style={styles.previewSylPill}>
+                                  <View style={[styles.previewSylDot, { backgroundColor: sColor }]} />
+                                  <Text style={styles.previewSylText}>{s.text}</Text>
+                                  {s.stress === 1 && <Text style={styles.previewStressBadge}>*</Text>}
+                                </View>
+                              );
+                            })}
+                          </View>
+                        </View>
+
+                        {/* Context reason if available */}
+                        {enun.contextMatchReason && (
+                          <View style={styles.contextReasonRow}>
+                            <View style={[styles.contextDot, { backgroundColor: famColor }]} />
+                            <Text style={styles.contextReasonText} numberOfLines={1}>
+                              {enun.contextMatchReason}
+                            </Text>
+                          </View>
+                        )}
+
+                        {/* Quick Apply Action */}
+                        <View style={styles.applyActionRow}>
+                          <Text style={styles.applyActionText}>Tap to Apply This Delivery Profile ▾</Text>
+                        </View>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+            )}
+
+            {/* Step 2: Individual Manual Syllable Selector */}
             <View style={styles.sectionBlock}>
               <Text style={styles.sectionLabel}>
                 SELECT INDIVIDUAL SYLLABLE TO IDENTIFY & TUNE ({activeSyllablesList.length} TOTAL)
@@ -201,7 +364,7 @@ export function SyllableInspectorModal({
               </View>
             </View>
 
-            {/* Step 2: Metric Stress Placement */}
+            {/* Step 3: Metric Stress Placement */}
             <View style={styles.sectionBlock}>
               <Text style={styles.sectionLabel}>
                 METRIC STRESS PLACEMENT FOR "{currentToken.text.trim()}"
@@ -245,7 +408,7 @@ export function SyllableInspectorModal({
               </View>
             </View>
 
-            {/* Step 3: 16-Step Bar Grid Alignment */}
+            {/* Step 4: 16-Step Bar Grid Alignment */}
             <View style={styles.sectionBlock}>
               <Text style={styles.sectionLabel}>16-POSITION BAR GRID ALIGNMENT</Text>
               <Text style={styles.sectionSublabel}>
@@ -283,7 +446,7 @@ export function SyllableInspectorModal({
               </View>
             </View>
 
-            {/* Step 4: 12+ Perceptual Sonic Rhyme Families */}
+            {/* Step 5: 12+ Perceptual Sonic Rhyme Families */}
             <View style={styles.sectionBlock}>
               <View style={styles.familyHeaderRow}>
                 <Text style={styles.sectionLabel}>PERCEPTUAL RHYME FAMILIES & WELLS SETS</Text>
@@ -335,8 +498,8 @@ export function SyllableInspectorModal({
               </Pressable>
             )}
           </ScrollView>
-        </Pressable>
-      </Pressable>
+        </Animated.View>
+      </Animated.View>
     </Modal>
   );
 }
@@ -353,7 +516,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.15)',
-    maxHeight: '85%',
+    maxHeight: '88%',
     paddingBottom: Platform.OS === 'ios' ? 34 : 20,
   },
   headerRow: {
@@ -419,19 +582,174 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   sectionBlock: {
-    marginBottom: 20,
+    marginBottom: 22,
+  },
+  sectionHeaderFlex: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   sectionLabel: {
     fontSize: 11,
     fontWeight: '800',
     color: 'rgba(255, 255, 255, 0.45)',
     letterSpacing: 0.8,
-    marginBottom: 10,
+    marginBottom: 8,
   },
   sectionSublabel: {
     fontSize: 11,
     color: 'rgba(255, 255, 255, 0.35)',
     marginBottom: 10,
+    lineHeight: 15,
+  },
+  enunciationList: {
+    gap: 10,
+  },
+  enunciationCard: {
+    padding: 12,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  enunciationCardTop: {
+    borderColor: '#E5A50A',
+    backgroundColor: 'rgba(229, 165, 10, 0.08)',
+  },
+  enunciationTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  enunciationRankBadgeGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+  },
+  rankTag: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  rankTagTop: {
+    backgroundColor: '#E5A50A',
+  },
+  rankTagText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: 'rgba(255, 255, 255, 0.7)',
+    textTransform: 'uppercase',
+  },
+  rankTagTextTop: {
+    color: '#000000',
+  },
+  enunciationLabelText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  matchPercentPill: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  matchPercentPillTop: {
+    backgroundColor: 'rgba(229, 165, 10, 0.25)',
+  },
+  matchPercentText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: 'rgba(255, 255, 255, 0.65)',
+  },
+  matchPercentTextTop: {
+    color: '#E5A50A',
+  },
+  enunciationDescText: {
+    fontSize: 11,
+    color: 'rgba(255, 255, 255, 0.5)',
+    marginBottom: 8,
+    lineHeight: 15,
+  },
+  enunciationDetailsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 6,
+  },
+  ipaText: {
+    fontSize: 12,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    color: 'rgba(255, 255, 255, 0.75)',
+    letterSpacing: 0.5,
+  },
+  enunciationSyllablesPreview: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  previewSylPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    gap: 4,
+  },
+  previewSylDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  previewSylText: {
+    fontSize: 11,
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  previewStressBadge: {
+    fontSize: 9,
+    color: '#E5A50A',
+    fontWeight: '900',
+  },
+  contextReasonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  contextDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  contextReasonText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.8)',
+    flex: 1,
+  },
+  applyActionRow: {
+    marginTop: 8,
+    paddingTop: 6,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.06)',
+    alignItems: 'center',
+  },
+  applyActionText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#E5A50A',
+    letterSpacing: 0.2,
   },
   syllableChipsRow: {
     flexDirection: 'row',

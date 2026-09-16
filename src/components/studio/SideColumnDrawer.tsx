@@ -9,7 +9,10 @@
 import React, { useCallback, useState } from 'react';
 import {
   Alert,
+  Animated,
+  Easing,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -82,13 +85,46 @@ export function SideColumnDrawer({
     [songs.length, onDeleteSong],
   );
 
+  const animValue = React.useRef(new Animated.Value(0)).current;
+
+  React.useEffect(() => {
+    if (visible) {
+      Animated.timing(animValue, {
+        toValue: 1,
+        duration: 260,
+        easing: Easing.bezier(0.16, 1, 0.3, 1),
+        useNativeDriver: Platform.OS !== 'web',
+      }).start();
+    } else {
+      Animated.timing(animValue, {
+        toValue: 0,
+        duration: 180,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: Platform.OS !== 'web',
+      }).start();
+    }
+  }, [visible, animValue]);
+
+  const backdropOpacity = animValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 1],
+  });
+
+  const drawerTranslateX = animValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-320, 0],
+  });
+
+  if (!visible) return null;
+
   return (
-    <Modal visible={visible} animationType="fade" transparent onRequestClose={onClose}>
-      <View style={styles.backdrop}>
+    <Modal visible={visible} animationType="none" transparent onRequestClose={onClose}>
+      <Animated.View style={[styles.backdrop, { opacity: backdropOpacity }]}>
         {/* Transparent touch area to close menu when tapping outside */}
         <Pressable style={styles.outsideTapArea} onPress={onClose} />
 
-        <SafeAreaView style={styles.drawerContainer}>
+        <Animated.View style={[styles.drawerContainer, { transform: [{ translateX: drawerTranslateX }] }]}>
+          <SafeAreaView style={{ flex: 1 }}>
           {/* User Profile Header */}
           <View style={styles.profileSection}>
             <View style={styles.avatar}>
@@ -260,7 +296,8 @@ export function SideColumnDrawer({
             <Text style={styles.footerText}>Prosodic Workstation v1.0</Text>
           </View>
         </SafeAreaView>
-      </View>
+        </Animated.View>
+      </Animated.View>
     </Modal>
   );
 }
