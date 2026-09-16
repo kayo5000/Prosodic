@@ -252,8 +252,8 @@ export function createBlankTexture(idSuffix: string = `${Date.now()}`): import('
     reflectionComment: '',
     attachedFiles: [],
     songsOnRepeat: [
-      { title: 'Baby Mine', artist: 'Fred Mollin', coverIcon: 'disc', coverBg: '#EDEBE6' },
-      { title: "I'm The Problem", artist: 'Morgan Wallen', coverIcon: 'guitar', coverBg: '#E5DFD3' },
+      { title: 'Baby Mine', artist: 'Fred Mollin', coverIcon: 'disc', coverBg: '#2C2C2E' },
+      { title: "I'm The Problem", artist: 'Morgan Wallen', coverIcon: 'guitar', coverBg: '#3A3A3C' },
     ],
     collaborator: {
       name: 'Teya',

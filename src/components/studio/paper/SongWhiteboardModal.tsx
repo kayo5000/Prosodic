@@ -52,8 +52,8 @@ export function SongWhiteboardModal({
 
   const [songs, setSongs] = useState<SongReferenceData[]>(
     metadata.whiteboard.songsOnRepeat || [
-      { title: 'Baby Mine', artist: 'Fred Mollin', coverIcon: 'disc', coverBg: '#EDEBE6' },
-      { title: "I'm The Problem", artist: 'Morgan Wallen', coverIcon: 'guitar', coverBg: '#E5DFD3' },
+      { title: 'Baby Mine', artist: 'Fred Mollin', coverIcon: 'disc', coverBg: '#2C2C2E' },
+      { title: "I'm The Problem", artist: 'Morgan Wallen', coverIcon: 'guitar', coverBg: '#3A3A3C' },
     ],
   );
   const [isEditingSongs, setIsEditingSongs] = useState<boolean>(false);
@@ -229,8 +229,8 @@ export function SongWhiteboardModal({
                         <View style={[styles.collageThumbSlot, { backgroundColor: '#F6B93B' }]}>
                           <View style={styles.figureYellowDress} />
                         </View>
-                        <View style={[styles.collageThumbSlot, { backgroundColor: '#E0D8CC', alignItems: 'center', justifyContent: 'center' }]}>
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#636366" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}>
+                        <View style={[styles.collageThumbSlot, { backgroundColor: '#2C2C2E', alignItems: 'center', justifyContent: 'center' }]}>
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255, 255, 255, 0.6)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}>
                             <rect x="2" y="5" width="20" height="14" rx="2" />
                             <line x1="6" y1="5" x2="6" y2="13" />
                             <line x1="10" y1="5" x2="10" y2="13" />
@@ -290,11 +290,11 @@ export function SongWhiteboardModal({
                           key={idx}
                           style={[
                             styles.appleSongTile,
-                            { backgroundColor: idx === 0 ? '#EDEBE6' : '#E5DFD3' },
+                            { backgroundColor: idx === 0 ? '#1C1C1E' : '#161618', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.08)' },
                           ]}
                         >
-                          <View style={[styles.appleSongCover, { backgroundColor: s.coverBg || '#D8D4C8', alignItems: 'center', justifyContent: 'center' }]}>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#636366" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}>
+                          <View style={[styles.appleSongCover, { backgroundColor: s.coverBg || '#2C2C2E', alignItems: 'center', justifyContent: 'center' }]}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}>
                               <circle cx="12" cy="12" r="10" />
                               <circle cx="12" cy="12" r="3" />
                             </svg>
@@ -761,11 +761,11 @@ const styles = StyleSheet.create({
   appleSongTitle: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#1C1C1E',
+    color: '#FFFFFF',
   },
   appleSongArtist: {
     fontSize: 11,
-    color: '#636366',
+    color: 'rgba(255, 255, 255, 0.6)',
   },
   inlineAddSongBox: {
     backgroundColor: '#2C2C2E',
@@ -836,17 +836,19 @@ const styles = StyleSheet.create({
   },
   moodTile: {
     flex: 1,
-    backgroundColor: '#EAE6D2',
+    backgroundColor: '#2C2C2E',
     borderRadius: 22,
     padding: 16,
     alignItems: 'center',
     justifyContent: 'space-between',
     minHeight: 150,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   moodTileCategory: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#4B4837',
+    color: '#FFFFFF',
     textAlign: 'center',
   },
   moodIconContainer: {
@@ -854,7 +856,7 @@ const styles = StyleSheet.create({
   },
   moodTileSub: {
     fontSize: 11,
-    color: '#767258',
+    color: 'rgba(255, 255, 255, 0.6)',
     fontWeight: '500',
   },
   rightStack: {

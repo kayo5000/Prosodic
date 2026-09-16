@@ -86,8 +86,8 @@ export function SectionTextureModal({
   // Songs on repeat metadata
   const [songs, setSongs] = useState<SongReferenceData[]>(
     section?.texture.songsOnRepeat || [
-      { title: 'Baby Mine', artist: 'Fred Mollin', coverBg: '#EDEBE6', coverIcon: 'disc' },
-      { title: "I'm The Problem", artist: 'Morgan Wallen', coverBg: '#E5DFD3', coverIcon: 'disc' },
+      { title: 'Baby Mine', artist: 'Fred Mollin', coverBg: '#2C2C2E', coverIcon: 'disc' },
+      { title: "I'm The Problem", artist: 'Morgan Wallen', coverBg: '#3A3A3C', coverIcon: 'disc' },
     ],
   );
   const [isEditingSongs, setIsEditingSongs] = useState<boolean>(false);
@@ -307,8 +307,8 @@ export function SectionTextureModal({
                           <View style={styles.figureYellowDress} />
                         </View>
                         {/* Top-right: Cozy bed scene */}
-                        <View style={[styles.collageThumbSlot, { backgroundColor: '#E0D8CC' }]}>
-                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6D6860" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <View style={[styles.collageThumbSlot, { backgroundColor: '#2C2C2E' }]}>
+                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255, 255, 255, 0.6)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M2 4v16" />
                             <path d="M2 8h18a2 2 0 0 1 2 2v10" />
                             <path d="M2 17h20" />
@@ -416,11 +416,11 @@ export function SectionTextureModal({
                           key={idx}
                           style={[
                             styles.appleSongTile,
-                            { backgroundColor: idx === 0 ? '#EDEBE6' : '#E5DFD3' },
+                            { backgroundColor: idx === 0 ? '#1C1C1E' : '#161618', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.08)' },
                           ]}
                         >
-                          <View style={[styles.appleSongCover, { backgroundColor: s.coverBg || '#D8D4C8' }]}>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1C1C1E" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                          <View style={[styles.appleSongCover, { backgroundColor: s.coverBg || '#2C2C2E' }]}>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                               <circle cx="12" cy="12" r="10" />
                               <circle cx="12" cy="12" r="3" />
                             </svg>
@@ -1073,11 +1073,11 @@ const styles = StyleSheet.create({
   appleSongTitle: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#1C1C1E',
+    color: '#FFFFFF',
   },
   appleSongArtist: {
     fontSize: 11,
-    color: '#636366',
+    color: 'rgba(255, 255, 255, 0.6)',
   },
 
   // Inline Song Add Form
@@ -1154,17 +1154,19 @@ const styles = StyleSheet.create({
   },
   moodTile: {
     flex: 1,
-    backgroundColor: '#EAE6D2',
+    backgroundColor: '#2C2C2E',
     borderRadius: 22,
     padding: 16,
     alignItems: 'center',
     justifyContent: 'space-between',
     minHeight: 160,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   moodTileCategory: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#4B4837',
+    color: '#FFFFFF',
     textAlign: 'center',
   },
   moodIconContainer: {
@@ -1172,7 +1174,7 @@ const styles = StyleSheet.create({
   },
   moodTileSub: {
     fontSize: 11,
-    color: '#767258',
+    color: 'rgba(255, 255, 255, 0.6)',
     fontWeight: '500',
   },
   rightStack: {
@@ -1281,10 +1283,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#F3E9D2',
+    backgroundColor: '#2C2C2E',
     paddingVertical: 8,
     paddingHorizontal: 14,
     borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   locationBriefcaseIcon: {
     fontSize: 14,
@@ -1292,7 +1296,7 @@ const styles = StyleSheet.create({
   locationText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#574B2A',
+    color: '#FFFFFF',
   },
 
   // Mood Selector Pills

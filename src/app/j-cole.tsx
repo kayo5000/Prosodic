@@ -20,6 +20,6 @@ export default function JColeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#0A0A0C',
   },
 });
