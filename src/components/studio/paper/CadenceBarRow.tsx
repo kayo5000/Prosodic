@@ -169,6 +169,10 @@ export function CadenceBarRow({
       );
     }
 
+    const wordSylls = syllableTokens?.filter(
+      (s) => s.wordIndex === tok.wordIndex && s.lineIndex === tok.lineIndex,
+    );
+
     const isRhyming = tok.colorId > 0;
     const wordColor = isRhyming ? tok.color : '#FFFFFF';
 
@@ -188,25 +192,58 @@ export function CadenceBarRow({
         style={[
           styles.interactiveWordPressable,
           alignment !== 'in-bar' && styles.crossBarPill,
-          isRhyming && {
-            borderBottomColor: tok.color,
-            borderBottomWidth: 2,
-          },
         ]}
         accessibilityRole="button"
         accessibilityLabel={`Word ${tok.text}, ${alignment}. Double-tap to shift cross-bar position, hold to inspect syllables.`}
       >
-        <Text
-          style={[
-            styles.wordChipText,
-            textStyle,
-            { color: wordColor },
-            alignment !== 'in-bar' && styles.crossBarText,
-            isRhyming && styles.interactiveWordTextRhyming,
-          ]}
-        >
-          {tok.text}
-        </Text>
+        {wordSylls && wordSylls.length > 0 ? (
+          <View style={styles.syllableClusterRow}>
+            {wordSylls.map((syl, sIdx) => {
+              const isSyllRhyming = syl.colorId > 0;
+              const syllColor = isSyllRhyming ? syl.color : '#FFFFFF';
+              return (
+                <View
+                  key={`syll-${sIdx}-${syl.text}`}
+                  style={[
+                    styles.syllableSpanWrap,
+                    isSyllRhyming && {
+                      borderBottomColor: syl.color,
+                      borderBottomWidth: 2,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.wordChipText,
+                      textStyle,
+                      { color: syllColor },
+                      alignment !== 'in-bar' && styles.crossBarText,
+                      isSyllRhyming && styles.interactiveWordTextRhyming,
+                    ]}
+                  >
+                    {syl.text}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+        ) : (
+          <Text
+            style={[
+              styles.wordChipText,
+              textStyle,
+              { color: wordColor },
+              alignment !== 'in-bar' && styles.crossBarText,
+              isRhyming && styles.interactiveWordTextRhyming,
+              isRhyming && {
+                borderBottomColor: tok.color,
+                borderBottomWidth: 2,
+              },
+            ]}
+          >
+            {tok.text}
+          </Text>
+        )}
       </Pressable>
     );
   };
@@ -499,6 +536,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
     borderRadius: 2,
     marginVertical: 1,
+  },
+  syllableClusterRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+  },
+  syllableSpanWrap: {
+    paddingVertical: 1,
+    paddingHorizontal: 0.5,
   },
   wordChipText: {
     fontSize: 16,

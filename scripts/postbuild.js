@@ -12,7 +12,15 @@ if (fs.existsSync(distDir)) {
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=0, must-revalidate',
+            value: 'no-cache, no-store, must-revalidate',
+          },
+          {
+            key: 'Pragma',
+            value: 'no-cache',
+          },
+          {
+            key: 'Expires',
+            value: '0',
           },
         ],
       },
@@ -65,6 +73,26 @@ if (fs.existsSync(distDir)) {
     let html = fs.readFileSync(indexPath, 'utf8');
 
     const iconTags = `
+    <!-- Cache Invalidation and Service Worker Auto-Purge -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          for (var registration of registrations) {
+            registration.unregister();
+          }
+        });
+      }
+      if ('caches' in window) {
+        caches.keys().then(function(names) {
+          for (var name of names) {
+            caches.delete(name);
+          }
+        });
+      }
+    </script>
     <!-- Favicons and Apple Touch Icon Suite -->
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
@@ -74,7 +102,7 @@ if (fs.existsSync(distDir)) {
     <link rel="apple-touch-icon-precomposed" sizes="180x180" href="/apple-touch-icon-precomposed.png" />
 `;
 
-    if (!html.includes('apple-touch-icon')) {
+    if (!html.includes('apple-touch-icon') || !html.includes('serviceWorker')) {
       html = html.replace('</head>', `${iconTags}\n  </head>`);
       fs.writeFileSync(indexPath, html, 'utf8');
     }

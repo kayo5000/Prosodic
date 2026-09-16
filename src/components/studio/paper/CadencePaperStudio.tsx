@@ -234,14 +234,14 @@ export function CadencePaperStudio({
 
       const override =
         syllableOverrides.get(`${l}:${w}:${s}:${t}`) ||
-        syllableOverrides.get(`${l}:${w}:${s}`) ||
-        syllableOverrides.get(`${l}:${w}`);
+        syllableOverrides.get(`${l}:${w}:${s}`);
 
       if (!override) return tok;
+      const colorId = override.colorId !== undefined ? override.colorId : tok.colorId;
       return {
         ...tok,
-        colorId: override.colorId !== undefined ? override.colorId : tok.colorId,
-        color: override.colorId !== undefined ? colorForFamily(override.colorId) : tok.color,
+        colorId,
+        color: colorId > 0 ? colorForFamily(colorId) : '#FFFFFF',
         stress: override.stress !== undefined ? override.stress : tok.stress,
         gridPosition: override.gridPos !== undefined ? override.gridPos : tok.gridPosition,
       };
@@ -256,11 +256,6 @@ export function CadencePaperStudio({
         if (!tok.isWord) return tok;
         const l = tok.lineIndex ?? li;
         const w = tok.wordIndex ?? 0;
-        const t = tok.text.trim().toLowerCase();
-
-        const directOverride =
-          syllableOverrides.get(`${l}:${w}`) ||
-          syllableOverrides.get(`${l}:${w}:0:${t}`);
 
         const wordSylls = updatedLineSyllables[li]?.filter(
           (s) => (s.wordIndex ?? 0) === w && (s.lineIndex ?? li) === l,
@@ -271,19 +266,8 @@ export function CadencePaperStudio({
           wordSylls.find((s) => s.colorId > 0) ||
           wordSylls[0];
 
-        const finalColorId =
-          directOverride?.colorId !== undefined
-            ? directOverride.colorId
-            : primarySyll
-            ? primarySyll.colorId
-            : tok.colorId;
-
-        const finalStress =
-          directOverride?.stress !== undefined
-            ? directOverride.stress
-            : primarySyll
-            ? primarySyll.stress
-            : tok.stress;
+        const finalColorId = primarySyll ? primarySyll.colorId : tok.colorId;
+        const finalStress = primarySyll ? primarySyll.stress : tok.stress;
 
         return {
           ...tok,
@@ -329,14 +313,14 @@ export function CadencePaperStudio({
 
       const override =
         syllableOverrides.get(`${l}:${w}:${s}:${t}`) ||
-        syllableOverrides.get(`${l}:${w}:${s}`) ||
-        syllableOverrides.get(`${l}:${w}`);
+        syllableOverrides.get(`${l}:${w}:${s}`);
 
       if (!override) return tok;
+      const colorId = override.colorId !== undefined ? override.colorId : tok.colorId;
       return {
         ...tok,
-        colorId: override.colorId !== undefined ? override.colorId : tok.colorId,
-        color: override.colorId !== undefined ? colorForFamily(override.colorId) : tok.color,
+        colorId,
+        color: colorId > 0 ? colorForFamily(colorId) : '#FFFFFF',
         stress: override.stress !== undefined ? override.stress : tok.stress,
         gridPosition: override.gridPos !== undefined ? override.gridPos : tok.gridPosition,
       };
@@ -351,11 +335,6 @@ export function CadencePaperStudio({
         if (!tok.isWord) return tok;
         const l = tok.lineIndex ?? li;
         const w = tok.wordIndex ?? 0;
-        const t = tok.text.trim().toLowerCase();
-
-        const directOverride =
-          syllableOverrides.get(`${l}:${w}`) ||
-          syllableOverrides.get(`${l}:${w}:0:${t}`);
 
         const wordSylls = updatedLineSyllables[li]?.filter(
           (s) => (s.wordIndex ?? 0) === w && (s.lineIndex ?? li) === l,
@@ -366,19 +345,8 @@ export function CadencePaperStudio({
           wordSylls.find((s) => s.colorId > 0) ||
           wordSylls[0];
 
-        const finalColorId =
-          directOverride?.colorId !== undefined
-            ? directOverride.colorId
-            : primarySyll
-            ? primarySyll.colorId
-            : tok.colorId;
-
-        const finalStress =
-          directOverride?.stress !== undefined
-            ? directOverride.stress
-            : primarySyll
-            ? primarySyll.stress
-            : tok.stress;
+        const finalColorId = primarySyll ? primarySyll.colorId : tok.colorId;
+        const finalStress = primarySyll ? primarySyll.stress : tok.stress;
 
         return {
           ...tok,
@@ -467,10 +435,6 @@ export function CadencePaperStudio({
             next.set(`${lIdx}:${wIdx}:${sIdx}`, ov);
           }
         });
-        next.set(`${lineIndex}:${wordIndex}`, {
-          colorId: enun.rhymeFamilyId,
-          stress: enun.syllables[0]?.stress ?? 1,
-        });
         return next;
       });
     },
@@ -487,9 +451,6 @@ export function CadencePaperStudio({
       const next = new Map(prev);
       next.set(`${lIdx}:${wIdx}:${sIdx}:${sText}`, override);
       next.set(`${lIdx}:${wIdx}:${sIdx}`, override);
-      if (override.colorId !== undefined && override.colorId > 0) {
-        next.set(`${lIdx}:${wIdx}`, override);
-      }
       return next;
     });
   };
@@ -504,7 +465,6 @@ export function CadencePaperStudio({
       const next = new Map(prev);
       next.delete(`${lIdx}:${wIdx}:${sIdx}:${sText}`);
       next.delete(`${lIdx}:${wIdx}:${sIdx}`);
-      next.delete(`${lIdx}:${wIdx}`);
       return next;
     });
   };
@@ -1064,26 +1024,55 @@ export function CadencePaperStudio({
                                   0,
                                 );
                               }}
-                              style={[
-                                styles.interactiveWordPressable,
-                                isRhyming && {
-                                  borderBottomColor: tok.color,
-                                  borderBottomWidth: 1.5,
-                                },
-                              ]}
+                              style={styles.interactiveWordPressable}
                               hitSlop={{ top: 6, bottom: 6, left: 2, right: 2 }}
                               accessibilityRole="button"
                               accessibilityLabel={`Word ${tok.text}, tap to inspect syllables`}
                             >
-                              <Text
-                                style={[
-                                  styles.interactiveWordText,
-                                  { color: wordColor },
-                                  isRhyming && styles.interactiveWordTextRhyming,
-                                ]}
-                              >
-                                {tok.text}
-                              </Text>
+                              {wordSyllables && wordSyllables.length > 0 ? (
+                                <View style={styles.syllableClusterRow}>
+                                  {wordSyllables.map((syl, sIdx) => {
+                                    const isSyllRhyming = syl.colorId > 0;
+                                    const syllColor = isSyllRhyming ? syl.color : '#FFFFFF';
+                                    return (
+                                      <View
+                                        key={`syll-${sIdx}-${syl.text}`}
+                                        style={[
+                                          styles.syllableSpanWrap,
+                                          isSyllRhyming && {
+                                            borderBottomColor: syl.color,
+                                            borderBottomWidth: 2,
+                                          },
+                                        ]}
+                                      >
+                                        <Text
+                                          style={[
+                                            styles.interactiveWordText,
+                                            { color: syllColor },
+                                            isSyllRhyming && styles.interactiveWordTextRhyming,
+                                          ]}
+                                        >
+                                          {syl.text}
+                                        </Text>
+                                      </View>
+                                    );
+                                  })}
+                                </View>
+                              ) : (
+                                <Text
+                                  style={[
+                                    styles.interactiveWordText,
+                                    { color: wordColor },
+                                    isRhyming && styles.interactiveWordTextRhyming,
+                                    isRhyming && {
+                                      borderBottomColor: tok.color,
+                                      borderBottomWidth: 2,
+                                    },
+                                  ]}
+                                >
+                                  {tok.text}
+                                </Text>
+                              )}
                             </Pressable>
                           );
                         })}
@@ -1700,6 +1689,14 @@ const styles = StyleSheet.create({
     marginRight: 4,
     marginBottom: 4,
     backgroundColor: 'rgba(255, 255, 255, 0.04)',
+  },
+  syllableClusterRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+  },
+  syllableSpanWrap: {
+    paddingVertical: 1,
+    paddingHorizontal: 0.5,
   },
   interactiveWordText: {
     fontSize: 16,

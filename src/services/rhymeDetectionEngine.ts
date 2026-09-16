@@ -445,7 +445,7 @@ export function buildVerseStream(verseLines: string[]): VerseSyllable[] {
 }
 
 export function extractRhymeCandidates(stream: VerseSyllable[]): RhymeCandidate[] {
-  const wordBuckets = new Map<string, VerseSyllable[]>();
+  const candidates: RhymeCandidate[] = [];
 
   for (const s of stream) {
     if (!s.isStressed) continue;
@@ -454,23 +454,7 @@ export function extractRhymeCandidates(stream: VerseSyllable[]): RhymeCandidate[
     const ru = s.rhymeUnit || getRhymeUnitFromPhonemes(s.phonemes);
     if (!ru) continue;
     s.rhymeUnit = ru;
-
-    const key = `${s.cleanWord.toLowerCase()}:${s.lineIndex}:${s.wordIndex}`;
-    const list = wordBuckets.get(key) || [];
-    list.push(s);
-    wordBuckets.set(key, list);
-  }
-
-  // Deduplication: take only the LAST stressed syllable per word occurrence
-  const candidates: RhymeCandidate[] = [];
-  for (const list of wordBuckets.values()) {
-    let lastSyllable = list[0];
-    for (let i = 1; i < list.length; i++) {
-      if (list[i].streamIndex > lastSyllable.streamIndex) {
-        lastSyllable = list[i];
-      }
-    }
-    candidates.push(lastSyllable as RhymeCandidate);
+    candidates.push(s as RhymeCandidate);
   }
 
   candidates.sort((a, b) => a.streamIndex - b.streamIndex);
@@ -716,8 +700,27 @@ export function analyzeVerseRhymes(verseLines: string[]): VerseRhymeAnalysis {
     motifGroups.push({ type: 'compound', colorId: currentId, members });
   }
 
-  // Word-Level Color Inheritance:
-  // If any syllable in a word earns color_id > 0, copy that color to all other syllables of the same word.
+  // Remap color IDs to a compact 1..N sequence across all syllable motifs
+  const allMotifColors = Array.from(motifMap.values()).filter((id) => id > 0);
+  const rawIds = Array.from(new Set(allMotifColors)).sort((a, b) => a - b);
+  const idRemap = new Map<number, number>();
+  rawIds.forEach((oldId, index) => {
+    idRemap.set(oldId, index + 1);
+  });
+
+  for (const [key, cid] of motifMap.entries()) {
+    if (cid > 0 && idRemap.has(cid)) {
+      motifMap.set(key, idRemap.get(cid)!);
+    }
+  }
+
+  for (const group of motifGroups) {
+    if (idRemap.has(group.colorId)) {
+      group.colorId = idRemap.get(group.colorId)!;
+    }
+  }
+
+  // Word-Level Color Map: Tracks the primary rhyming syllable for monosyllabic words / whole word fallback
   const wordBuckets = new Map<string, VerseSyllable[]>();
   for (const s of stream) {
     const key = `${s.lineIndex}:${s.wordIndex}`;
@@ -729,40 +732,11 @@ export function analyzeVerseRhymes(verseLines: string[]): VerseRhymeAnalysis {
   const wordColorMap = new Map<string, number>(); // `${lineIndex}:${wordIndex}` -> colorId
 
   for (const [wKey, syllables] of wordBuckets.entries()) {
-    let earnerColor = 0;
-    for (const s of syllables) {
-      const cid = motifMap.get(`${s.lineIndex}:${s.streamIndex}`) || 0;
-      if (cid > 0) {
-        earnerColor = cid;
-        break;
-      }
-    }
-    if (earnerColor > 0) {
-      wordColorMap.set(wKey, earnerColor);
-      for (const s of syllables) {
-        motifMap.set(`${s.lineIndex}:${s.streamIndex}`, earnerColor);
-      }
+    const rhymingSyll = syllables.find((s) => (motifMap.get(`${s.lineIndex}:${s.streamIndex}`) || 0) > 0);
+    if (rhymingSyll) {
+      wordColorMap.set(wKey, motifMap.get(`${rhymingSyll.lineIndex}:${rhymingSyll.streamIndex}`) || 0);
     } else {
       wordColorMap.set(wKey, 0);
-    }
-  }
-
-  // Remap color IDs to a compact 1..N sequence
-  const rawIds = Array.from(new Set(Array.from(wordColorMap.values()).filter((id) => id > 0))).sort((a, b) => a - b);
-  const idRemap = new Map<number, number>();
-  rawIds.forEach((oldId, index) => {
-    idRemap.set(oldId, index + 1);
-  });
-
-  for (const [key, cid] of wordColorMap.entries()) {
-    if (cid > 0 && idRemap.has(cid)) {
-      wordColorMap.set(key, idRemap.get(cid)!);
-    }
-  }
-
-  for (const group of motifGroups) {
-    if (idRemap.has(group.colorId)) {
-      group.colorId = idRemap.get(group.colorId)!;
     }
   }
 
@@ -836,7 +810,7 @@ export function analyzeVerseRhymes(verseLines: string[]): VerseRhymeAnalysis {
       syllsForWord.forEach((s, sIdx) => {
         const [start, end] = ranges[sIdx] || [0, clean.length];
         const syllableText = clean.slice(start, end) || clean;
-        const cId = motifMap.get(`${li}:${s.streamIndex}`) || wordColorMap.get(`${li}:${wi}`) || 0;
+        const cId = motifMap.get(`${li}:${s.streamIndex}`) || (numSylls === 1 ? (wordColorMap.get(`${li}:${wi}`) || 0) : 0);
         const gridPos = Math.floor((globalSyllIdx * 16) / totalLineSyllables);
 
         tokens.push({

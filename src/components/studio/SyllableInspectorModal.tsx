@@ -124,18 +124,17 @@ export function SyllableInspectorModal({
   const curW = currentToken.wordIndex ?? wordIndex ?? 0;
   const curS = currentToken.syllableIndex ?? selectedSyllableIdx ?? 0;
   const curT = currentToken.text.trim().toLowerCase();
+  const totalWordSyllables = activeSyllablesList.length;
 
   const activeOverride =
     syllableOverrides?.get(`${curL}:${curW}:${curS}:${curT}`) ||
     syllableOverrides?.get(`${curL}:${curW}:${curS}`) ||
-    syllableOverrides?.get(`${curL}:${curW}`) ||
+    (totalWordSyllables === 1 ? syllableOverrides?.get(`${curL}:${curW}`) : undefined) ||
     currentOverride;
 
   const activeStress = activeOverride?.stress !== undefined ? activeOverride.stress : currentToken.stress;
   const activeColorId = activeOverride?.colorId !== undefined ? activeOverride.colorId : currentToken.colorId;
   const activeGridPos = activeOverride?.gridPos !== undefined ? activeOverride.gridPos : (currentToken.gridPosition || 0);
-
-  const totalWordSyllables = activeSyllablesList.length;
 
   const handleSelectFamily = (familyId: number) => {
     onSaveOverride(currentToken, {
@@ -338,7 +337,7 @@ export function SyllableInspectorModal({
                   const tokOv =
                     syllableOverrides?.get(`${tokL}:${tokW}:${tokS}:${tokT}`) ||
                     syllableOverrides?.get(`${tokL}:${tokW}:${tokS}`) ||
-                    syllableOverrides?.get(`${tokL}:${tokW}`);
+                    (activeSyllablesList.length === 1 ? syllableOverrides?.get(`${tokL}:${tokW}`) : undefined);
                   const tokColorId = tokOv?.colorId !== undefined ? tokOv.colorId : tok.colorId;
                   const tokStress = tokOv?.stress !== undefined ? tokOv.stress : tok.stress;
                   const tokColor = tokColorId > 0 ? colorForFamily(tokColorId) : '#FFFFFF';

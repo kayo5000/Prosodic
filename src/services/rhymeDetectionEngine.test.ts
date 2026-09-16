@@ -119,10 +119,11 @@ describe('RhymeDetectionEngine (Vetted Port of Python Suite)', () => {
 
     it('detects two distinct R-family groups without cross-contamination', () => {
       const result = analyzeVerseRhymes(jColeLyrics);
-      expect(result.rhymeGroups.length).toBe(2);
+      const singleGroups = result.rhymeGroups.filter((g) => g.type === 'rhyme');
+      expect(singleGroups.length).toBe(2);
 
       // Verify Group 1: VR Class 2 (persevere, adhere)
-      const vrGroup = result.rhymeGroups.find((g) =>
+      const vrGroup = singleGroups.find((g) =>
         g.members.some((m) => m.cleanWord.toLowerCase() === 'adhere')
       );
       expect(vrGroup).toBeDefined();
@@ -132,8 +133,8 @@ describe('RhymeDetectionEngine (Vetted Port of Python Suite)', () => {
       expect(vrWords).not.toContain('worst');
       expect(vrWords).not.toContain('curse');
 
-      // Verify Group 2: ER Class 1 (worst, thirst, curse)
-      const erGroup = result.rhymeGroups.find((g) =>
+      // Verify Group 2: ER Class 1 (worst, thirst, curse, and 'per' in persevere)
+      const erGroup = singleGroups.find((g) =>
         g.members.some((m) => m.cleanWord.toLowerCase() === 'worst')
       );
       expect(erGroup).toBeDefined();
@@ -141,8 +142,8 @@ describe('RhymeDetectionEngine (Vetted Port of Python Suite)', () => {
       expect(erWords).toContain('worst');
       expect(erWords).toContain('thirst');
       expect(erWords).toContain('curse');
+      expect(erWords).toContain('persevere');
       expect(erWords).not.toContain('adhere');
-      expect(erWords).not.toContain('persevere');
     });
 
     it('generates discrete atomic syllable tokens in lineSyllables (never counting whole words)', () => {
@@ -160,13 +161,26 @@ describe('RhymeDetectionEngine (Vetted Port of Python Suite)', () => {
       expect(line0Sylls[1].syllableIndex).toBe(0);
       expect(line0Sylls[3].word).toBe('persevere');
       expect(line0Sylls[3].syllableIndex).toBe(2);
-      expect(line0Sylls[3].colorId).toBe(line0Sylls[1].colorId); // word-level color inheritance
+
+      // Distinct per-syllable rhyme families: 'per' (ER family) vs 'vere' (VR family)
+      expect(line0Sylls[1].colorId).toBeGreaterThan(0); // 'per' in ER-Family
+      expect(line0Sylls[3].colorId).toBeGreaterThan(0); // 'vere' in VR-Family
+      expect(line0Sylls[1].colorId).not.toBe(line0Sylls[3].colorId); // NEVER collapsed into 1 solid flat color!
+      expect(line0Sylls[2].colorId).toBe(0); // 'se' is unstressed neutral white
 
       // Line 1: "My thirst to adhere is a curse" -> 8 syllables
       const line1Sylls = result.lineSyllables[1];
       expect(line1Sylls.length).toBe(8);
       const line1Texts = line1Sylls.map((s) => s.text.toLowerCase());
       expect(line1Texts).toEqual(['my', 'thirst', 'to', 'ad', 'here', 'is', 'a', 'curse']);
+
+      // 'per' in 'persevere' matches 'worst', 'thirst', and 'curse' (ER-Family)
+      expect(line0Sylls[1].colorId).toBe(line0Sylls[6].colorId); // per == worst
+      expect(line0Sylls[1].colorId).toBe(line1Sylls[1].colorId); // per == thirst
+      expect(line0Sylls[1].colorId).toBe(line1Sylls[7].colorId); // per == curse
+
+      // 'vere' in 'persevere' matches 'here' in 'adhere' (VR-Family)
+      expect(line0Sylls[3].colorId).toBe(line1Sylls[4].colorId); // vere == adhere
 
       // 16-step sixteenth-note grid check
       line1Sylls.forEach((s) => {
