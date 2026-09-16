@@ -48,6 +48,7 @@ import { SectionTimelineBar } from './SectionTimelineBar';
 import { SongSettingsModal } from './SongSettingsModal';
 import { SongWhiteboardModal } from './SongWhiteboardModal';
 import { TextureScreen } from './TextureScreen';
+import { LiquidGlassCard } from '../../ui/LiquidGlassCard';
 import type {
   AudioRecordingData,
   BeatMovement,
@@ -114,8 +115,19 @@ export function CadencePaperStudio({
   }, []);
 
   // 2. Undo / Redo History
-  const [history, setHistory] = useState<PaperSection[][]>([initialData.sections]);
+  const [history, setHistory] = useState<PaperSection[][]>([sections]);
   const [historyIndex, setHistoryIndex] = useState<number>(0);
+
+  // BPM Prompt
+  const [showBpmPrompt, setShowBpmPrompt] = useState(false);
+  const [hasSkippedBpm, setHasSkippedBpm] = useState(false);
+
+  useEffect(() => {
+    // Show on mount if default BPM is used
+    if (metadata.defaultBpm === 120 && !metadata.audioFile) {
+      setShowBpmPrompt(true);
+    }
+  }, []);
 
   const pushHistory = useCallback(
     (newSections: PaperSection[]) => {
@@ -626,12 +638,46 @@ export function CadencePaperStudio({
     [activeSectionId],
   );
 
+  const handleMergeBlocks = useCallback((sectionId: string) => {
+    setSections((prev) => {
+      const next = prev.map((sec) => {
+        if (sec.id !== sectionId || sec.blocks.length <= 1) return sec;
+        
+        const allBars = sec.blocks.flatMap((b) => b.bars);
+        const mergedBars = allBars.map((bar, idx) => ({
+          ...bar,
+          barIndex: idx + 1,
+        }));
+        
+        const mergedBlock = {
+          ...sec.blocks[0],
+          targetBarCount: mergedBars.length,
+          phrasePreset: '-/-' as PhrasePreset,
+          bars: mergedBars,
+        };
+        
+        return {
+          ...sec,
+          blocks: [mergedBlock],
+        };
+      });
+      pushHistory(next);
+      return next;
+    });
+  }, [pushHistory]);
+
   const handleSelectSlashCommand = useCallback(
     (cmdId: string) => {
       const activeMovementId = movements[0]?.id || 'mov_1';
       switch (cmdId) {
+        case 'intro':
+          handleAddNewSection('intro', activeMovementId);
+          break;
         case 'verse':
           handleAddNewSection('verse', activeMovementId);
+          break;
+        case 'pre-chorus':
+          handleAddNewSection('pre-chorus', activeMovementId);
           break;
         case 'chorus':
           handleAddNewSection('chorus', activeMovementId);
@@ -641,6 +687,9 @@ export function CadencePaperStudio({
           break;
         case 'bridge':
           handleAddNewSection('bridge', activeMovementId);
+          break;
+        case 'outro':
+          handleAddNewSection('outro', activeMovementId);
           break;
         case 'record':
           setRecordingBlockName(
@@ -965,11 +1014,11 @@ export function CadencePaperStudio({
             accessibilityLabel="Tap to edit title, adjust BPM, or add audio file"
           >
             <Text style={styles.titleHeading}>{metadata.title || 'New Song'}</Text>
-            <View style={styles.metaSettingsPill}>
+            <LiquidGlassCard style={styles.metaSettingsPill} borderRadius={16}>
               <Text style={styles.metaSettingsPillText}>
                 {metadata.defaultBpm} BPM {metadata.audioFile ? '• Beat Audio' : '• Settings'}
               </Text>
-            </View>
+            </LiquidGlassCard>
           </Pressable>
 
           <Text style={styles.dateText}>{formattedDateTime}</Text>
@@ -1168,7 +1217,7 @@ export function CadencePaperStudio({
                     style={styles.sectionCanvasBlock}
                   >
                     {/* Section Header: Name, Phrase length, and Texture Button */}
-                    <View style={styles.sectionHeaderBar}>
+                    <LiquidGlassCard style={styles.sectionHeaderBar} borderRadius={12}>
                       <View style={styles.sectionTitleRow}>
                         <Text style={styles.sectionTitleText}>{sec.name}</Text>
                         {showBars && (
@@ -1185,18 +1234,30 @@ export function CadencePaperStudio({
                         )}
                       </View>
 
-                      {/* Texture Button */}
-                      <Pressable
-                        onPress={() => {
-                          handleSelectSection(sec.id);
-                          setViewMode('texture');
-                        }}
-                        style={styles.textureBadgeBtn}
-                        accessibilityLabel="Open Texture Screen for this block"
-                      >
-                        <Text style={styles.textureBadgeText}>Texture</Text>
-                      </Pressable>
-                    </View>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                        {sec.blocks.length > 1 && (
+                          <Pressable
+                            onPress={() => handleMergeBlocks(sec.id)}
+                            style={styles.textureBadgeBtn} // reusing textureBadgeBtn styles for consistency
+                            accessibilityLabel="Merge section blocks"
+                          >
+                            <Text style={styles.textureBadgeText}>Merge</Text>
+                          </Pressable>
+                        )}
+
+                        {/* Texture Button */}
+                        <Pressable
+                          onPress={() => {
+                            handleSelectSection(sec.id);
+                            setViewMode('texture');
+                          }}
+                          style={styles.textureBadgeBtn}
+                          accessibilityLabel="Open Texture Screen for this block"
+                        >
+                          <Text style={styles.textureBadgeText}>Texture</Text>
+                        </Pressable>
+                      </View>
+                    </LiquidGlassCard>
 
                     {/* Cadence Blocks in this Section */}
                     {sec.blocks.map((block) => {
@@ -1226,6 +1287,7 @@ export function CadencePaperStudio({
                                 isActive={isActive}
                                 isAlignedAcrossPage={isAlignedAcrossPage}
                                 showBarNumber={showBars}
+                                displayBarIndex={((bar.barIndex - 1) % 4) + 1}
                                 showRhymeMap={showRhymeMap}
                                 rhymeTokens={barData?.words}
                                 syllableTokens={barData?.syllables}
@@ -1242,6 +1304,61 @@ export function CadencePaperStudio({
                                 onSubmitEditing={() =>
                                   handleAdvanceNextBar(sec.id, block.blockIndex, bar.barIndex)
                                 }
+                                onSplitBar={(textBefore, textAfter) => {
+                                  setSections((prev) => {
+                                    const next = [...prev];
+                                    const secIndex = next.findIndex((s) => s.id === sec.id);
+                                    if (secIndex === -1) return prev;
+                                    const newSec = { ...next[secIndex] };
+                                    const blockIndexObj = newSec.blocks.findIndex(
+                                      (b) => b.blockIndex === block.blockIndex,
+                                    );
+                                    if (blockIndexObj === -1) return prev;
+                                    const newBlock = { ...newSec.blocks[blockIndexObj] };
+                                    const barIndexObj = newBlock.bars.findIndex(
+                                      (b) => b.barIndex === bar.barIndex,
+                                    );
+                                    if (barIndexObj === -1) return prev;
+
+                                    const newBars = [...newBlock.bars];
+
+                                    newBars[barIndexObj] = {
+                                      ...newBars[barIndexObj],
+                                      rawText: textBefore,
+                                      spans: [{ text: textBefore }],
+                                    };
+
+                                    newBars.splice(barIndexObj + 1, 0, {
+                                      id: `split-${Date.now()}`,
+                                      barIndex: bar.barIndex + 1,
+                                      globalBarNumber: 0,
+                                      spans: [{ text: textAfter }],
+                                      rawText: textAfter,
+                                      syllableCount: 0,
+                                    });
+
+                                    newBlock.bars = newBars.map((b, i) => ({
+                                      ...b,
+                                      barIndex: i + 1,
+                                    }));
+                                    newBlock.targetBarCount = newBlock.bars.length;
+                                    newSec.blocks[blockIndexObj] = newBlock;
+                                    next[secIndex] = newSec;
+
+                                    // Push history async or directly? pushHistory is safe to call
+                                    pushHistory(next);
+                                    setActiveFocus({
+                                      sectionId: sec.id,
+                                      blockIndex: block.blockIndex,
+                                      barIndex: bar.barIndex + 1,
+                                    });
+                                    if (onLyricsChange) {
+                                      onLyricsChange(sectionsToLyrics(next));
+                                    }
+
+                                    return next;
+                                  });
+                                }}
                                 onBackspaceEmpty={() =>
                                   handleBackspaceEmpty(sec.id, block.blockIndex, bar.barIndex)
                                 }
@@ -1456,6 +1573,48 @@ export function CadencePaperStudio({
               ]}
             />
           </View>
+        </View>
+      )}
+
+      {/* BPM Prompt Modal */}
+      {showBpmPrompt && (
+        <View style={[StyleSheet.absoluteFill as any, { zIndex: 9999, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.8)' }]}>
+          <LiquidGlassCard borderRadius={16} style={{ padding: 24, maxWidth: 350, alignItems: 'center' }}>
+            <Text style={{ color: '#fff', fontSize: 20, fontWeight: 'bold', marginBottom: 16 }}>
+              {hasSkippedBpm ? "Wait, are you sure?" : "Set Your BPM"}
+            </Text>
+            
+            <Text style={{ color: '#ccc', fontSize: 16, textAlign: 'center', marginBottom: 24 }}>
+              {hasSkippedBpm 
+                ? "BPM is a vital metric to accurately measure cadence, rhyme stress, and all the other things that use stress." 
+                : "Tap out your tempo or enter a BPM to start mapping your cadence."}
+            </Text>
+            
+            <View style={{ flexDirection: 'row', gap: 12, width: '100%' }}>
+              <Pressable
+                onPress={() => {
+                  if (!hasSkippedBpm) {
+                    setHasSkippedBpm(true);
+                  } else {
+                    setShowBpmPrompt(false);
+                  }
+                }}
+                style={[styles.craftButton, { flex: 1, backgroundColor: 'transparent', borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' }]}
+              >
+                <Text style={[styles.craftButtonText, { color: '#ccc' }]}>Skip</Text>
+              </Pressable>
+              
+              <Pressable
+                onPress={() => {
+                  setShowBpmPrompt(false);
+                  setSongSettingsVisible(true); // Open settings to actually set it
+                }}
+                style={[styles.craftButton, { flex: 1, backgroundColor: '#3b82f6' }]}
+              >
+                <Text style={[styles.craftButtonText, { color: '#fff' }]}>Set BPM</Text>
+              </Pressable>
+            </View>
+          </LiquidGlassCard>
         </View>
       )}
     </KeyboardAvoidingView>
@@ -1804,5 +1963,16 @@ const styles = StyleSheet.create({
       default: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     }),
     textAlignVertical: 'top',
+  },
+  craftButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  craftButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

@@ -33,6 +33,19 @@ export const AffineSlashMenu: React.FC<AffineSlashMenuProps> = ({
 
   const commands: SlashCommandItem[] = [
     {
+      id: 'intro',
+      title: 'Intro Section',
+      subtitle: 'Add 4-bar introductory cadence block',
+      badge: '4 BARS',
+      icon: (color) => (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 8v8" />
+          <path d="M8 12l4 4 4-4" />
+        </svg>
+      ),
+    },
+    {
       id: 'verse',
       title: 'Verse Section',
       subtitle: 'Add 16-bar storytelling cadence block',
@@ -43,6 +56,18 @@ export const AffineSlashMenu: React.FC<AffineSlashMenuProps> = ({
           <line x1="21" y1="6" x2="3" y2="6" />
           <line x1="21" y1="14" x2="3" y2="14" />
           <line x1="17" y1="18" x2="3" y2="18" />
+        </svg>
+      ),
+    },
+    {
+      id: 'pre-chorus',
+      title: 'Pre-Chorus Section',
+      subtitle: 'Add 4-bar buildup cadence block',
+      badge: '4 BARS',
+      icon: (color) => (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 4v16" />
+          <path d="M8 8l4-4 4 4" />
         </svg>
       ),
     },
@@ -79,6 +104,18 @@ export const AffineSlashMenu: React.FC<AffineSlashMenuProps> = ({
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
           <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+        </svg>
+      ),
+    },
+    {
+      id: 'outro',
+      title: 'Outro Section',
+      subtitle: 'Add 4-bar concluding cadence block',
+      badge: '4 BARS',
+      icon: (color) => (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <rect x="9" y="9" width="6" height="6" />
         </svg>
       ),
     },

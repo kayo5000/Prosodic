@@ -36,7 +36,7 @@ export interface PaperFormatState {
   headingStyle: 'body' | 'heading' | 'subheading';
 }
 
-export type SectionType = 'verse' | 'chorus' | 'hook' | 'bridge' | 'reprise' | 'custom';
+export type SectionType = 'intro' | 'verse' | 'pre-chorus' | 'chorus' | 'hook' | 'bridge' | 'outro' | 'reprise' | 'custom';
 
 export type MoodType =
   | 'excited'

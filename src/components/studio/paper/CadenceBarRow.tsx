@@ -11,18 +11,21 @@ import {
 
 import type { CadenceBarLine, CrossBarAlignment } from './types';
 import type { VerseRhymeToken } from '../../../services/rhymeDetectionEngine';
+import { LiquidGlassCard } from '../../ui/LiquidGlassCard';
 
 interface CadenceBarRowProps {
   bar: CadenceBarLine;
   isActive: boolean;
   isAlignedAcrossPage: boolean;
   showBarNumber?: boolean;
+  displayBarIndex?: number;
   showRhymeMap?: boolean;
   rhymeTokens?: VerseRhymeToken[];
   syllableTokens?: VerseRhymeToken[];
   onFocus: () => void;
   onChangeText: (newText: string) => void;
   onSubmitEditing: () => void;
+  onSplitBar?: (textBefore: string, textAfter: string) => void;
   onBackspaceEmpty?: () => void;
   onGutterPress?: () => void;
   onSelectSyllable?: (token: VerseRhymeToken, allWordSyllables?: VerseRhymeToken[]) => void;
@@ -34,12 +37,14 @@ export function CadenceBarRow({
   isActive,
   isAlignedAcrossPage,
   showBarNumber = true,
+  displayBarIndex,
   showRhymeMap = true,
   rhymeTokens,
   syllableTokens,
   onFocus,
   onChangeText,
   onSubmitEditing,
+  onSplitBar,
   onBackspaceEmpty,
   onGutterPress,
   onSelectSyllable,
@@ -47,6 +52,7 @@ export function CadenceBarRow({
 }: CadenceBarRowProps) {
   const inputRef = useRef<TextInput>(null);
   const lastTapRef = useRef<Record<string, number>>({});
+  const [cursorPos, setCursorPos] = React.useState<number | null>(null);
 
   // Derive styles from formatting spans
   const isItalic = bar.spans.some((s) => s.italic);
@@ -112,6 +118,16 @@ export function CadenceBarRow({
   const handleKeyPress = (e: any) => {
     if (e.nativeEvent.key === 'Backspace' && bar.rawText === '' && onBackspaceEmpty) {
       onBackspaceEmpty();
+    }
+  };
+
+  const handleSubmit = () => {
+    if (onSplitBar && cursorPos !== null && cursorPos < bar.rawText.length) {
+      const textBefore = bar.rawText.slice(0, cursorPos);
+      const textAfter = bar.rawText.slice(cursorPos);
+      onSplitBar(textBefore, textAfter);
+    } else {
+      onSubmitEditing();
     }
   };
 
@@ -276,7 +292,7 @@ export function CadenceBarRow({
             accessibilityLabel={`Bar ${bar.barIndex}. Tap to configure section phrase length`}
           >
             <Text style={[styles.barNumberText, isActive && styles.activeBarNumberText]}>
-              {bar.barIndex}
+              {displayBarIndex ?? bar.barIndex}
             </Text>
           </Pressable>
         )}
@@ -308,7 +324,7 @@ export function CadenceBarRow({
           )}
 
           {/* Lyric Input Field / Interactive Rhyme Chips */}
-          <View style={styles.inputWrapper}>
+          <LiquidGlassCard style={styles.inputWrapper} borderRadius={4} blurIntensity="sm" glowIntensity="none">
             {shouldRenderRhymeChips ? (
               <Pressable
                 onPress={() => {
@@ -325,8 +341,9 @@ export function CadenceBarRow({
                 value={bar.rawText}
                 onChangeText={onChangeText}
                 onFocus={onFocus}
-                onSubmitEditing={onSubmitEditing}
+                onSubmitEditing={handleSubmit}
                 onKeyPress={handleKeyPress}
+                onSelectionChange={(e) => setCursorPos(e.nativeEvent.selection.start)}
                 {...(Platform.OS === 'web' ? ({ onPaste: handlePaste } as any) : {})}
                 blurOnSubmit={false}
                 returnKeyType="next"
@@ -340,7 +357,7 @@ export function CadenceBarRow({
                 ]}
               />
             )}
-          </View>
+          </LiquidGlassCard>
 
           {/* Right Repeat Barline Marker •| */}
           {showBarNumber && (

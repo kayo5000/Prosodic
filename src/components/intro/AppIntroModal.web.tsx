@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View, Platform } from 'react-native';
+import { LiquidGlassCard } from '../ui/LiquidGlassCard';
 
 import {
   PROSODIC_WHITE_LOGO_BASE64,
@@ -172,16 +173,51 @@ export function AppIntroModal({ onDismiss }: AppIntroModalProps) {
     }
   }, []);
 
+  const [showPwaPrompt, setShowPwaPrompt] = useState(false);
   const hasEnteredRef = useRef(false);
   const handleEnter = () => {
     if (hasEnteredRef.current) return;
+    
+    // Check if running in browser vs PWA standalone
+    const isStandalone = typeof window !== 'undefined' && (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone);
+    
+    if (!isStandalone && typeof window !== 'undefined') {
+      setShowPwaPrompt(true);
+      return;
+    }
+
     hasEnteredRef.current = true;
+    if (Platform.OS === 'web') {
+      try {
+        localStorage.setItem('prosodic_intro_seen', 'true');
+      } catch (e) {}
+    }
     setIsFadingOut(true);
     if (typeof document !== 'undefined') {
       document.body.style.backgroundColor = '#000000';
       document.documentElement.style.backgroundColor = '#000000';
     }
-    setTimeout(onDismiss, 350);
+    setTimeout(() => {
+      onDismiss();
+    }, 400);
+  };
+
+  const proceedFromPwaPrompt = () => {
+    hasEnteredRef.current = true;
+    if (Platform.OS === 'web') {
+      try {
+        localStorage.setItem('prosodic_intro_seen', 'true');
+      } catch (e) {}
+    }
+    setShowPwaPrompt(false);
+    setIsFadingOut(true);
+    if (typeof document !== 'undefined') {
+      document.body.style.backgroundColor = '#000000';
+      document.documentElement.style.backgroundColor = '#000000';
+    }
+    setTimeout(() => {
+      onDismiss();
+    }, 400);
   };
 
   const handleOverlayPress = () => {
@@ -204,6 +240,31 @@ export function AppIntroModal({ onDismiss }: AppIntroModalProps) {
   };
 
   return (
+    <React.Fragment>
+    {showPwaPrompt && (
+      <View style={{...styles.overlay, zIndex: 999999, justifyContent: 'center', alignItems: 'center'}}>
+        <View style={styles.centerContainer}>
+          <LiquidGlassCard borderRadius={16} style={{ padding: 24, maxWidth: 400, alignItems: 'center' }}>
+            <Text style={{ color: '#fff', fontSize: 20, fontWeight: 'bold', marginBottom: 16 }}>
+              For the best web experience
+            </Text>
+            <View style={{ alignItems: 'flex-start', marginBottom: 24, gap: 8 }}>
+              <Text style={{ color: '#ccc', fontSize: 16 }}>• Press Share (in browser)</Text>
+              <Text style={{ color: '#ccc', fontSize: 16 }}>• View More</Text>
+              <Text style={{ color: '#ccc', fontSize: 16 }}>• Add To Home Screen</Text>
+              <Text style={{ color: '#ccc', fontSize: 16 }}>• Ensure "Open As Web App" toggle is enabled</Text>
+              <Text style={{ color: '#ccc', fontSize: 16 }}>• Close browser & open web app from Home Screen</Text>
+            </View>
+            <Pressable
+              onPress={proceedFromPwaPrompt}
+              style={[styles.craftButton, { width: '100%' }]}
+            >
+              <Text style={styles.craftButtonText}>Continue to Beta</Text>
+            </Pressable>
+          </LiquidGlassCard>
+        </View>
+      </View>
+    )}
     <Pressable
       style={[
         styles.overlay,
@@ -379,23 +440,25 @@ export function AppIntroModal({ onDismiss }: AppIntroModalProps) {
 
       {/* Bottom Action Section: Transparent Bordered "Test Your Craft" Button */}
       <View style={styles.bottomContainer}>
-        <Pressable
-          onPress={(e: any) => {
-            if (e && e.stopPropagation) e.stopPropagation();
-            handleEnter();
-          }}
-          style={({ pressed, hovered }: any) => [
-            styles.craftButton,
-            hovered && styles.craftButtonHovered,
-            pressed && styles.craftButtonPressed,
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel="Test Your Craft"
-        >
-          <Text style={styles.craftButtonText}>
-            Test Your Craft
-          </Text>
-        </Pressable>
+        <LiquidGlassCard borderRadius={18}>
+          <Pressable
+            onPress={(e: any) => {
+              if (e && e.stopPropagation) e.stopPropagation();
+              handleEnter();
+            }}
+            style={({ pressed, hovered }: any) => [
+              styles.craftButton,
+              hovered && styles.craftButtonHovered,
+              pressed && styles.craftButtonPressed,
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel="Test Your Craft"
+          >
+            <Text style={styles.craftButtonText}>
+              Test Your Craft
+            </Text>
+          </Pressable>
+        </LiquidGlassCard>
 
         <View style={styles.betaWrapper} accessibilityLabel="Beta version">
           <Text style={styles.betaText}>
@@ -404,6 +467,7 @@ export function AppIntroModal({ onDismiss }: AppIntroModalProps) {
         </View>
       </View>
     </Pressable>
+    </React.Fragment>
   );
 }
 

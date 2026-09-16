@@ -270,9 +270,16 @@ export function getNextSectionName(
   type: import('./types').SectionType,
   existingSections: import('./types').PaperSection[],
 ): string {
+  if (type === 'intro') {
+    return 'Intro';
+  }
   if (type === 'verse') {
     const verseCount = existingSections.filter((s) => s.type === 'verse').length;
     return `Verse ${verseCount + 1}`;
+  }
+  if (type === 'pre-chorus') {
+    const preChorusCount = existingSections.filter((s) => s.type === 'pre-chorus').length;
+    return preChorusCount === 0 ? 'Pre-Chorus' : `Pre-Chorus ${preChorusCount + 1}`;
   }
   if (type === 'chorus' || type === 'hook') {
     const chorusCount = existingSections.filter((s) => s.type === 'chorus' || s.type === 'hook').length;
@@ -281,6 +288,9 @@ export function getNextSectionName(
   if (type === 'bridge') {
     const bridgeCount = existingSections.filter((s) => s.type === 'bridge').length;
     return bridgeCount === 0 ? 'Bridge' : `Bridge ${bridgeCount + 1}`;
+  }
+  if (type === 'outro') {
+    return 'Outro';
   }
   if (type === 'reprise') {
     return 'Reprise';
