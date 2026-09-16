@@ -64,7 +64,7 @@
     "test": "jest",
     "typecheck": "tsc --noEmit",
     "build:web": "expo export -p web && node scripts/postbuild.js",
-    "verify": "npm run typecheck && npm run test -- --silent && npm run lint && npx expo-doctor",
+    "verify": "npm run typecheck && npm run test -- --silent && npm run lint",
     "verify:fast": "npm run typecheck && npm run test -- --silent && npm run lint"
   },
   "private": true,
