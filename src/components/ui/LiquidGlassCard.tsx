@@ -2,7 +2,7 @@ import React from 'react';
 import { View, StyleSheet, type ViewProps } from 'react-native';
 
 interface LiquidGlassCardProps extends ViewProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   blurIntensity?: 'sm' | 'md' | 'lg' | 'xl';
   shadowIntensity?: 'none' | 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   borderRadius?: number;
