@@ -120,8 +120,16 @@ export function SyllableInspectorModal({
   if (!visible || activeSyllablesList.length === 0) return null;
 
   const currentToken = activeSyllablesList[selectedSyllableIdx] || activeSyllablesList[0];
-  const overrideKey = `${currentToken.lineIndex}:${currentToken.wordIndex}:${currentToken.syllableIndex}:${currentToken.text.trim().toLowerCase()}`;
-  const activeOverride = syllableOverrides?.get(overrideKey) || currentOverride;
+  const curL = currentToken.lineIndex ?? lineIndex ?? 0;
+  const curW = currentToken.wordIndex ?? wordIndex ?? 0;
+  const curS = currentToken.syllableIndex ?? selectedSyllableIdx ?? 0;
+  const curT = currentToken.text.trim().toLowerCase();
+
+  const activeOverride =
+    syllableOverrides?.get(`${curL}:${curW}:${curS}:${curT}`) ||
+    syllableOverrides?.get(`${curL}:${curW}:${curS}`) ||
+    syllableOverrides?.get(`${curL}:${curW}`) ||
+    currentOverride;
 
   const activeStress = activeOverride?.stress !== undefined ? activeOverride.stress : currentToken.stress;
   const activeColorId = activeOverride?.colorId !== undefined ? activeOverride.colorId : currentToken.colorId;
@@ -322,8 +330,15 @@ export function SyllableInspectorModal({
               <View style={styles.syllableChipsRow}>
                 {activeSyllablesList.map((tok, idx) => {
                   const isSelected = selectedSyllableIdx === idx;
-                  const tokKey = `${tok.lineIndex}:${tok.wordIndex}:${tok.syllableIndex}:${tok.text.trim().toLowerCase()}`;
-                  const tokOv = syllableOverrides?.get(tokKey);
+                  const tokL = tok.lineIndex ?? lineIndex ?? 0;
+                  const tokW = tok.wordIndex ?? wordIndex ?? 0;
+                  const tokS = tok.syllableIndex ?? idx ?? 0;
+                  const tokT = tok.text.trim().toLowerCase();
+
+                  const tokOv =
+                    syllableOverrides?.get(`${tokL}:${tokW}:${tokS}:${tokT}`) ||
+                    syllableOverrides?.get(`${tokL}:${tokW}:${tokS}`) ||
+                    syllableOverrides?.get(`${tokL}:${tokW}`);
                   const tokColorId = tokOv?.colorId !== undefined ? tokOv.colorId : tok.colorId;
                   const tokStress = tokOv?.stress !== undefined ? tokOv.stress : tok.stress;
                   const tokColor = tokColorId > 0 ? colorForFamily(tokColorId) : '#FFFFFF';

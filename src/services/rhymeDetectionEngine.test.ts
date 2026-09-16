@@ -1,6 +1,7 @@
 import {
   analyzeVerseRhymes,
   classifyRFamily,
+  codaConsonantSimilarity,
   extractRhymeCandidates,
   findRhymeGroups,
   getWordSyllables,
@@ -208,4 +209,44 @@ describe('RhymeDetectionEngine (Vetted Port of Python Suite)', () => {
       expect(fussinColor).toBe(bussinColor);
     });
   });
+
+  describe('Tight Coda Scoring & False Positive Rejection', () => {
+    it('accurately scores homorganic voicing pairs as tight slant rhymes', () => {
+      // T vs D voicing pair (e.g. cat vs bad)
+      const voicingScore = codaConsonantSimilarity(['T'], ['D']);
+      expect(voicingScore).toBeGreaterThanOrEqual(0.85);
+
+      const rhymeScore = syllableRhymeScore(['AE1', 'T'], ['AE1', 'D']);
+      expect(rhymeScore).toBeGreaterThanOrEqual(0.85);
+    });
+
+    it('accurately scores nasal class codas as tight slant rhymes', () => {
+      // M vs N (e.g. time vs shine)
+      const nasalScore = codaConsonantSimilarity(['M'], ['N']);
+      expect(nasalScore).toBeGreaterThanOrEqual(0.80);
+
+      const rhymeScore = syllableRhymeScore(['AY1', 'M'], ['AY1', 'N']);
+      expect(rhymeScore).toBeGreaterThanOrEqual(0.80);
+    });
+
+    it('strictly rejects unrelated clashing codas with the same vowel to prevent false clustering', () => {
+      // T vs N (cat vs man) -> unrelated manner of articulation
+      const clashingScore = codaConsonantSimilarity(['T'], ['N']);
+      expect(clashingScore).toBeLessThan(0.75);
+
+      const syllableScore = syllableRhymeScore(['AE1', 'T'], ['AE1', 'N']);
+      expect(syllableScore).toBeLessThan(0.75); // Strictly below 0.75 threshold
+    });
+
+    it('rejects unrelated words like cat and man from grouping together in verses', () => {
+      const unrelatedVerse = [
+        'The quick cat',
+        'A single man',
+      ];
+      const result = analyzeVerseRhymes(unrelatedVerse);
+      // "cat" and "man" must NOT form a rhyme group
+      expect(result.rhymeGroups).toHaveLength(0);
+    });
+  });
 });
+

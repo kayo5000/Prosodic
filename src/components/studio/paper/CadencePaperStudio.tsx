@@ -225,22 +225,78 @@ export function CadencePaperStudio({
     const raw = analyzeVerseRhymes(lines);
     if (syllableOverrides.size === 0) return raw;
 
-    const applyOverride = (tok: VerseRhymeToken) => {
-      const key = `${tok.lineIndex}:${tok.wordIndex}:${tok.syllableIndex}:${tok.text.trim().toLowerCase()}`;
-      const override = syllableOverrides.get(key);
+    const applyOverrideToSyllable = (tok: VerseRhymeToken) => {
+      const l = tok.lineIndex ?? 0;
+      const w = tok.wordIndex ?? 0;
+      const s = tok.syllableIndex ?? 0;
+      const t = tok.text.trim().toLowerCase();
+
+      const override =
+        syllableOverrides.get(`${l}:${w}:${s}:${t}`) ||
+        syllableOverrides.get(`${l}:${w}:${s}`) ||
+        syllableOverrides.get(`${l}:${w}`);
+
       if (!override) return tok;
       return {
         ...tok,
         colorId: override.colorId !== undefined ? override.colorId : tok.colorId,
         color: override.colorId !== undefined ? colorForFamily(override.colorId) : tok.color,
         stress: override.stress !== undefined ? override.stress : tok.stress,
+        gridPosition: override.gridPos !== undefined ? override.gridPos : tok.gridPosition,
       };
     };
 
+    const updatedLineSyllables = raw.lineSyllables.map((tokens) =>
+      tokens.map(applyOverrideToSyllable),
+    );
+
+    const updatedLineTokens = raw.lineTokens.map((tokens, li) =>
+      tokens.map((tok) => {
+        if (!tok.isWord) return tok;
+        const l = tok.lineIndex ?? li;
+        const w = tok.wordIndex ?? 0;
+        const t = tok.text.trim().toLowerCase();
+
+        const directOverride =
+          syllableOverrides.get(`${l}:${w}`) ||
+          syllableOverrides.get(`${l}:${w}:0:${t}`);
+
+        const wordSylls = updatedLineSyllables[li]?.filter(
+          (s) => (s.wordIndex ?? 0) === w && (s.lineIndex ?? li) === l,
+        ) || [];
+
+        const primarySyll =
+          wordSylls.find((s) => s.stress !== undefined && s.stress >= 1 && s.colorId > 0) ||
+          wordSylls.find((s) => s.colorId > 0) ||
+          wordSylls[0];
+
+        const finalColorId =
+          directOverride?.colorId !== undefined
+            ? directOverride.colorId
+            : primarySyll
+            ? primarySyll.colorId
+            : tok.colorId;
+
+        const finalStress =
+          directOverride?.stress !== undefined
+            ? directOverride.stress
+            : primarySyll
+            ? primarySyll.stress
+            : tok.stress;
+
+        return {
+          ...tok,
+          colorId: finalColorId,
+          color: finalColorId > 0 ? colorForFamily(finalColorId) : '#FFFFFF',
+          stress: finalStress,
+        };
+      }),
+    );
+
     return {
       ...raw,
-      lineTokens: raw.lineTokens.map((tokens) => tokens.map(applyOverride)),
-      lineSyllables: raw.lineSyllables.map((tokens) => tokens.map(applyOverride)),
+      lineTokens: updatedLineTokens,
+      lineSyllables: updatedLineSyllables,
     };
   }, [showRhymeMap, flatBarLines, syllableOverrides]);
 
@@ -264,22 +320,78 @@ export function CadencePaperStudio({
     const raw = analyzeVerseRhymes(blankVerseLines);
     if (syllableOverrides.size === 0) return raw;
 
-    const applyOverride = (tok: VerseRhymeToken) => {
-      const key = `${tok.lineIndex}:${tok.wordIndex}:${tok.syllableIndex}:${tok.text.trim().toLowerCase()}`;
-      const override = syllableOverrides.get(key);
+    const applyOverrideToSyllable = (tok: VerseRhymeToken) => {
+      const l = tok.lineIndex ?? 0;
+      const w = tok.wordIndex ?? 0;
+      const s = tok.syllableIndex ?? 0;
+      const t = tok.text.trim().toLowerCase();
+
+      const override =
+        syllableOverrides.get(`${l}:${w}:${s}:${t}`) ||
+        syllableOverrides.get(`${l}:${w}:${s}`) ||
+        syllableOverrides.get(`${l}:${w}`);
+
       if (!override) return tok;
       return {
         ...tok,
         colorId: override.colorId !== undefined ? override.colorId : tok.colorId,
         color: override.colorId !== undefined ? colorForFamily(override.colorId) : tok.color,
         stress: override.stress !== undefined ? override.stress : tok.stress,
+        gridPosition: override.gridPos !== undefined ? override.gridPos : tok.gridPosition,
       };
     };
 
+    const updatedLineSyllables = raw.lineSyllables.map((tokens) =>
+      tokens.map(applyOverrideToSyllable),
+    );
+
+    const updatedLineTokens = raw.lineTokens.map((tokens, li) =>
+      tokens.map((tok) => {
+        if (!tok.isWord) return tok;
+        const l = tok.lineIndex ?? li;
+        const w = tok.wordIndex ?? 0;
+        const t = tok.text.trim().toLowerCase();
+
+        const directOverride =
+          syllableOverrides.get(`${l}:${w}`) ||
+          syllableOverrides.get(`${l}:${w}:0:${t}`);
+
+        const wordSylls = updatedLineSyllables[li]?.filter(
+          (s) => (s.wordIndex ?? 0) === w && (s.lineIndex ?? li) === l,
+        ) || [];
+
+        const primarySyll =
+          wordSylls.find((s) => s.stress !== undefined && s.stress >= 1 && s.colorId > 0) ||
+          wordSylls.find((s) => s.colorId > 0) ||
+          wordSylls[0];
+
+        const finalColorId =
+          directOverride?.colorId !== undefined
+            ? directOverride.colorId
+            : primarySyll
+            ? primarySyll.colorId
+            : tok.colorId;
+
+        const finalStress =
+          directOverride?.stress !== undefined
+            ? directOverride.stress
+            : primarySyll
+            ? primarySyll.stress
+            : tok.stress;
+
+        return {
+          ...tok,
+          colorId: finalColorId,
+          color: finalColorId > 0 ? colorForFamily(finalColorId) : '#FFFFFF',
+          stress: finalStress,
+        };
+      }),
+    );
+
     return {
       ...raw,
-      lineTokens: raw.lineTokens.map((tokens) => tokens.map(applyOverride)),
-      lineSyllables: raw.lineSyllables.map((tokens) => tokens.map(applyOverride)),
+      lineTokens: updatedLineTokens,
+      lineSyllables: updatedLineSyllables,
     };
   }, [showRhymeMap, blankVerseLines, blankText, syllableOverrides]);
 
@@ -342,12 +454,21 @@ export function CadencePaperStudio({
         syllables.forEach((sylTok, idx) => {
           const enunSyl = enun.syllables[idx] || enun.syllables[enun.syllables.length - 1];
           if (enunSyl) {
-            const key = `${sylTok.lineIndex ?? lineIndex}:${sylTok.wordIndex ?? wordIndex}:${sylTok.syllableIndex ?? idx}:${sylTok.text.trim().toLowerCase()}`;
-            next.set(key, {
+            const lIdx = sylTok.lineIndex ?? lineIndex ?? 0;
+            const wIdx = sylTok.wordIndex ?? wordIndex ?? 0;
+            const sIdx = sylTok.syllableIndex ?? idx;
+            const sText = sylTok.text.trim().toLowerCase();
+            const ov: SyllableOverride = {
               stress: enunSyl.stress,
               colorId: enunSyl.vowelFamilyId,
-            });
+            };
+            next.set(`${lIdx}:${wIdx}:${sIdx}:${sText}`, ov);
+            next.set(`${lIdx}:${wIdx}:${sIdx}`, ov);
           }
+        });
+        next.set(`${lineIndex}:${wordIndex}`, {
+          colorId: enun.rhymeFamilyId,
+          stress: enun.syllables[0]?.stress ?? 1,
         });
         return next;
       });
@@ -356,19 +477,33 @@ export function CadencePaperStudio({
   );
 
   const handleSaveSyllableOverride = (tok: VerseRhymeToken, override: SyllableOverride) => {
-    const key = `${tok.lineIndex}:${tok.wordIndex}:${tok.syllableIndex}:${tok.text.trim().toLowerCase()}`;
+    const lIdx = tok.lineIndex ?? inspectorModalData.lineIndex ?? 0;
+    const wIdx = tok.wordIndex ?? inspectorModalData.wordIndex ?? 0;
+    const sIdx = tok.syllableIndex ?? 0;
+    const sText = tok.text.trim().toLowerCase();
+
     setSyllableOverrides((prev) => {
       const next = new Map(prev);
-      next.set(key, override);
+      next.set(`${lIdx}:${wIdx}:${sIdx}:${sText}`, override);
+      next.set(`${lIdx}:${wIdx}:${sIdx}`, override);
+      if (override.colorId !== undefined && override.colorId > 0) {
+        next.set(`${lIdx}:${wIdx}`, override);
+      }
       return next;
     });
   };
 
   const handleClearSyllableOverride = (tok: VerseRhymeToken) => {
-    const key = `${tok.lineIndex}:${tok.wordIndex}:${tok.syllableIndex}:${tok.text.trim().toLowerCase()}`;
+    const lIdx = tok.lineIndex ?? inspectorModalData.lineIndex ?? 0;
+    const wIdx = tok.wordIndex ?? inspectorModalData.wordIndex ?? 0;
+    const sIdx = tok.syllableIndex ?? 0;
+    const sText = tok.text.trim().toLowerCase();
+
     setSyllableOverrides((prev) => {
       const next = new Map(prev);
-      next.delete(key);
+      next.delete(`${lIdx}:${wIdx}:${sIdx}:${sText}`);
+      next.delete(`${lIdx}:${wIdx}:${sIdx}`);
+      next.delete(`${lIdx}:${wIdx}`);
       return next;
     });
   };

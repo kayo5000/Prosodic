@@ -228,6 +228,84 @@ export function rFamilyCompatible(famI: number, famJ: number): boolean {
 
 // ── Syllable Rhyme Scoring ───────────────────────────────────────────────────
 
+const VOICING_PAIRS: Record<string, string> = {
+  T: 'D', D: 'T',
+  P: 'B', B: 'P',
+  K: 'G', G: 'K',
+  S: 'Z', Z: 'S',
+  F: 'V', V: 'F',
+  CH: 'JH', JH: 'CH',
+  SH: 'ZH', ZH: 'SH',
+  TH: 'DH', DH: 'TH',
+};
+
+const NASAL_SET = new Set(['M', 'N', 'NG']);
+const SIBILANT_SET = new Set(['S', 'Z', 'SH', 'ZH', 'CH', 'JH']);
+const STOP_SET = new Set(['P', 'T', 'K', 'B', 'D', 'G']);
+
+/**
+ * Computes phonetic acoustic similarity between coda consonant sequences.
+ * Returns a value in [0, 1] based on articulatory manner, voicing pairs, and CCR clusters.
+ */
+export function codaConsonantSimilarity(codaA: string[], codaB: string[]): number {
+  if (codaA.length === 0 && codaB.length === 0) return 1.0;
+  if (codaA.join(' ') === codaB.join(' ')) return 1.0;
+
+  const baseA = codaA.map(basePhoneme);
+  const baseB = codaB.map(basePhoneme);
+  if (baseA.join(' ') === baseB.join(' ')) return 1.0;
+
+  // Open syllable vs single weak consonant (e.g. non-rhotic slang or relaxed glide)
+  if (baseA.length === 0 || baseB.length === 0) {
+    const nonEmp = baseA.length > 0 ? baseA : baseB;
+    if (nonEmp.length === 1 && (nonEmp[0] === 'H' || nonEmp[0] === 'N' || nonEmp[0] === 'R')) {
+      return 0.50;
+    }
+    return 0.20;
+  }
+
+  // Single coda consonant comparison
+  if (baseA.length === 1 && baseB.length === 1) {
+    const ca = baseA[0];
+    const cb = baseB[0];
+    if (ca === cb) return 1.0;
+
+    // Homorganic voicing pair (T/D, P/B, K/G, S/Z, etc.) -> High acoustic similarity
+    if (VOICING_PAIRS[ca] === cb) return 0.88;
+
+    // Nasal class (M, N, NG) -> Slant rhyme
+    if (NASAL_SET.has(ca) && NASAL_SET.has(cb)) return 0.82;
+
+    // Sibilant class (S, Z, SH, CH, JH) -> Slant rhyme
+    if (SIBILANT_SET.has(ca) && SIBILANT_SET.has(cb)) return 0.80;
+
+    // Stop class (P, T, K, B, D, G)
+    if (STOP_SET.has(ca) && STOP_SET.has(cb)) return 0.65;
+
+    return 0.25;
+  }
+
+  // Consonant cluster comparison (e.g. ST vs S, ND vs N, LD vs L, KT vs K, etc.)
+  const strA = baseA.join('');
+  const strB = baseB.join('');
+
+  // CCR cluster subset (e.g. 'ST' starts with 'S', 'ND' starts with 'N')
+  if (
+    (strA.startsWith(strB) || strB.startsWith(strA)) ||
+    (strA.endsWith(strB) || strB.endsWith(strA))
+  ) {
+    return 0.85;
+  }
+
+  // Last consonant match in cluster
+  const lastA = baseA[baseA.length - 1];
+  const lastB = baseB[baseB.length - 1];
+  if (lastA === lastB) return 0.80;
+  if (VOICING_PAIRS[lastA] === lastB) return 0.76;
+
+  return 0.30;
+}
+
 export function syllableRhymeScore(
   unitA: string[] | null | undefined,
   unitB: string[] | null | undefined,
@@ -249,26 +327,52 @@ export function syllableRhymeScore(
   const aEhR = isEhR(vowA, unitA);
   const bEhR = isEhR(vowB, unitB);
 
-  // Exact nucleus match (including stress)
-  if (nucA === nucB) {
-    const sameRContext = aR === bR && aEhR === bEhR;
-    return sameRContext ? 0.88 : 0.35;
-  }
-
-  // R-colored bridge (both R-colored)
+  // Both R-colored (ER vs ER, or VR vs VR)
   if (aR && bR) {
     const aCoda = vowA === 'ER' ? unitA.slice(1).map(basePhoneme) : unitA.slice(2).map(basePhoneme);
     const bCoda = vowB === 'ER' ? unitB.slice(1).map(basePhoneme) : unitB.slice(2).map(basePhoneme);
-    if (aCoda.join(' ') === bCoda.join(' ')) {
-      return 0.80;
+    if (aCoda.join(' ') === bCoda.join(' ')) return 1.0;
+
+    const codaSim = codaConsonantSimilarity(aCoda, bCoda);
+    if (codaSim >= 0.75) {
+      return 0.80 + (codaSim * 0.10);
     }
-    return 0.50;
+    // NURSE vs NURSE nucleus match with different codas (e.g. turnt vs merch)
+    if (vowA === 'ER' && vowB === 'ER') {
+      return 0.88;
+    }
+    return 0.45;
   }
 
-  // Same vowel base
+  // Same exact nucleus (including stress)
+  if (nucA === nucB) {
+    const sameRContext = aR === bR && aEhR === bEhR;
+    if (!sameRContext) return 0.35;
+
+    const codaA = unitA.slice(1).map(basePhoneme);
+    const codaB = unitB.slice(1).map(basePhoneme);
+    const codaSim = codaConsonantSimilarity(codaA, codaB);
+
+    if (codaSim >= 0.75) {
+      return 0.75 + (codaSim * 0.25); // 0.94 - 1.0
+    }
+    // Unrelated codas with same vowel -> below threshold to prevent noisy chaining
+    return 0.35 + (codaSim * 0.30); // 0.40 - 0.55
+  }
+
+  // Same base vowel (differing stress digit)
   if (vowA === vowB) {
     const sameRContext = aR === bR && aEhR === bEhR;
-    return sameRContext ? NEAR_RHYME_SAME_VOWEL_SCORE : 0.35;
+    if (!sameRContext) return 0.35;
+
+    const codaA = unitA.slice(1).map(basePhoneme);
+    const codaB = unitB.slice(1).map(basePhoneme);
+    const codaSim = codaConsonantSimilarity(codaA, codaB);
+
+    if (codaSim >= 0.75) {
+      return 0.75 + (codaSim * 0.20); // 0.90 - 0.95
+    }
+    return 0.30 + (codaSim * 0.30); // 0.35 - 0.50
   }
 
   // EH+R slant bridge
@@ -276,7 +380,7 @@ export function syllableRhymeScore(
     return 0.65;
   }
 
-  // Shared final consonant
+  // Shared final consonant without vowel match -> non-rhyme
   if (unitA.length > 1 && unitB.length > 1) {
     if (basePhoneme(unitA[unitA.length - 1]) === basePhoneme(unitB[unitB.length - 1])) {
       return 0.35;
