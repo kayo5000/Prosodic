@@ -1,5 +1,6 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -229,6 +230,16 @@ export function CadencePaperStudio({
   });
   const [isEditingBlankText, setIsEditingBlankText] = useState<boolean>(false);
   const [syllableOverrides, setSyllableOverrides] = useState<Map<string, SyllableOverride>>(new Map());
+  const [keyboardVisible, setKeyboardVisible] = useState<boolean>(false);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener('keyboardDidShow', () => setKeyboardVisible(true));
+    const hideSub = Keyboard.addListener('keyboardDidHide', () => setKeyboardVisible(false));
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   const verseRhymeAnalysis = useMemo(() => {
     if (!showRhymeMap) return null;
@@ -272,12 +283,14 @@ export function CadencePaperStudio({
           (s) => (s.wordIndex ?? 0) === w && (s.lineIndex ?? li) === l,
         ) || [];
 
+        // Word-level color = primary-stressed syllable's family.
+        // NEVER fall through to "any syllable that has a colorId > 0" — that
+        // causes all syllables of a multi-syllable word to collapse to one color.
         const primarySyll =
-          wordSylls.find((s) => s.stress !== undefined && s.stress >= 1 && s.colorId > 0) ||
-          wordSylls.find((s) => s.colorId > 0) ||
+          wordSylls.find((s) => (s.stress ?? 0) >= 1 && (s.colorId ?? 0) > 0) ||
           wordSylls[0];
 
-        const finalColorId = primarySyll ? primarySyll.colorId : tok.colorId;
+        const finalColorId = primarySyll ? (primarySyll.colorId ?? tok.colorId) : tok.colorId;
         const finalStress = primarySyll ? primarySyll.stress : tok.stress;
 
         return {
@@ -351,12 +364,14 @@ export function CadencePaperStudio({
           (s) => (s.wordIndex ?? 0) === w && (s.lineIndex ?? li) === l,
         ) || [];
 
+        // Word-level color = primary-stressed syllable's family.
+        // NEVER fall through to "any syllable that has a colorId > 0" — that
+        // causes all syllables of a multi-syllable word to collapse to one color.
         const primarySyll =
-          wordSylls.find((s) => s.stress !== undefined && s.stress >= 1 && s.colorId > 0) ||
-          wordSylls.find((s) => s.colorId > 0) ||
+          wordSylls.find((s) => (s.stress ?? 0) >= 1 && (s.colorId ?? 0) > 0) ||
           wordSylls[0];
 
-        const finalColorId = primarySyll ? primarySyll.colorId : tok.colorId;
+        const finalColorId = primarySyll ? (primarySyll.colorId ?? tok.colorId) : tok.colorId;
         const finalStress = primarySyll ? primarySyll.stress : tok.stress;
 
         return {
@@ -1085,36 +1100,44 @@ export function CadencePaperStudio({
                 })}
               </View>
             ) : (
-              <View style={styles.blankInputWrapper}>
-                {showRhymeMap && blankText.trim().length > 0 && (
-                  <View style={styles.blankInputNoticeRow}>
-                    <Pressable
-                      onPress={() => setIsEditingBlankText(false)}
-                      style={styles.doneEditingNoticeBtn}
-                      accessibilityRole="button"
-                    >
-                      <Text style={styles.doneEditingNoticeBtnText}>
-                        Done Editing • View & Tap Rhyme Words ▾
-                      </Text>
-                    </Pressable>
-                  </View>
-                )}
-                <TextInput
-                  ref={blankInputRef}
-                  value={blankText}
-                  onChangeText={handleBlankTextChange}
-                  multiline
-                  scrollEnabled={false}
-                  autoCapitalize="sentences"
-                  autoCorrect={false}
-                  placeholder="Start writing freely..."
-                  placeholderTextColor="rgba(255, 255, 255, 0.25)"
-                  style={[
-                    styles.blankTextInput,
-                    Platform.OS === 'web' ? ({ outlineStyle: 'none' } as any) : null,
-                  ]}
-                />
-              </View>
+              /* When keyboard is up: show a slim placeholder in the scroll so
+                 content doesn't jump. The real TextInput is rendered as an
+                 absolute-positioned bottom dock (see outside ScrollView below). */
+              !keyboardVisible ? (
+                <View style={styles.blankInputWrapper}>
+                  {showRhymeMap && blankText.trim().length > 0 && (
+                    <View style={styles.blankInputNoticeRow}>
+                      <Pressable
+                        onPress={() => setIsEditingBlankText(false)}
+                        style={styles.doneEditingNoticeBtn}
+                        accessibilityRole="button"
+                      >
+                        <Text style={styles.doneEditingNoticeBtnText}>
+                          Done Editing • View & Tap Rhyme Words ▾
+                        </Text>
+                      </Pressable>
+                    </View>
+                  )}
+                  <TextInput
+                    ref={blankInputRef}
+                    value={blankText}
+                    onChangeText={handleBlankTextChange}
+                    multiline
+                    scrollEnabled={false}
+                    autoCapitalize="sentences"
+                    autoCorrect={false}
+                    placeholder="Start writing freely..."
+                    placeholderTextColor="rgba(255, 255, 255, 0.25)"
+                    style={[
+                      styles.blankTextInput,
+                      Platform.OS === 'web' ? ({ outlineStyle: 'none' } as any) : null,
+                    ]}
+                  />
+                </View>
+              ) : (
+                /* Keyboard is open: ghost spacer keeps scroll height stable */
+                <View style={styles.blankKeyboardSpacer} />
+              )
             )}
           </View>
         ) : (
@@ -1392,6 +1415,41 @@ export function CadencePaperStudio({
         onOpenLexicon={() => setLexiconModalVisible(true)}
         onOpenPractice={() => setPracticeModalVisible(true)}
       />
+
+      {/* Keyboard-Docked Bottom Input Bar (Bars Off, editing mode, keyboard up) */}
+      {!showBars && isEditingBlankText && keyboardVisible && (
+        <View style={styles.dockedInputBar}>
+          <View style={styles.dockedInputInner}>
+            {showRhymeMap && blankText.trim().length > 0 && (
+              <Pressable
+                onPress={() => {
+                  setIsEditingBlankText(false);
+                  Keyboard.dismiss();
+                }}
+                style={styles.dockedDoneBtn}
+                accessibilityRole="button"
+              >
+                <Text style={styles.dockedDoneBtnText}>Done</Text>
+              </Pressable>
+            )}
+            <TextInput
+              ref={blankInputRef}
+              value={blankText}
+              onChangeText={handleBlankTextChange}
+              multiline
+              scrollEnabled={true}
+              autoCapitalize="sentences"
+              autoCorrect={false}
+              placeholder="Start writing freely..."
+              placeholderTextColor="rgba(255, 255, 255, 0.25)"
+              style={[
+                styles.dockedTextInput,
+                Platform.OS === 'web' ? ({ outlineStyle: 'none' } as any) : null,
+              ]}
+            />
+          </View>
+        </View>
+      )}
     </KeyboardAvoidingView>
   );
 }
@@ -1688,5 +1746,55 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     color: '#E5A50A',
+  },
+  // Ghost spacer in scroll when keyboard is open (prevents content jump)
+  blankKeyboardSpacer: {
+    height: 80,
+  },
+  // Bottom-anchored input bar when keyboard is visible
+  dockedInputBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#0A0A0C',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+    paddingBottom: Platform.OS === 'ios' ? 0 : 8,
+  },
+  dockedInputInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 10,
+    gap: 10,
+  },
+  dockedDoneBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 8,
+    backgroundColor: 'rgba(229, 165, 10, 0.15)',
+    borderWidth: 1,
+    borderColor: '#E5A50A',
+    flexShrink: 0,
+  },
+  dockedDoneBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#E5A50A',
+  },
+  dockedTextInput: {
+    flex: 1,
+    fontSize: 16,
+    lineHeight: 24,
+    color: '#FFFFFF',
+    padding: 0,
+    maxHeight: 120,
+    fontFamily: Platform.select({
+      ios: 'System',
+      default: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    }),
+    textAlignVertical: 'top',
   },
 });
