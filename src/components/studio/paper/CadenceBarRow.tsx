@@ -154,63 +154,34 @@ export function CadenceBarRow({
           )}
         </View>
 
-        {/* 3. Syllable Count Badge on Right */}
-        <View style={styles.syllableContainer}>
-          <Text
-            style={[
-              styles.syllableText,
-              bar.syllableCount > 0 ? styles.syllableTextActive : styles.syllableTextZero,
-              isActive && styles.syllableTextHighlight,
-            ]}
-          >
-            {bar.syllableCount}
-          </Text>
-        </View>
+        {/* 3. Syllable Count Badge on Right - Tap to Inspect Bar Words & Syllables */}
+        <Pressable
+          onPress={(e) => {
+            e.stopPropagation();
+            if (tokensToRender.length > 0 && onSelectSyllable) {
+              onSelectSyllable(tokensToRender[0]);
+            } else {
+              onGutterPress?.();
+            }
+          }}
+          style={styles.syllableContainer}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          accessibilityRole="button"
+          accessibilityLabel={`Bar ${bar.barIndex} has ${bar.syllableCount} syllables. Tap to inspect words and syllables`}
+        >
+          <View style={[styles.syllableBadgePill, showRhymeMap && bar.syllableCount > 0 && styles.syllableBadgePillActive]}>
+            <Text
+              style={[
+                styles.syllableText,
+                bar.syllableCount > 0 ? styles.syllableTextActive : styles.syllableTextZero,
+                isActive && styles.syllableTextHighlight,
+              ]}
+            >
+              {bar.syllableCount}
+            </Text>
+          </View>
+        </Pressable>
       </Pressable>
-
-      {/* 4. Tactile Syllable Placement Ribbon (Rendered when Rhyme Map is Active) */}
-      {showRhymeMap && tokensToRender.length > 0 && (
-        <View style={styles.syllableRibbonContainer}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.syllableRibbonScroll}
-          >
-            {tokensToRender.filter((t) => t.isWord).map((tok, idx) => {
-              const isRhyming = tok.colorId > 0;
-              const hasColor = isRhyming ? tok.color : 'rgba(255, 255, 255, 0.4)';
-
-              return (
-                <Pressable
-                  key={idx}
-                  onPress={() => onSelectSyllable?.(tok)}
-                  style={[
-                    styles.syllablePill,
-                    isRhyming && {
-                      borderColor: tok.color,
-                      backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                    },
-                  ]}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Syllable ${tok.text}, Stress ${tok.stress}, Tap to inspect`}
-                >
-                  <View
-                    style={[
-                      styles.syllableColorDot,
-                      { backgroundColor: isRhyming ? tok.color : 'rgba(255, 255, 255, 0.2)' },
-                    ]}
-                  />
-                  <Text style={[styles.syllablePillText, { color: isRhyming ? tok.color : '#FFFFFF' }]}>
-                    {tok.text}
-                  </Text>
-                  {tok.stress === 1 && <Text style={styles.stressMarker}>*</Text>}
-                  {tok.stress === 2 && <Text style={styles.stressMarkerSecondary}>•</Text>}
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-        </View>
-      )}
     </View>
   );
 }
@@ -328,15 +299,26 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.4)',
   },
   syllableContainer: {
-    width: 44,
+    minWidth: 36,
     alignItems: 'flex-end',
     justifyContent: 'center',
     marginLeft: 'auto',
   },
+  syllableBadgePill: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    backgroundColor: 'transparent',
+  },
+  syllableBadgePillActive: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
   syllableText: {
-    fontSize: 14,
+    fontSize: 13,
     fontVariant: ['tabular-nums'],
-    textAlign: 'right',
+    textAlign: 'center',
   },
   syllableTextActive: {
     color: '#FFFFFF',

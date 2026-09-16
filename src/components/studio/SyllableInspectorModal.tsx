@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Modal,
   Platform,
@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 
-import { colorForFamily, FAMILY_COLORS } from '../../theme/theme';
+import { colorForFamily } from '../../theme/theme';
 import type { VerseRhymeToken } from '../../services/rhymeDetectionEngine';
 
 export interface SyllableOverride {
@@ -18,61 +18,99 @@ export interface SyllableOverride {
   gridPos?: number;
 }
 
-interface SyllableInspectorModalProps {
+export interface SyllableInspectorModalProps {
   visible: boolean;
-  syllable: VerseRhymeToken | null;
+  wordText?: string;
+  lineIndex?: number;
+  wordIndex?: number;
+  syllables?: VerseRhymeToken[];
+  syllable?: VerseRhymeToken | null;
+  initialSyllableIndex?: number;
   currentOverride?: SyllableOverride;
+  syllableOverrides?: Map<string, SyllableOverride>;
   onClose: () => void;
   onSaveOverride: (token: VerseRhymeToken, override: SyllableOverride) => void;
   onClearOverride: (token: VerseRhymeToken) => void;
 }
 
 const PERCEPTUAL_FAMILY_NAMES: Array<{ id: number; name: string; nucleus: string; example: string }> = [
-  { id: 1, name: 'R-Family', nucleus: 'ER', example: 'worst, curse, turnt' },
-  { id: 2, name: 'AY-Family', nucleus: 'EY', example: 'day, way, make' },
-  { id: 3, name: 'EE-Family', nucleus: 'IY', example: 'see, feel, deep' },
-  { id: 4, name: 'OW-Family', nucleus: 'OW', example: 'know, flow, cold' },
-  { id: 5, name: 'AH-Family', nucleus: 'AH', example: 'blood, love, run' },
-  { id: 6, name: 'AY2-Family', nucleus: 'AY', example: 'life, night, mind' },
-  { id: 7, name: 'OO-Family', nucleus: 'UW', example: 'true, move, cool' },
-  { id: 8, name: 'AW-Family', nucleus: 'AW', example: 'down, sound, out' },
-  { id: 9, name: 'AE-Family', nucleus: 'AE', example: 'back, track, trap' },
-  { id: 10, name: 'OH-Family', nucleus: 'AO', example: 'talk, call, thought' },
-  { id: 11, name: 'IH-Family', nucleus: 'IH', example: 'win, begin, think' },
-  { id: 12, name: 'EH-Family', nucleus: 'EH', example: 'head, dead, best' },
+  { id: 1, name: 'ER-Family (NURSE)', nucleus: 'ER', example: 'worst, curse, turnt, hurt' },
+  { id: 2, name: 'VR-Family (NEAR)', nucleus: 'IH/IY+R', example: 'persevere, adhere, clear, steer' },
+  { id: 3, name: 'AIR-Family (SQUARE)', nucleus: 'EH+R', example: 'rare, stare, care, there' },
+  { id: 4, name: 'AR-Family (START)', nucleus: 'AA+R', example: 'car, far, hard, smart' },
+  { id: 5, name: 'OR-Family (NORTH)', nucleus: 'AO+R', example: 'more, door, floor, store' },
+  { id: 6, name: 'EE-Family', nucleus: 'IY', example: 'see, feel, deep, dream' },
+  { id: 7, name: 'AY-Family', nucleus: 'AY', example: 'life, night, mind, rhyme' },
+  { id: 8, name: 'EY-Family', nucleus: 'EY', example: 'day, way, make, state' },
+  { id: 9, name: 'OH-Family', nucleus: 'OW', example: 'know, flow, cold, stone' },
+  { id: 10, name: 'OO-Family', nucleus: 'UW', example: 'true, move, cool, room' },
+  { id: 11, name: 'AH-Family', nucleus: 'AH/AA', example: 'blood, love, run, god' },
+  { id: 12, name: 'EH-Family', nucleus: 'EH', example: 'head, dead, best, step' },
+  { id: 13, name: 'IH-Family', nucleus: 'IH', example: 'win, begin, think, spit' },
+  { id: 14, name: 'AW-Family', nucleus: 'AW', example: 'down, sound, out, crown' },
+  { id: 15, name: 'AE-Family', nucleus: 'AE', example: 'back, track, trap, stand' },
+  { id: 16, name: 'OY-Family', nucleus: 'OY', example: 'coin, voice, boy, joy' },
 ];
 
 export function SyllableInspectorModal({
   visible,
+  wordText,
+  lineIndex = 0,
+  wordIndex = 0,
+  syllables,
   syllable,
+  initialSyllableIndex = 0,
   currentOverride,
+  syllableOverrides,
   onClose,
   onSaveOverride,
   onClearOverride,
 }: SyllableInspectorModalProps) {
-  if (!syllable) return null;
+  // Normalize word syllables list
+  const activeSyllablesList: VerseRhymeToken[] = React.useMemo(() => {
+    if (syllables && syllables.length > 0) return syllables;
+    if (syllable) return [syllable];
+    return [];
+  }, [syllables, syllable]);
 
-  const activeStress = currentOverride?.stress !== undefined ? currentOverride.stress : syllable.stress;
-  const activeColorId = currentOverride?.colorId !== undefined ? currentOverride.colorId : syllable.colorId;
-  const activeGridPos = currentOverride?.gridPos !== undefined ? currentOverride.gridPos : 0;
+  const [selectedSyllableIdx, setSelectedSyllableIdx] = useState<number>(initialSyllableIndex);
+
+  useEffect(() => {
+    if (visible) {
+      setSelectedSyllableIdx(Math.min(initialSyllableIndex, Math.max(0, activeSyllablesList.length - 1)));
+    }
+  }, [visible, initialSyllableIndex, activeSyllablesList.length]);
+
+  if (!visible || activeSyllablesList.length === 0) return null;
+
+  const currentToken = activeSyllablesList[selectedSyllableIdx] || activeSyllablesList[0];
+  const overrideKey = `${currentToken.lineIndex}:${currentToken.wordIndex}:${currentToken.syllableIndex}:${currentToken.text.trim().toLowerCase()}`;
+  const activeOverride = syllableOverrides?.get(overrideKey) || currentOverride;
+
+  const activeStress = activeOverride?.stress !== undefined ? activeOverride.stress : currentToken.stress;
+  const activeColorId = activeOverride?.colorId !== undefined ? activeOverride.colorId : currentToken.colorId;
+  const activeGridPos = activeOverride?.gridPos !== undefined ? activeOverride.gridPos : (currentToken.gridPosition || 0);
+
+  const displayWord = wordText || currentToken.word || currentToken.text;
+  const totalWordSyllables = activeSyllablesList.length;
 
   const handleSelectFamily = (familyId: number) => {
-    onSaveOverride(syllable, {
-      ...currentOverride,
+    onSaveOverride(currentToken, {
+      ...activeOverride,
       colorId: familyId === activeColorId ? 0 : familyId,
     });
   };
 
   const handleSelectStress = (stressLevel: number) => {
-    onSaveOverride(syllable, {
-      ...currentOverride,
+    onSaveOverride(currentToken, {
+      ...activeOverride,
       stress: stressLevel,
     });
   };
 
   const handleSelectGrid = (gridStep: number) => {
-    onSaveOverride(syllable, {
-      ...currentOverride,
+    onSaveOverride(currentToken, {
+      ...activeOverride,
       gridPos: gridStep,
     });
   };
@@ -86,12 +124,20 @@ export function SyllableInspectorModal({
     >
       <Pressable style={styles.backdrop} onPress={onClose}>
         <Pressable style={styles.sheetContainer} onPress={(e) => e.stopPropagation()}>
-          {/* Header */}
+          {/* Header: Word & Line context */}
           <View style={styles.headerRow}>
-            <View>
-              <Text style={styles.sheetTitle}>Syllable Inspector</Text>
-              <Text style={styles.syllablePreview}>
-                "{syllable.text.trim()}" in <Text style={styles.wordHighlight}>{syllable.word}</Text>
+            <View style={styles.headerTitleGroup}>
+              <View style={styles.badgeRow}>
+                <Text style={styles.sheetTitle}>WORD INSPECTOR</Text>
+                <View style={styles.linePill}>
+                  <Text style={styles.linePillText}>LINE {(currentToken.lineIndex ?? lineIndex) + 1}</Text>
+                </View>
+              </View>
+              <Text style={styles.wordHeading}>
+                "{displayWord.trim()}"
+                <Text style={styles.syllableCountSubtext}>
+                  {' '}• {totalWordSyllables} {totalWordSyllables === 1 ? 'Syllable' : 'Syllables'}
+                </Text>
               </Text>
             </View>
             <Pressable
@@ -105,9 +151,61 @@ export function SyllableInspectorModal({
           </View>
 
           <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
-            {/* 1. Stress Placement Control */}
+            {/* Step 1: Individual Manual Syllable Selector */}
             <View style={styles.sectionBlock}>
-              <Text style={styles.sectionLabel}>METRIC STRESS PLACEMENT</Text>
+              <Text style={styles.sectionLabel}>
+                SELECT INDIVIDUAL SYLLABLE TO IDENTIFY & TUNE ({activeSyllablesList.length} TOTAL)
+              </Text>
+              <View style={styles.syllableChipsRow}>
+                {activeSyllablesList.map((tok, idx) => {
+                  const isSelected = selectedSyllableIdx === idx;
+                  const tokKey = `${tok.lineIndex}:${tok.wordIndex}:${tok.syllableIndex}:${tok.text.trim().toLowerCase()}`;
+                  const tokOv = syllableOverrides?.get(tokKey);
+                  const tokColorId = tokOv?.colorId !== undefined ? tokOv.colorId : tok.colorId;
+                  const tokStress = tokOv?.stress !== undefined ? tokOv.stress : tok.stress;
+                  const tokColor = tokColorId > 0 ? colorForFamily(tokColorId) : '#FFFFFF';
+                  const isRhyming = tokColorId > 0;
+
+                  return (
+                    <Pressable
+                      key={idx}
+                      onPress={() => setSelectedSyllableIdx(idx)}
+                      style={[
+                        styles.syllableSelectPill,
+                        isSelected && styles.syllableSelectPillActive,
+                        isRhyming && { borderColor: tokColor },
+                      ]}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Syllable ${tok.text}, tap to inspect`}
+                    >
+                      <View
+                        style={[
+                          styles.syllableSelectDot,
+                          { backgroundColor: isRhyming ? tokColor : 'rgba(255, 255, 255, 0.25)' },
+                        ]}
+                      />
+                      <Text
+                        style={[
+                          styles.syllableSelectPillText,
+                          { color: isRhyming ? tokColor : '#FFFFFF' },
+                          isSelected && styles.syllableSelectPillTextActive,
+                        ]}
+                      >
+                        {tok.text}
+                      </Text>
+                      {tokStress === 1 && <Text style={styles.stressBadge}>*</Text>}
+                      {tokStress === 2 && <Text style={styles.stressBadgeSecondary}>•</Text>}
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+
+            {/* Step 2: Metric Stress Placement */}
+            <View style={styles.sectionBlock}>
+              <Text style={styles.sectionLabel}>
+                METRIC STRESS PLACEMENT FOR "{currentToken.text.trim()}"
+              </Text>
               <View style={styles.stressButtonsRow}>
                 <Pressable
                   onPress={() => handleSelectStress(1)}
@@ -147,7 +245,7 @@ export function SyllableInspectorModal({
               </View>
             </View>
 
-            {/* 2. 16-Step Bar Grid Position */}
+            {/* Step 3: 16-Step Bar Grid Alignment */}
             <View style={styles.sectionBlock}>
               <Text style={styles.sectionLabel}>16-POSITION BAR GRID ALIGNMENT</Text>
               <Text style={styles.sectionSublabel}>
@@ -185,12 +283,12 @@ export function SyllableInspectorModal({
               </View>
             </View>
 
-            {/* 3. 12 Perceptual Sonic Families */}
+            {/* Step 4: 12+ Perceptual Sonic Rhyme Families */}
             <View style={styles.sectionBlock}>
               <View style={styles.familyHeaderRow}>
-                <Text style={styles.sectionLabel}>12 PERCEPTUAL RHYME FAMILIES</Text>
+                <Text style={styles.sectionLabel}>PERCEPTUAL RHYME FAMILIES & WELLS SETS</Text>
                 {activeColorId > 0 && (
-                  <Pressable onPress={() => onSaveOverride(syllable, { ...currentOverride, colorId: 0 })}>
+                  <Pressable onPress={() => onSaveOverride(currentToken, { ...activeOverride, colorId: 0 })}>
                     <Text style={styles.clearFamilyText}>Clear Family</Text>
                   </Pressable>
                 )}
@@ -213,7 +311,7 @@ export function SyllableInspectorModal({
                       <View style={[styles.familyColorDot, { backgroundColor: famColor }]} />
                       <View style={styles.familyTextGroup}>
                         <Text style={[styles.familyNameText, isFamActive && { color: famColor, fontWeight: '700' }]}>
-                          {fam.name} ({fam.nucleus})
+                          {fam.name}
                         </Text>
                         <Text style={styles.familyExamplesText} numberOfLines={1}>
                           {fam.example}
@@ -226,15 +324,14 @@ export function SyllableInspectorModal({
             </View>
 
             {/* Clear All Overrides Action */}
-            {currentOverride && (
+            {activeOverride && (
               <Pressable
                 onPress={() => {
-                  onClearOverride(syllable);
-                  onClose();
+                  onClearOverride(currentToken);
                 }}
                 style={styles.resetButton}
               >
-                <Text style={styles.resetButtonText}>Reset to Natural Engine Detection</Text>
+                <Text style={styles.resetButtonText}>Reset Syllable to Natural Engine Detection</Text>
               </Pressable>
             )}
           </ScrollView>
@@ -247,7 +344,7 @@ export function SyllableInspectorModal({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
     justifyContent: 'flex-end',
   },
   sheetContainer: {
@@ -269,25 +366,46 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.08)',
   },
+  headerTitleGroup: {
+    flex: 1,
+  },
+  badgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   sheetTitle: {
-    fontSize: 16,
+    fontSize: 12,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: '#E5A50A',
     textTransform: 'uppercase',
     letterSpacing: 0.8,
   },
-  syllablePreview: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.6)',
-    marginTop: 2,
+  linePill: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
   },
-  wordHighlight: {
-    color: '#FFFFFF',
+  linePillText: {
+    fontSize: 10,
     fontWeight: '700',
+    color: 'rgba(255, 255, 255, 0.6)',
+  },
+  wordHeading: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    marginTop: 4,
+  },
+  syllableCountSubtext: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: 'rgba(255, 255, 255, 0.5)',
   },
   closeButton: {
     paddingHorizontal: 14,
-    paddingVertical: 6,
+    paddingVertical: 8,
     borderRadius: 8,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
@@ -308,12 +426,56 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: 'rgba(255, 255, 255, 0.45)',
     letterSpacing: 0.8,
-    marginBottom: 8,
+    marginBottom: 10,
   },
   sectionSublabel: {
     fontSize: 11,
     color: 'rgba(255, 255, 255, 0.35)',
     marginBottom: 10,
+  },
+  syllableChipsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  syllableSelectPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    gap: 6,
+  },
+  syllableSelectPillActive: {
+    borderColor: '#E5A50A',
+    backgroundColor: 'rgba(229, 165, 10, 0.15)',
+    transform: [{ scale: 1.04 }],
+  },
+  syllableSelectDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  syllableSelectPillText: {
+    fontSize: 15,
+    fontWeight: '700',
+    letterSpacing: -0.2,
+  },
+  syllableSelectPillTextActive: {
+    fontWeight: '900',
+  },
+  stressBadge: {
+    fontSize: 12,
+    fontWeight: '900',
+    color: '#E5A50A',
+  },
+  stressBadgeSecondary: {
+    fontSize: 12,
+    fontWeight: '900',
+    color: 'rgba(255, 255, 255, 0.5)',
   },
   stressButtonsRow: {
     flexDirection: 'row',

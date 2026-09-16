@@ -196,10 +196,44 @@ export function CadencePaperStudio({
     return list;
   }, [sections]);
 
-  // Syllable Manual Overrides & Inspector Modal State
-  const [inspectorSyllable, setInspectorSyllable] = useState<VerseRhymeToken | null>(null);
-  const [inspectorVisible, setInspectorVisible] = useState<boolean>(false);
+  // Word & Syllable Manual Overrides & Inspector Modal State
+  const [inspectorModalData, setInspectorModalData] = useState<{
+    visible: boolean;
+    wordText: string;
+    lineIndex: number;
+    wordIndex: number;
+    syllables: VerseRhymeToken[];
+    initialSyllableIndex: number;
+  }>({
+    visible: false,
+    wordText: '',
+    lineIndex: 0,
+    wordIndex: 0,
+    syllables: [],
+    initialSyllableIndex: 0,
+  });
+  const [isEditingBlankText, setIsEditingBlankText] = useState<boolean>(false);
   const [syllableOverrides, setSyllableOverrides] = useState<Map<string, SyllableOverride>>(new Map());
+
+  const handleOpenWordInspector = useCallback(
+    (
+      wordText: string,
+      lineIndex: number,
+      wordIndex: number,
+      syllables: VerseRhymeToken[],
+      initialSyllableIndex: number = 0,
+    ) => {
+      setInspectorModalData({
+        visible: true,
+        wordText,
+        lineIndex,
+        wordIndex,
+        syllables,
+        initialSyllableIndex,
+      });
+    },
+    [],
+  );
 
   const handleSaveSyllableOverride = (tok: VerseRhymeToken, override: SyllableOverride) => {
     const key = `${tok.lineIndex}:${tok.wordIndex}:${tok.syllableIndex}:${tok.text.trim().toLowerCase()}`;
@@ -736,70 +770,82 @@ export function CadencePaperStudio({
         {/* 4. Canvas Content: Single Blank Field (Bars Off) vs Structured Measures (Bars On) */}
         {!showBars ? (
           <View style={styles.blankCanvasContainer}>
-            <TextInput
-              ref={blankInputRef}
-              value={blankText}
-              onChangeText={handleBlankTextChange}
-              multiline
-              scrollEnabled={false}
-              autoCapitalize="sentences"
-              autoCorrect={false}
-              placeholder="Start writing freely..."
-              placeholderTextColor="rgba(255, 255, 255, 0.25)"
-              style={[
-                styles.blankTextInput,
-                Platform.OS === 'web' ? ({ outlineStyle: 'none' } as any) : null,
-              ]}
-            />
+            {/* Interactive Lyrics View (Press Any Word to Pop Up Word & Syllable Inspector) */}
+            {showRhymeMap && blankText.trim().length > 0 && blankRhymeAnalysis && !isEditingBlankText ? (
+              <View style={styles.interactiveLyricsSheet}>
+                <View style={styles.interactiveLyricsHeader}>
+                  <Text style={styles.interactiveLyricsInstruction}>
+                    TAP ANY WORD TO INSPECT & TUNE SYLLABLES
+                  </Text>
+                  <Pressable
+                    onPress={() => {
+                      setIsEditingBlankText(true);
+                      setTimeout(() => blankInputRef.current?.focus(), 50);
+                    }}
+                    style={styles.editModeSwitchBtn}
+                    accessibilityRole="button"
+                    accessibilityLabel="Edit lyrics text"
+                  >
+                    <Text style={styles.editModeSwitchBtnText}>Edit Text</Text>
+                  </Pressable>
+                </View>
 
-            {/* Tactile Rhyme & Syllable Board for Blank Field (Rendered when Rhyme Map is Active) */}
-            {showRhymeMap && blankText.trim().length > 0 && blankRhymeAnalysis && (
-              <View style={styles.blankSyllableBoard}>
-                <Text style={styles.blankSyllableBoardTitle}>SYLLABLE & RHYME MAP</Text>
-                {blankRhymeAnalysis.lineSyllables.map((tokens, lineIdx) => {
-                  const syllablesOnly = tokens.filter((t) => t.isWord);
-                  if (syllablesOnly.length === 0) return null;
+                {blankRhymeAnalysis.lineTokens.map((tokens, lineIdx) => {
+                  const lineSylls = blankRhymeAnalysis.lineSyllables[lineIdx] || [];
+                  const hasContent = tokens.some((t) => t.isWord);
+                  if (!hasContent && tokens.length === 0) {
+                    return <View key={lineIdx} style={styles.interactiveEmptyLine} />;
+                  }
 
                   return (
-                    <View key={lineIdx} style={styles.blankSyllableLineRow}>
-                      <Text style={styles.blankLineNumberLabel}>{lineIdx + 1}</Text>
-                      <View style={styles.blankSyllableChipsGroup}>
-                        {syllablesOnly.map((tok, tokIdx) => {
+                    <View key={lineIdx} style={styles.interactiveLyricLine}>
+                      <Text style={styles.interactiveLineNumber}>{lineIdx + 1}</Text>
+                      <View style={styles.interactiveWordsRow}>
+                        {tokens.map((tok, tokIdx) => {
+                          if (!tok.isWord) {
+                            return (
+                              <Text key={tokIdx} style={styles.interactiveWhitespace}>
+                                {tok.text}
+                              </Text>
+                            );
+                          }
+
+                          const wordSyllables = lineSylls.filter((s) => s.wordIndex === tok.wordIndex);
                           const isRhyming = tok.colorId > 0;
+                          const wordColor = isRhyming ? tok.color : '#FFFFFF';
 
                           return (
                             <Pressable
                               key={tokIdx}
                               onPress={() => {
-                                setInspectorSyllable(tok);
-                                setInspectorVisible(true);
+                                handleOpenWordInspector(
+                                  tok.word || tok.text,
+                                  lineIdx,
+                                  tok.wordIndex ?? 0,
+                                  wordSyllables.length > 0 ? wordSyllables : [tok],
+                                  0,
+                                );
                               }}
                               style={[
-                                styles.blankSyllablePill,
+                                styles.interactiveWordPressable,
                                 isRhyming && {
-                                  borderColor: tok.color,
-                                  backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                                  borderBottomColor: tok.color,
+                                  borderBottomWidth: 1.5,
                                 },
                               ]}
+                              hitSlop={{ top: 6, bottom: 6, left: 2, right: 2 }}
                               accessibilityRole="button"
-                              accessibilityLabel={`Syllable ${tok.text}, Stress ${tok.stress}, Tap to inspect`}
+                              accessibilityLabel={`Word ${tok.text}, tap to inspect syllables`}
                             >
-                              <View
-                                style={[
-                                  styles.blankSyllableColorDot,
-                                  { backgroundColor: isRhyming ? tok.color : 'rgba(255, 255, 255, 0.2)' },
-                                ]}
-                              />
                               <Text
                                 style={[
-                                  styles.blankSyllablePillText,
-                                  { color: isRhyming ? tok.color : '#FFFFFF' },
+                                  styles.interactiveWordText,
+                                  { color: wordColor },
+                                  isRhyming && styles.interactiveWordTextRhyming,
                                 ]}
                               >
                                 {tok.text}
                               </Text>
-                              {tok.stress === 1 && <Text style={styles.stressMarker}>*</Text>}
-                              {tok.stress === 2 && <Text style={styles.stressMarkerSecondary}>•</Text>}
                             </Pressable>
                           );
                         })}
@@ -807,6 +853,37 @@ export function CadencePaperStudio({
                     </View>
                   );
                 })}
+              </View>
+            ) : (
+              <View style={styles.blankInputWrapper}>
+                {showRhymeMap && blankText.trim().length > 0 && (
+                  <View style={styles.blankInputNoticeRow}>
+                    <Pressable
+                      onPress={() => setIsEditingBlankText(false)}
+                      style={styles.doneEditingNoticeBtn}
+                      accessibilityRole="button"
+                    >
+                      <Text style={styles.doneEditingNoticeBtnText}>
+                        Done Editing • View & Tap Rhyme Words ▾
+                      </Text>
+                    </Pressable>
+                  </View>
+                )}
+                <TextInput
+                  ref={blankInputRef}
+                  value={blankText}
+                  onChangeText={handleBlankTextChange}
+                  multiline
+                  scrollEnabled={false}
+                  autoCapitalize="sentences"
+                  autoCorrect={false}
+                  placeholder="Start writing freely..."
+                  placeholderTextColor="rgba(255, 255, 255, 0.25)"
+                  style={[
+                    styles.blankTextInput,
+                    Platform.OS === 'web' ? ({ outlineStyle: 'none' } as any) : null,
+                  ]}
+                />
               </View>
             )}
           </View>
@@ -914,10 +991,19 @@ export function CadencePaperStudio({
                                 onGutterPress={() =>
                                   handleOpenPhraseSelector(sec.id, block.blockIndex)
                                 }
-                                onSelectSyllable={(tok) => {
-                                  setInspectorSyllable(tok);
-                                  setInspectorVisible(true);
-                                }}
+                                 onSelectSyllable={(tok) => {
+                                   const barTokens = barTokensMap.get(`${sec.id}:${block.blockIndex}:${bar.barIndex}`) || [];
+                                   const wordSyllables = barTokens.filter(
+                                     (s) => s.wordIndex === tok.wordIndex && s.lineIndex === tok.lineIndex,
+                                   );
+                                   handleOpenWordInspector(
+                                     tok.word || tok.text,
+                                     tok.lineIndex ?? 0,
+                                     tok.wordIndex ?? 0,
+                                     wordSyllables.length > 0 ? wordSyllables : [tok],
+                                     tok.syllableIndex ?? 0,
+                                   );
+                                 }}
                               />
                             );
                           })}
@@ -1003,20 +1089,17 @@ export function CadencePaperStudio({
         onClose={() => setPhraseModal((prev) => ({ ...prev, visible: false }))}
       />
 
-      {/* Tactile Syllable Inspector & Manual Override Modal */}
+      {/* Tactile Word & Syllable Inspector & Manual Override Modal */}
       <SyllableInspectorModal
-        visible={inspectorVisible}
-        syllable={inspectorSyllable}
-        currentOverride={
-          inspectorSyllable
-            ? syllableOverrides.get(
-                `${inspectorSyllable.lineIndex}:${inspectorSyllable.wordIndex}:${inspectorSyllable.syllableIndex}:${inspectorSyllable.text.trim().toLowerCase()}`
-              )
-            : undefined
-        }
+        visible={inspectorModalData.visible}
+        wordText={inspectorModalData.wordText}
+        lineIndex={inspectorModalData.lineIndex}
+        wordIndex={inspectorModalData.wordIndex}
+        syllables={inspectorModalData.syllables}
+        initialSyllableIndex={inspectorModalData.initialSyllableIndex}
+        syllableOverrides={syllableOverrides}
         onClose={() => {
-          setInspectorVisible(false);
-          setInspectorSyllable(null);
+          setInspectorModalData((prev) => ({ ...prev, visible: false }));
         }}
         onSaveOverride={handleSaveSyllableOverride}
         onClearOverride={handleClearSyllableOverride}
@@ -1308,66 +1391,99 @@ const styles = StyleSheet.create({
     }),
     textAlignVertical: 'top',
   },
-  blankSyllableBoard: {
-    marginTop: 24,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+  interactiveLyricsSheet: {
+    paddingVertical: 8,
   },
-  blankSyllableBoardTitle: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: 'rgba(255, 255, 255, 0.45)',
-    letterSpacing: 0.8,
-    marginBottom: 12,
-  },
-  blankSyllableLineRow: {
+  interactiveLyricsHeader: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
-    gap: 10,
+    marginBottom: 16,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
   },
-  blankLineNumberLabel: {
-    width: 24,
-    fontSize: 12,
-    fontWeight: '700',
-    color: 'rgba(255, 255, 255, 0.35)',
-    fontVariant: ['tabular-nums'],
-  },
-  blankSyllableChipsGroup: {
-    flex: 1,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-  },
-  blankSyllablePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    gap: 4,
-  },
-  blankSyllableColorDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  blankSyllablePillText: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  stressMarker: {
+  interactiveLyricsInstruction: {
     fontSize: 10,
     fontWeight: '800',
     color: '#E5A50A',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
   },
-  stressMarkerSecondary: {
-    fontSize: 10,
+  editModeSwitchBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  editModeSwitchBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  interactiveLyricLine: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+  },
+  interactiveLineNumber: {
+    width: 28,
+    fontSize: 12,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.3)',
+    marginTop: 3,
+    fontVariant: ['tabular-nums'],
+  },
+  interactiveWordsRow: {
+    flex: 1,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+  },
+  interactiveWhitespace: {
+    fontSize: 16,
+    lineHeight: 26,
+    color: 'transparent',
+  },
+  interactiveWordPressable: {
+    paddingVertical: 2,
+    paddingHorizontal: 4,
+    borderRadius: 4,
+    marginRight: 4,
+    marginBottom: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+  },
+  interactiveWordText: {
+    fontSize: 16,
+    lineHeight: 22,
+    fontWeight: '600',
+  },
+  interactiveWordTextRhyming: {
     fontWeight: '800',
-    color: 'rgba(255, 255, 255, 0.4)',
+  },
+  interactiveEmptyLine: {
+    height: 16,
+  },
+  blankInputWrapper: {
+    flex: 1,
+  },
+  blankInputNoticeRow: {
+    marginBottom: 12,
+    alignItems: 'flex-start',
+  },
+  doneEditingNoticeBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: 'rgba(229, 165, 10, 0.15)',
+    borderWidth: 1,
+    borderColor: '#E5A50A',
+  },
+  doneEditingNoticeBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#E5A50A',
   },
 });
