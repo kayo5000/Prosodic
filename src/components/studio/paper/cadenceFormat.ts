@@ -483,6 +483,128 @@ export function updateSectionsFromLyrics(
   return reindexSectionsGlobalBars(updated);
 }
 
+/**
+ * Result structure returned by pasteLinesIntoSections.
+ */
+export interface PasteResult {
+  sections: import('./types').PaperSection[];
+  finalFocus: {
+    sectionId: string;
+    blockIndex: number;
+    barIndex: number;
+  };
+}
 
+/**
+ * Distributes multiline pasted text sequentially across bars and blocks in a section.
+ * If lines exceed current bars or blocks, creates new blocks automatically.
+ * Reindexes all global bar numbers across the song.
+ */
+export function pasteLinesIntoSections(
+  sections: import('./types').PaperSection[],
+  targetSectionId: string,
+  targetBlockIndex: number,
+  targetBarIndex: number,
+  multilineText: string,
+): PasteResult {
+  const rawLines = multilineText.split(/\r\n|\r|\n/);
 
+  if (rawLines.length <= 1) {
+    const text = rawLines[0] !== undefined ? rawLines[0] : multilineText;
+    const updated = sections.map((sec) => {
+      if (sec.id !== targetSectionId) return sec;
+      return {
+        ...sec,
+        blocks: updateBarText(sec.blocks, targetBlockIndex, targetBarIndex, text),
+      };
+    });
+    return {
+      sections: reindexSectionsGlobalBars(updated),
+      finalFocus: {
+        sectionId: targetSectionId,
+        blockIndex: targetBlockIndex,
+        barIndex: targetBarIndex,
+      },
+    };
+  }
 
+  // Deep clone sections to allow safe block expansion
+  const updatedSections: import('./types').PaperSection[] = sections.map((sec) => ({
+    ...sec,
+    blocks: sec.blocks.map((b) => ({
+      ...b,
+      bars: b.bars.map((bar) => ({
+        ...bar,
+        spans: [...bar.spans.map((s) => ({ ...s }))],
+      })),
+    })),
+  }));
+
+  const sec = updatedSections.find((s) => s.id === targetSectionId);
+  if (!sec) {
+    return {
+      sections,
+      finalFocus: {
+        sectionId: targetSectionId,
+        blockIndex: targetBlockIndex,
+        barIndex: targetBarIndex,
+      },
+    };
+  }
+
+  let currentBlockIdx = targetBlockIndex;
+  let currentBarIdx = targetBarIndex;
+
+  for (let i = 0; i < rawLines.length; i++) {
+    const lineText = rawLines[i];
+
+    // Find current block or create new one
+    let block = sec.blocks.find((b) => b.blockIndex === currentBlockIdx);
+    if (!block) {
+      const newBlock = createEmptyCadenceBlock(currentBlockIdx, 0);
+      sec.blocks.push(newBlock);
+      block = newBlock;
+    }
+
+    // Find or create bar in current block
+    let bar = block.bars.find((b) => b.barIndex === currentBarIdx);
+    if (!bar) {
+      bar = {
+        id: `block-${currentBlockIdx}-bar-${currentBarIdx}-${Date.now()}-${i}`,
+        barIndex: currentBarIdx,
+        globalBarNumber: 0,
+        spans: [{ text: lineText }],
+        rawText: lineText,
+        syllableCount: countLineSyllables(lineText),
+      };
+      block.bars.push(bar);
+    } else {
+      bar.rawText = lineText;
+      bar.spans = [{ text: lineText }];
+      bar.syllableCount = countLineSyllables(lineText);
+    }
+
+    // If last line, break before advancing cursor
+    if (i === rawLines.length - 1) {
+      break;
+    }
+
+    // Advance to next bar
+    if (currentBarIdx < block.bars.length) {
+      currentBarIdx++;
+    } else {
+      currentBlockIdx++;
+      currentBarIdx = 1;
+    }
+  }
+
+  const reindexed = reindexSectionsGlobalBars(updatedSections);
+  return {
+    sections: reindexed,
+    finalFocus: {
+      sectionId: targetSectionId,
+      blockIndex: currentBlockIdx,
+      barIndex: currentBarIdx,
+    },
+  };
+}

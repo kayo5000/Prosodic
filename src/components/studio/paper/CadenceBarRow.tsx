@@ -2,7 +2,6 @@ import React, { useRef } from 'react';
 import {
   Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -20,12 +19,13 @@ interface CadenceBarRowProps {
   showBarNumber?: boolean;
   showRhymeMap?: boolean;
   rhymeTokens?: VerseRhymeToken[];
+  syllableTokens?: VerseRhymeToken[];
   onFocus: () => void;
   onChangeText: (newText: string) => void;
   onSubmitEditing: () => void;
   onBackspaceEmpty?: () => void;
   onGutterPress?: () => void;
-  onSelectSyllable?: (token: VerseRhymeToken) => void;
+  onSelectSyllable?: (token: VerseRhymeToken, allWordSyllables?: VerseRhymeToken[]) => void;
 }
 
 export function CadenceBarRow({
@@ -35,6 +35,7 @@ export function CadenceBarRow({
   showBarNumber = true,
   showRhymeMap = true,
   rhymeTokens,
+  syllableTokens,
   onFocus,
   onChangeText,
   onSubmitEditing,
@@ -55,9 +56,9 @@ export function CadenceBarRow({
     fontWeight: isBold ? '700' : '500',
   };
 
-  // Render vetted rhyme tokens or fall back
+  // Render vetted rhyme tokens when available
   const tokensToRender = React.useMemo(() => {
-    if (!showRhymeMap || !bar.rawText) return [];
+    if (!showRhymeMap || !bar.rawText.trim()) return [];
     if (rhymeTokens && rhymeTokens.length > 0) return rhymeTokens;
     return [];
   }, [showRhymeMap, bar.rawText, rhymeTokens]);
@@ -76,6 +77,20 @@ export function CadenceBarRow({
       onBackspaceEmpty();
     }
   };
+
+  // Intercept multiline paste on Web so linebreaks are never flattened
+  const handlePaste = (e: any) => {
+    const clipboardText =
+      e?.clipboardData?.getData?.('text/plain') ||
+      e?.clipboardData?.getData?.('text') ||
+      e?.nativeEvent?.text;
+    if (clipboardText && (clipboardText.includes('\n') || clipboardText.includes('\r'))) {
+      e.preventDefault?.();
+      onChangeText(clipboardText);
+    }
+  };
+
+  const shouldRenderRhymeChips = showRhymeMap && !isActive && tokensToRender.length > 0;
 
   return (
     <View style={styles.barOuterWrapper}>
@@ -124,26 +139,87 @@ export function CadenceBarRow({
             </View>
           )}
 
-          {/* Lyric Input Field: Crisp Native High-Contrast Text Input */}
+          {/* Lyric Input Field / Interactive Rhyme Chips */}
           <View style={styles.inputWrapper}>
-            <TextInput
-              ref={inputRef}
-              value={bar.rawText}
-              onChangeText={onChangeText}
-              onFocus={onFocus}
-              onSubmitEditing={onSubmitEditing}
-              onKeyPress={handleKeyPress}
-              blurOnSubmit={false}
-              returnKeyType="next"
-              autoCorrect={false}
-              autoCapitalize="sentences"
-              placeholder=""
-              style={[
-                styles.textInput,
-                textStyle,
-                Platform.OS === 'web' ? ({ outlineStyle: 'none' } as any) : null,
-              ]}
-            />
+            {shouldRenderRhymeChips ? (
+              <Pressable
+                onPress={() => {
+                  onFocus();
+                  inputRef.current?.focus();
+                }}
+                style={styles.interactiveWordRow}
+              >
+                {tokensToRender.map((tok, tIdx) => {
+                  if (!tok.isWord) {
+                    return (
+                      <Text
+                        key={`space-${tIdx}`}
+                        style={[styles.wordChipText, styles.whitespaceText, textStyle]}
+                      >
+                        {tok.text}
+                      </Text>
+                    );
+                  }
+
+                  const isRhyming = tok.colorId > 0;
+                  const wordColor = isRhyming ? tok.color : '#FFFFFF';
+
+                  return (
+                    <Pressable
+                      key={`tok-${tIdx}-${tok.wordIndex}`}
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        const wordSylls = syllableTokens?.filter(
+                          (s) => s.wordIndex === tok.wordIndex && s.lineIndex === tok.lineIndex,
+                        );
+                        onSelectSyllable?.(tok, wordSylls);
+                      }}
+                      hitSlop={{ top: 8, bottom: 8, left: 2, right: 2 }}
+                      style={[
+                        styles.interactiveWordPressable,
+                        isRhyming && {
+                          borderBottomColor: tok.color,
+                          borderBottomWidth: 2,
+                        },
+                      ]}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Word ${tok.text}, tap to inspect syllables and annunciation`}
+                    >
+                      <Text
+                        style={[
+                          styles.wordChipText,
+                          textStyle,
+                          { color: wordColor },
+                          isRhyming && styles.interactiveWordTextRhyming,
+                        ]}
+                      >
+                        {tok.text}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </Pressable>
+            ) : (
+              <TextInput
+                ref={inputRef}
+                value={bar.rawText}
+                onChangeText={onChangeText}
+                onFocus={onFocus}
+                onSubmitEditing={onSubmitEditing}
+                onKeyPress={handleKeyPress}
+                {...(Platform.OS === 'web' ? ({ onPaste: handlePaste } as any) : {})}
+                blurOnSubmit={false}
+                returnKeyType="next"
+                autoCorrect={false}
+                autoCapitalize="sentences"
+                placeholder=""
+                style={[
+                  styles.textInput,
+                  textStyle,
+                  Platform.OS === 'web' ? ({ outlineStyle: 'none' } as any) : null,
+                ]}
+              />
+            )}
           </View>
 
           {/* Right Repeat Barline Marker •| */}
@@ -159,7 +235,15 @@ export function CadenceBarRow({
           onPress={(e) => {
             e.stopPropagation();
             if (tokensToRender.length > 0 && onSelectSyllable) {
-              onSelectSyllable(tokensToRender[0]);
+              const firstRhymeTok = tokensToRender.find((t) => t.isWord && t.colorId > 0) || tokensToRender.find((t) => t.isWord);
+              if (firstRhymeTok) {
+                const wordSylls = syllableTokens?.filter(
+                  (s) => s.wordIndex === firstRhymeTok.wordIndex && s.lineIndex === firstRhymeTok.lineIndex,
+                );
+                onSelectSyllable(firstRhymeTok, wordSylls);
+              } else {
+                onGutterPress?.();
+              }
             } else {
               onGutterPress?.();
             }
@@ -257,46 +341,35 @@ const styles = StyleSheet.create({
       default: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     }),
   },
-  syllableRibbonContainer: {
-    paddingLeft: 46,
-    paddingRight: 12,
-    paddingBottom: 6,
-  },
-  syllableRibbonScroll: {
+  interactiveWordRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
-    gap: 6,
-  },
-  syllablePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 3,
+    paddingVertical: 6,
     paddingHorizontal: 8,
-    borderRadius: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    gap: 4,
   },
-  syllableColorDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+  interactiveWordPressable: {
+    paddingVertical: 1,
+    paddingHorizontal: 1,
+    borderRadius: 2,
+    marginVertical: 1,
   },
-  syllablePillText: {
-    fontSize: 12,
+  wordChipText: {
+    fontSize: 16,
+    lineHeight: 22,
     fontWeight: '600',
+    fontFamily: Platform.select({
+      ios: 'System',
+      default: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    }),
+  },
+  interactiveWordTextRhyming: {
+    fontWeight: '700',
     letterSpacing: -0.2,
   },
-  stressMarker: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: '#E5A50A',
-  },
-  stressMarkerSecondary: {
-    fontSize: 10,
-    fontWeight: '800',
+  whitespaceText: {
     color: 'rgba(255, 255, 255, 0.4)',
+    fontWeight: '400',
   },
   syllableContainer: {
     minWidth: 36,
@@ -333,3 +406,4 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 });
+

@@ -17,6 +17,7 @@ import {
   createInitialSongState,
   createSection,
   lyricsToCadenceBlocks,
+  pasteLinesIntoSections,
   reindexSectionsGlobalBars,
   sectionsToLyrics,
   setBlockBarCount,
@@ -244,11 +245,14 @@ export function CadencePaperStudio({
   }, [showRhymeMap, flatBarLines, syllableOverrides]);
 
   const barTokensMap = useMemo(() => {
-    const map = new Map<string, VerseRhymeToken[]>();
+    const map = new Map<string, { words: VerseRhymeToken[]; syllables: VerseRhymeToken[] }>();
     if (!verseRhymeAnalysis) return map;
     flatBarLines.forEach((b, idx) => {
       const key = `${b.sectionId}:${b.blockIndex}:${b.barIndex}`;
-      map.set(key, verseRhymeAnalysis.lineSyllables[idx] || []);
+      map.set(key, {
+        words: verseRhymeAnalysis.lineTokens[idx] || [],
+        syllables: verseRhymeAnalysis.lineSyllables[idx] || [],
+      });
     });
     return map;
   }, [flatBarLines, verseRhymeAnalysis]);
@@ -475,18 +479,32 @@ export function CadencePaperStudio({
     onLyricsChange?.(sectionsToLyrics(updatedSections));
   }, [movements, sections, metadata.defaultBpm, pushHistory, onLyricsChange]);
 
-  // Update text of a bar in a section
+  // Update text of a bar in a section (with multi-line paste distribution across bars)
   const handleBarTextChange = useCallback(
     (sectionId: string, blockIndex: number, barIndex: number, newText: string) => {
-      const updatedSections = sections.map((sec) => {
-        if (sec.id !== sectionId) return sec;
-        const updatedBlocks = updateBarText(sec.blocks, blockIndex, barIndex, newText);
-        return { ...sec, blocks: updatedBlocks };
-      });
+      if (newText.includes('\n') || newText.includes('\r')) {
+        const { sections: newSections, finalFocus } = pasteLinesIntoSections(
+          sections,
+          sectionId,
+          blockIndex,
+          barIndex,
+          newText,
+        );
+        setSections(newSections);
+        pushHistory(newSections);
+        setActiveFocus(finalFocus);
+        onLyricsChange?.(sectionsToLyrics(newSections));
+      } else {
+        const updatedSections = sections.map((sec) => {
+          if (sec.id !== sectionId) return sec;
+          const updatedBlocks = updateBarText(sec.blocks, blockIndex, barIndex, newText);
+          return { ...sec, blocks: updatedBlocks };
+        });
 
-      setSections(updatedSections);
-      pushHistory(updatedSections);
-      onLyricsChange?.(sectionsToLyrics(updatedSections));
+        setSections(updatedSections);
+        pushHistory(updatedSections);
+        onLyricsChange?.(sectionsToLyrics(updatedSections));
+      }
     },
     [sections, pushHistory, onLyricsChange],
   );
@@ -1017,6 +1035,8 @@ export function CadencePaperStudio({
                             const isAlignedAcrossPage =
                               hasMultipleLines || bar.rawText.length > 18;
 
+                            const barData = barTokensMap.get(`${sec.id}:${block.blockIndex}:${bar.barIndex}`);
+
                             return (
                               <CadenceBarRow
                                 key={bar.id}
@@ -1025,7 +1045,8 @@ export function CadencePaperStudio({
                                 isAlignedAcrossPage={isAlignedAcrossPage}
                                 showBarNumber={showBars}
                                 showRhymeMap={showRhymeMap}
-                                rhymeTokens={barTokensMap.get(`${sec.id}:${block.blockIndex}:${bar.barIndex}`)}
+                                rhymeTokens={barData?.words}
+                                syllableTokens={barData?.syllables}
                                 onFocus={() =>
                                   setActiveFocus({
                                     sectionId: sec.id,
@@ -1036,7 +1057,7 @@ export function CadencePaperStudio({
                                 onChangeText={(txt) =>
                                   handleBarTextChange(sec.id, block.blockIndex, bar.barIndex, txt)
                                 }
-                                 onSubmitEditing={() =>
+                                onSubmitEditing={() =>
                                   handleAdvanceNextBar(sec.id, block.blockIndex, bar.barIndex)
                                 }
                                 onBackspaceEmpty={() =>
@@ -1045,19 +1066,21 @@ export function CadencePaperStudio({
                                 onGutterPress={() =>
                                   handleOpenPhraseSelector(sec.id, block.blockIndex)
                                 }
-                                 onSelectSyllable={(tok) => {
-                                   const barTokens = barTokensMap.get(`${sec.id}:${block.blockIndex}:${bar.barIndex}`) || [];
-                                   const wordSyllables = barTokens.filter(
-                                     (s) => s.wordIndex === tok.wordIndex && s.lineIndex === tok.lineIndex,
-                                   );
-                                   handleOpenWordInspector(
-                                     tok.word || tok.text,
-                                     tok.lineIndex ?? 0,
-                                     tok.wordIndex ?? 0,
-                                     wordSyllables.length > 0 ? wordSyllables : [tok],
-                                     tok.syllableIndex ?? 0,
-                                   );
-                                 }}
+                                onSelectSyllable={(tok, allWordSyllables) => {
+                                  const wordSyllables =
+                                    allWordSyllables && allWordSyllables.length > 0
+                                      ? allWordSyllables
+                                      : (barData?.syllables || []).filter(
+                                          (s) => s.wordIndex === tok.wordIndex && s.lineIndex === tok.lineIndex,
+                                        );
+                                  handleOpenWordInspector(
+                                    tok.word || tok.text,
+                                    tok.lineIndex ?? 0,
+                                    tok.wordIndex ?? 0,
+                                    wordSyllables.length > 0 ? wordSyllables : [tok],
+                                    tok.syllableIndex ?? 0,
+                                  );
+                                }}
                               />
                             );
                           })}

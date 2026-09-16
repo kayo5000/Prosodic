@@ -6,6 +6,7 @@ import {
   createInitialSongState,
   createSection,
   lyricsToCadenceBlocks,
+  pasteLinesIntoSections,
   reindexSectionsGlobalBars,
   sectionsToLyrics,
   setBlockBarCount,
@@ -185,7 +186,52 @@ describe('cadenceFormat tests', () => {
     // Round-trip verification: converting back to lyrics matches input exactly
     expect(sectionsToLyrics(updated)).toBe(rawLyrics);
   });
+
+  it('distributes multiline paste sequentially across bars and auto-expands blocks in Bar Mode', () => {
+    const initial = createInitialSongState();
+    const targetSec = initial.sections[0];
+
+    // Paste 4 lines starting at Bar 1
+    const paste4 = 'First line in bar one\nSecond line in bar two\nThird line in bar three\nFourth line in bar four';
+    const result1 = pasteLinesIntoSections(initial.sections, targetSec.id, 1, 1, paste4);
+
+    expect(result1.sections[0].blocks[0].bars[0].rawText).toBe('First line in bar one');
+    expect(result1.sections[0].blocks[0].bars[1].rawText).toBe('Second line in bar two');
+    expect(result1.sections[0].blocks[0].bars[2].rawText).toBe('Third line in bar three');
+    expect(result1.sections[0].blocks[0].bars[3].rawText).toBe('Fourth line in bar four');
+    expect(result1.finalFocus).toEqual({
+      sectionId: targetSec.id,
+      blockIndex: 1,
+      barIndex: 4,
+    });
+
+    // Paste 3 lines starting at Bar 3 of Block 1 -> creates Block 2 for line 3
+    const paste3 = 'Line at bar 3\nLine at bar 4\nLine at block 2 bar 1';
+    const result2 = pasteLinesIntoSections(result1.sections, targetSec.id, 1, 3, paste3);
+
+    expect(result2.sections[0].blocks).toHaveLength(2);
+    expect(result2.sections[0].blocks[0].bars[2].rawText).toBe('Line at bar 3');
+    expect(result2.sections[0].blocks[0].bars[3].rawText).toBe('Line at bar 4');
+    expect(result2.sections[0].blocks[1].bars[0].rawText).toBe('Line at block 2 bar 1');
+    expect(result2.finalFocus).toEqual({
+      sectionId: targetSec.id,
+      blockIndex: 2,
+      barIndex: 1,
+    });
+
+    // Paste a 16-line verse from scratch
+    const lines16 = Array.from({ length: 16 }, (_, i) => `Verse Line ${i + 1}`).join('\n');
+    const freshState = createInitialSongState();
+    const result16 = pasteLinesIntoSections(freshState.sections, freshState.sections[0].id, 1, 1, lines16);
+
+    expect(result16.sections[0].blocks).toHaveLength(4);
+    expect(result16.sections[0].blocks[0].bars[0].rawText).toBe('Verse Line 1');
+    expect(result16.sections[0].blocks[3].bars[3].rawText).toBe('Verse Line 16');
+    expect(result16.sections[0].blocks[3].bars[3].globalBarNumber).toBe(16);
+    expect(result16.finalFocus).toEqual({
+      sectionId: freshState.sections[0].id,
+      blockIndex: 4,
+      barIndex: 4,
+    });
+  });
 });
-
-
-
