@@ -2,7 +2,6 @@ import React from 'react';
 import {
   Platform,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -10,8 +9,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface AffineHeaderBarProps {
   onToggleSidebar: () => void;
-  viewMode: 'cadence' | 'texture';
-  onViewModeChange: (mode: 'cadence' | 'texture') => void;
   showBars: boolean;
   onToggleShowBars: () => void;
   showRhymeMap: boolean;
@@ -25,8 +22,6 @@ interface AffineHeaderBarProps {
 
 export const AffineHeaderBar: React.FC<AffineHeaderBarProps> = ({
   onToggleSidebar,
-  viewMode,
-  onViewModeChange,
   showBars,
   onToggleShowBars,
   showRhymeMap,
@@ -41,7 +36,7 @@ export const AffineHeaderBar: React.FC<AffineHeaderBarProps> = ({
 
   return (
     <View style={[styles.wrap, { paddingTop: Math.max(insets.top, Platform.OS === 'ios' ? 44 : 16) }]}>
-      {/* Floating icon row — no bar chrome, sits directly on the gradient */}
+      {/* Single floating icon row — sidebar, settings, utilities. No mode labels. */}
       <View style={styles.floatingRow}>
         <TouchableOpacity
           style={styles.floatingIconButton}
@@ -68,21 +63,8 @@ export const AffineHeaderBar: React.FC<AffineHeaderBarProps> = ({
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
           </svg>
         </TouchableOpacity>
-      </View>
 
-      {/* Secondary row: plain text-only mode switches, no pills or borders */}
-      <View style={styles.modeSwitchRow}>
-        <ModeSwitch
-          label="Cadence"
-          active={viewMode === 'cadence'}
-          onPress={() => onViewModeChange('cadence')}
-        />
-        <ModeSwitch
-          label="Texture"
-          active={viewMode === 'texture'}
-          onPress={() => onViewModeChange('texture')}
-        />
-
+        {/* Utility icons inline in the same row */}
         <View style={styles.utilityRow}>
           <UtilityIcon
             active={showRhymeMap}
@@ -137,25 +119,6 @@ export const AffineHeaderBar: React.FC<AffineHeaderBarProps> = ({
   );
 };
 
-function ModeSwitch({
-  label,
-  active,
-  onPress,
-}: {
-  label: string;
-  active: boolean;
-  onPress: () => void;
-}) {
-  return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={styles.modeSwitchItem}>
-      {active && <View style={styles.modeSwitchGlow} />}
-      <Text style={[styles.modeSwitchText, active && styles.modeSwitchTextActive]}>
-        {label}
-      </Text>
-    </TouchableOpacity>
-  );
-}
-
 function UtilityIcon({
   children,
   active,
@@ -202,35 +165,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.35)',
-  },
-  modeSwitchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 20,
-    minWidth: 0,
-  },
-  modeSwitchItem: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modeSwitchGlow: {
-    position: 'absolute',
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    top: -18,
-    backgroundColor: 'rgba(229, 165, 10, 0.22)',
-  },
-  modeSwitchText: {
-    fontSize: 12.5,
-    fontWeight: '600',
-    letterSpacing: 0.6,
-    textTransform: 'uppercase',
-    color: 'rgba(255, 255, 255, 0.4)',
-  },
-  modeSwitchTextActive: {
-    color: '#FFFFFF',
-    fontWeight: '800',
   },
   utilityRow: {
     flexDirection: 'row',

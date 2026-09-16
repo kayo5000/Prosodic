@@ -897,11 +897,9 @@ export function CadencePaperStudio({
         onOpenLexicon={() => setLexiconModalVisible(true)}
       />
 
-      {/* 2. Affine Workspace Top Header & Dual Mode HUD */}
+      {/* 2. Affine Workspace Top Header */}
       <AffineHeaderBar
         onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
         showBars={showBars}
         onToggleShowBars={() => setShowBars((prev) => !prev)}
         showRhymeMap={showRhymeMap}
@@ -1379,6 +1377,14 @@ export function CadencePaperStudio({
       <LexiconModal
         visible={lexiconModalVisible}
         onClose={() => setLexiconModalVisible(false)}
+        onSelectRhyme={(word) => {
+          const appended = blankText.trimEnd() + (blankText.length > 0 ? ' ' : '') + word + ' ';
+          handleBlankTextChange(appended);
+          setIsEditingBlankText(true);
+          setLexiconModalVisible(false);
+          // Cursor lands at end of the appended word
+          setTimeout(() => blankInputRef.current?.focus(), 80);
+        }}
       />
 
       {/* Practice / Velocity Drill Modal */}
