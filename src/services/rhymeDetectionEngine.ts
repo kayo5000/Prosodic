@@ -612,22 +612,22 @@ export function syllableCharRanges(word: string, numSyllables: number): Array<[n
   if (numSyllables === 1) return [[0, n]];
 
   const wLower = word.toLowerCase();
-  const vowelSet = new Set(['a', 'e', 'i', 'o', 'u', 'y']);
+  const isVowel = (c: string) => 'aeiouy'.includes(c);
 
-  const vowelStarts: number[] = [];
+  // ── Step 1: Locate vowel-group starts (each group = one syllable nucleus) ──
+  const vowelGroupStarts: number[] = [];
   let inVowel = false;
   for (let i = 0; i < n; i++) {
-    if (vowelSet.has(wLower[i])) {
-      if (!inVowel) {
-        vowelStarts.push(i);
-      }
+    if (isVowel(wLower[i])) {
+      if (!inVowel) vowelGroupStarts.push(i);
       inVowel = true;
     } else {
       inVowel = false;
     }
   }
 
-  if (vowelStarts.length < numSyllables) {
+  // Fallback: not enough vowel nuclei → divide evenly
+  if (vowelGroupStarts.length < numSyllables) {
     const chunk = n / numSyllables;
     return Array.from({ length: numSyllables }, (_, i) => [
       Math.floor(i * chunk),
@@ -635,34 +635,53 @@ export function syllableCharRanges(word: string, numSyllables: number): Array<[n
     ]);
   }
 
-  const anchors = vowelStarts.slice(0, numSyllables);
+  // ── Step 2: Build cut-points using VCCV / VCV golden rules ──
+  // For each pair of adjacent nuclei, decide where to cut the inter-nucleus
+  // consonant cluster:
+  //   • 0 consonants between nuclei (VV): cut right before the second vowel
+  //   • 1 consonant (VCV):  Maximal Onset → consonant belongs to next syllable
+  //                         Exception: check if keeping it closed keeps a short vowel
+  //                         (VC/V pattern). Since we're purely char-based here we
+  //                         use Maximal Onset as the default (mirrors Open Vowel Push).
+  //   • 2+ consonants (VCCV): split between the two middle consonants (Double-Consonant Split).
+  //   • Silent trailing e: do not create a syllable for it.
+  const cuts: number[] = [0];
 
-  const vowelGroupEnd = (pos: number) => {
-    let p = pos;
-    while (p < n && vowelSet.has(wLower[p])) {
-      p++;
+  for (let ni = 0; ni < numSyllables - 1; ni++) {
+    const vStart = vowelGroupStarts[ni];
+    const vNext  = vowelGroupStarts[ni + 1];
+
+    // End of current vowel group
+    let vEnd = vStart;
+    while (vEnd < n && isVowel(wLower[vEnd])) vEnd++;
+
+    // Consonant cluster between vEnd and vNext
+    const clusterLen = vNext - vEnd;
+
+    let cut: number;
+    if (clusterLen === 0) {
+      // Adjacent vowels (hiatus): split right before next vowel
+      cut = vNext;
+    } else if (clusterLen === 1) {
+      // VCV → Maximal Onset: single consonant begins next syllable
+      cut = vEnd;
+    } else {
+      // VCCV or longer → split after the first consonant of the cluster
+      // (Double-Consonant Split: "rab/bit", "nap/kin")
+      cut = vEnd + 1;
     }
-    return p;
-  };
+    cuts.push(cut);
+  }
+  cuts.push(n);
 
+  // Build [start, end] pairs from cuts
   const ranges: Array<[number, number]> = [];
   for (let i = 0; i < numSyllables; i++) {
-    const start = i === 0 ? 0 : ranges[ranges.length - 1][1];
-    let end = n;
-    if (i < numSyllables - 1) {
-      const vEnd = vowelGroupEnd(anchors[i]);
-      const inter = anchors[i + 1] - vEnd;
-      if (inter === 1) {
-        // Single consonant between vowels: Maximal Onset Principle assigns it to the following syllable onset
-        end = vEnd;
-      } else {
-        end = Math.floor((anchors[i] + anchors[i + 1]) / 2) + 1;
-      }
-    }
-    ranges.push([start, end]);
+    ranges.push([cuts[i], cuts[i + 1]]);
   }
   return ranges;
 }
+
 
 // ── Top-Level Verse Analysis ─────────────────────────────────────────────────
 

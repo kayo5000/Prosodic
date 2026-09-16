@@ -91,6 +91,44 @@ const SPECIAL_WORD_SYLLABLES: Record<string, number> = {
   persevere: 3,
   persevered: 3,
   persevering: 4,
+
+  // "Wh-" compound relatives — commonly misparsed by vowel-group heuristics
+  whoever: 3,     // who/ev/er
+  whatever: 3,    // what/ev/er
+  whenever: 3,    // when/ev/er
+  wherever: 3,    // where/ev/er
+  however: 3,     // how/ev/er
+  whichever: 3,   // which/ev/er
+  forever: 3,     // for/ev/er
+  together: 3,    // to/geth/er
+
+  // Other commonly misparsed words — dictionary wins over heuristics
+  another: 3,     // an/oth/er
+  beautiful: 3,   // beau/ti/ful
+  because: 2,     // be/cause
+  before: 2,      // be/fore
+  between: 2,     // be/tween
+  beyond: 2,      // be/yond
+  believe: 2,     // be/lieve
+  belong: 2,      // be/long
+  become: 2,      // be/come
+  behind: 2,      // be/hind
+  beneath: 2,     // be/neath
+  inside: 2,      // in/side
+  outside: 2,     // out/side
+  nothing: 2,     // noth/ing
+  something: 2,   // some/thing
+  everything: 3,  // ev/ery/thing
+  everyone: 3,    // ev/ery/one
+  everybody: 4,   // ev/ery/bo/dy
+  understand: 3,  // un/der/stand
+  important: 3,   // im/por/tant
+  remember: 3,    // re/mem/ber
+  possible: 3,    // pos/si/ble
+  suddenly: 3,    // sud/den/ly
+  following: 3,   // fol/low/ing
+  yesterday: 3,   // yes/ter/day
+  tomorrow: 3,    // to/mor/row
 };
 
 /**

@@ -86,6 +86,7 @@ export function SyllableInspectorModal({
   }, [syllables, syllable]);
 
   const [selectedSyllableIdx, setSelectedSyllableIdx] = useState<number>(initialSyllableIndex);
+  const [selectedEnunciationId, setSelectedEnunciationId] = useState<string | null>(null);
 
   // Smooth Motion Transition Animation
   const animValue = useRef(new Animated.Value(0)).current;
@@ -93,6 +94,7 @@ export function SyllableInspectorModal({
   useEffect(() => {
     if (visible) {
       setSelectedSyllableIdx(Math.min(initialSyllableIndex, Math.max(0, activeSyllablesList.length - 1)));
+      setSelectedEnunciationId(null);
       Animated.timing(animValue, {
         toValue: 1,
         duration: 260,
@@ -158,6 +160,9 @@ export function SyllableInspectorModal({
   };
 
   const handleApplyEnunciationOption = (enun: EnunciationOption) => {
+    // Highlight the selected card immediately
+    setSelectedEnunciationId(enun.id);
+
     if (onApplyEnunciation) {
       onApplyEnunciation(enun);
     } else {
@@ -172,6 +177,9 @@ export function SyllableInspectorModal({
         }
       });
     }
+
+    // Close after a short beat so the user sees the selection applied
+    setTimeout(() => onClose(), 320);
   };
 
   const backdropOpacity = animValue.interpolate({
@@ -253,6 +261,7 @@ export function SyllableInspectorModal({
                     const matchPercent = Math.round(enun.likelihoodScore * 100);
                     const famColor = colorForFamily(enun.rhymeFamilyId);
                     const isTop = enun.isRecommended || eIdx === 0;
+                    const isSelected = selectedEnunciationId === enun.id;
 
                     return (
                       <Pressable
@@ -261,6 +270,7 @@ export function SyllableInspectorModal({
                         style={[
                           styles.enunciationCard,
                           isTop && styles.enunciationCardTop,
+                          isSelected && styles.enunciationCardSelected,
                         ]}
                         accessibilityRole="button"
                         accessibilityLabel={`Enunciation option ${enun.label}, ${matchPercent}% match`}
@@ -629,6 +639,11 @@ const styles = StyleSheet.create({
   enunciationCardTop: {
     borderColor: '#E5A50A',
     backgroundColor: 'rgba(229, 165, 10, 0.08)',
+  },
+  enunciationCardSelected: {
+    borderColor: '#E5A50A',
+    borderWidth: 2,
+    backgroundColor: 'rgba(229, 165, 10, 0.18)',
   },
   enunciationTopRow: {
     flexDirection: 'row',

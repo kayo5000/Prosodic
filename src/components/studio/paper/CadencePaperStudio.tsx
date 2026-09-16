@@ -692,7 +692,7 @@ export function CadencePaperStudio({
     [sections, pushHistory, onLyricsChange],
   );
 
-  // Advance to next bar on Enter
+  // Advance to next bar on Enter — bars are 1-indexed inside each block
   const handleAdvanceNextBar = useCallback(
     (currentSectionId: string, currentBlockIdx: number, currentBarIdx: number) => {
       const sec = sections.find((s) => s.id === currentSectionId);
@@ -701,6 +701,7 @@ export function CadencePaperStudio({
       const currentBlock = sec.blocks.find((b) => b.blockIndex === currentBlockIdx);
       const totalBarsInBlock = currentBlock ? currentBlock.bars.length : 4;
 
+      // If there's still a bar below in the same block, go there
       if (currentBarIdx < totalBarsInBlock) {
         setActiveFocus({
           sectionId: currentSectionId,
@@ -708,9 +709,10 @@ export function CadencePaperStudio({
           barIndex: currentBarIdx + 1,
         });
       } else {
-        // Next block in section, or create new block in section
+        // Last bar of block → go to next block, create if needed
         const nextBlockIdx = currentBlockIdx + 1;
-        if (nextBlockIdx > sec.blocks.length) {
+        const nextBlockExists = sec.blocks.some((b) => b.blockIndex === nextBlockIdx);
+        if (!nextBlockExists) {
           const totalGlobalBars = sections.reduce(
             (acc, s) => acc + s.blocks.reduce((bAcc, b) => bAcc + b.bars.length, 0),
             0,
