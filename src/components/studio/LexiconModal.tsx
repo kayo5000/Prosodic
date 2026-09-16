@@ -94,7 +94,7 @@ export const LexiconModal: React.FC<LexiconModalProps> = ({
               <Text style={styles.subtitle}>12 Sonic Families &amp; Multisyllabics</Text>
             </View>
             <TouchableOpacity style={styles.closeBtn} onPress={onClose} accessibilityRole="button" accessibilityLabel="Close Lexicon">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2.5" strokeLinecap="round">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255, 255, 255, 0.6)" strokeWidth="2.5" strokeLinecap="round">
                 <line x1="18" y1="6" x2="6" y2="18" />
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
@@ -103,20 +103,20 @@ export const LexiconModal: React.FC<LexiconModalProps> = ({
 
           {/* Search Box */}
           <View style={styles.searchBox}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 8 }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255, 255, 255, 0.45)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 8 }}>
               <circle cx="11" cy="11" r="8" />
               <line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
             <TextInput
               style={styles.searchInput}
               placeholder="Search words, rhymes, slang..."
-              placeholderTextColor="#64748B"
+              placeholderTextColor="rgba(255, 255, 255, 0.4)"
               value={query}
               onChangeText={setQuery}
             />
             {query.length > 0 && (
               <TouchableOpacity onPress={() => setQuery('')} accessibilityRole="button" accessibilityLabel="Clear Search">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2.5" strokeLinecap="round">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255, 255, 255, 0.6)" strokeWidth="2.5" strokeLinecap="round">
                   <line x1="18" y1="6" x2="6" y2="18" />
                   <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
@@ -235,11 +235,11 @@ const styles = StyleSheet.create({
   },
   modalCard: {
     height: '85%',
-    backgroundColor: '#0F172A',
+    backgroundColor: '#1C1C1E',
     borderTopLeftRadius: 36,
     borderTopRightRadius: 36,
     borderWidth: 1.5,
-    borderColor: '#334155',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
     padding: 24,
   },
   headerRow: {
@@ -251,24 +251,24 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#F8FAFC',
+    color: '#FFFFFF',
   },
   subtitle: {
     fontSize: 12.5,
-    color: '#94A3B8',
+    color: 'rgba(255, 255, 255, 0.5)',
     marginTop: 2,
   },
   closeBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#1E293B',
+    backgroundColor: '#2C2C2E',
     alignItems: 'center',
     justifyContent: 'center',
   },
   closeText: {
     fontSize: 14,
-    color: '#94A3B8',
+    color: 'rgba(255, 255, 255, 0.6)',
     fontWeight: '700',
   },
   searchBox: {
@@ -276,9 +276,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     height: 48,
     borderRadius: 16,
-    backgroundColor: '#0B111E',
+    backgroundColor: '#161618',
     borderWidth: 1.2,
-    borderColor: '#1E293B',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     paddingHorizontal: 12,
     marginBottom: 14,
   },
@@ -288,13 +288,13 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    color: '#F8FAFC',
+    color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
   },
   clearText: {
     fontSize: 14,
-    color: '#94A3B8',
+    color: 'rgba(255, 255, 255, 0.6)',
     fontWeight: '700',
     paddingHorizontal: 4,
   },
@@ -311,13 +311,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
-    backgroundColor: '#1E293B',
+    backgroundColor: '#2C2C2E',
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   familyPillActive: {
-    backgroundColor: '#2563EB',
-    borderColor: '#60A5FA',
+    backgroundColor: 'rgba(229, 165, 10, 0.18)',
+    borderColor: '#E5A50A',
   },
   familyColorDot: {
     width: 8,
@@ -328,7 +328,7 @@ const styles = StyleSheet.create({
   familyPillText: {
     fontSize: 11.5,
     fontWeight: '700',
-    color: '#CBD5E1',
+    color: 'rgba(255, 255, 255, 0.7)',
   },
   familyPillTextActive: {
     color: '#FFFFFF',
@@ -343,7 +343,7 @@ const styles = StyleSheet.create({
   categoryTitle: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#64748B',
+    color: 'rgba(255, 255, 255, 0.45)',
     letterSpacing: 0.5,
     marginBottom: 8,
   },
@@ -353,47 +353,47 @@ const styles = StyleSheet.create({
     gap: 8,
     padding: 14,
     borderRadius: 16,
-    backgroundColor: '#0B111E',
+    backgroundColor: '#161618',
     borderWidth: 1,
-    borderColor: '#1E293B',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   rhymeChip: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 10,
-    backgroundColor: '#131D31',
+    backgroundColor: '#2C2C2E',
     borderWidth: 1,
-    borderColor: '#3B82F6',
+    borderColor: 'rgba(229, 165, 10, 0.4)',
   },
   rhymeChipText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#F8FAFC',
+    color: '#FFFFFF',
   },
   rhymeChipMulti: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 10,
-    backgroundColor: '#18182E',
+    backgroundColor: '#2C2C2E',
     borderWidth: 1,
-    borderColor: '#A855F7',
+    borderColor: 'rgba(255, 255, 255, 0.14)',
   },
   rhymeChipMultiText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#C084FC',
+    color: 'rgba(255, 255, 255, 0.85)',
   },
   rhymeChipSlant: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 10,
-    backgroundColor: '#241808',
+    backgroundColor: '#2C2C2E',
     borderWidth: 1,
-    borderColor: '#F59E0B',
+    borderColor: 'rgba(255, 255, 255, 0.14)',
   },
   rhymeChipSlantText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#FBBF24',
+    color: 'rgba(255, 255, 255, 0.85)',
   },
 });

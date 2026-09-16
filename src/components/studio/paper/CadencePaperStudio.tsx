@@ -29,7 +29,17 @@ import {
 import { analyzeVerseRhymes, type VerseRhymeToken } from '../../../services/rhymeDetectionEngine';
 import { colorForFamily } from '../../../theme/theme';
 import { SyllableInspectorModal, type SyllableOverride } from '../SyllableInspectorModal';
+import { LexiconModal } from '../LexiconModal';
+import { PracticeModal } from '../PracticeModal';
+import {
+  AffineSidebar,
+  AffineHeaderBar,
+  AffineSpeedDial,
+  AffineSlashMenu,
+  StudioBackdrop,
+} from '../affine';
 import type { EnunciationOption, EnunciationContext } from '../../../services/enunciationEngine';
+import { AudioRecordingModal } from './AudioRecordingModal';
 import { CadenceBarRow } from './CadenceBarRow';
 import { PhraseSelectorModal } from './PhraseSelectorModal';
 import { SectionTextureModal } from './SectionTextureModal';
@@ -38,6 +48,7 @@ import { SongSettingsModal } from './SongSettingsModal';
 import { SongWhiteboardModal } from './SongWhiteboardModal';
 import { TextureScreen } from './TextureScreen';
 import type {
+  AudioRecordingData,
   BeatMovement,
   CrossBarAlignment,
   PaperFormatState,
@@ -494,6 +505,14 @@ export function CadencePaperStudio({
     currentBarCount: 4,
   });
 
+  // Affine Workspace & Speed Dial Navigation State
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
+  const [audioRecordingVisible, setAudioRecordingVisible] = useState<boolean>(false);
+  const [recordingBlockName, setRecordingBlockName] = useState<string>('Verse');
+  const [lexiconModalVisible, setLexiconModalVisible] = useState<boolean>(false);
+  const [practiceModalVisible, setPracticeModalVisible] = useState<boolean>(false);
+  const [slashMenuVisible, setSlashMenuVisible] = useState<boolean>(false);
+
   // Formatting state
   const [formatState, setFormatState] = useState<PaperFormatState>({
     isBold: false,
@@ -571,9 +590,66 @@ export function CadencePaperStudio({
     onLyricsChange?.(sectionsToLyrics(updatedSections));
   }, [movements, sections, metadata.defaultBpm, pushHistory, onLyricsChange]);
 
+  const handleSaveVoiceTake = useCallback(
+    (take: AudioRecordingData) => {
+      if (activeSectionId) {
+        setSections((prevSections) =>
+          prevSections.map((sec) => {
+            if (sec.id !== activeSectionId) return sec;
+            const currentTakes = sec.texture.audioRecordings || [];
+            return {
+              ...sec,
+              texture: {
+                ...sec.texture,
+                audioRecordings: [...currentTakes, take],
+              },
+            };
+          }),
+        );
+      }
+    },
+    [activeSectionId],
+  );
+
+  const handleSelectSlashCommand = useCallback(
+    (cmdId: string) => {
+      const activeMovementId = movements[0]?.id || 'mov_1';
+      switch (cmdId) {
+        case 'verse':
+          handleAddNewSection('verse', activeMovementId);
+          break;
+        case 'chorus':
+          handleAddNewSection('chorus', activeMovementId);
+          break;
+        case 'hook':
+          handleAddNewSection('hook', activeMovementId);
+          break;
+        case 'bridge':
+          handleAddNewSection('bridge', activeMovementId);
+          break;
+        case 'record':
+          setRecordingBlockName(
+            sections.find((sec) => sec.id === activeSectionId)?.name || 'Verse',
+          );
+          setAudioRecordingVisible(true);
+          break;
+        case 'whiteboard':
+          setViewMode('texture');
+          break;
+        case 'settings':
+          setSongSettingsVisible(true);
+          break;
+      }
+    },
+    [movements, handleAddNewSection, sections, activeSectionId],
+  );
+
   // Update text of a bar in a section (with multi-line paste distribution across bars)
   const handleBarTextChange = useCallback(
     (sectionId: string, blockIndex: number, barIndex: number, newText: string) => {
+      if (newText.trim() === '/') {
+        setSlashMenuVisible(true);
+      }
       if (newText.includes('\n') || newText.includes('\r')) {
         const { sections: newSections, finalFocus } = pasteLinesIntoSections(
           sections,
@@ -776,124 +852,51 @@ export function CadencePaperStudio({
     [sections, pushHistory],
   );
 
+  const activeSectionName = sections.find((s) => s.id === activeSectionId)?.name;
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      {/* 1. Top Navigation Bar */}
-      <View style={styles.topNavBar}>
-        <View style={styles.navLeft}>
-          <Pressable
-            onPress={() => {
-              onClose?.();
-            }}
-            style={styles.navIconButton}
-            accessibilityRole="button"
-            accessibilityLabel="Notes"
-          >
-            {Platform.OS === 'web' ? (
-              <svg width="13" height="21" viewBox="0 0 12 20" fill="none" stroke="#E5A50A" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block', marginRight: 4 }}>
-                <path d="M10 2 L2 10 L10 18" />
-              </svg>
-            ) : (
-              <Text style={styles.navBackIcon}>‹</Text>
-            )}
-            <Text style={styles.navBackText}>Notes</Text>
-          </Pressable>
-        </View>
+      {/* 0. Ambient mesh-gradient backdrop, fixed behind everything */}
+      <StudioBackdrop />
 
-        <View style={styles.navRight}>
-          <Pressable
-            onPress={handleUndo}
-            disabled={historyIndex <= 0}
-            style={[styles.navIconButton, historyIndex <= 0 && styles.navButtonDisabled]}
-            accessibilityRole="button"
-            accessibilityLabel="Undo"
-          >
-            {Platform.OS === 'web' ? (
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={historyIndex <= 0 ? 'rgba(229, 165, 10, 0.35)' : '#E5A50A'} strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}>
-                <path d="M3 7v6h6" />
-                <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13" />
-              </svg>
-            ) : (
-              <Text style={styles.navActionIcon}>↺</Text>
-            )}
-          </Pressable>
+      {/* 1. Affine Collapsible Workspace Sidebar */}
+      <AffineSidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        sections={sections}
+        activeSectionId={activeSectionId}
+        onSelectSection={handleSelectSection}
+        onAddSection={(type) => handleAddNewSection((type as any) || 'verse', movements[0]?.id || 'mov_1')}
+        metadata={metadata}
+        onOpenSettings={() => setSongSettingsVisible(true)}
+        onOpenWhiteboard={() => setWhiteboardModalVisible(true)}
+        onOpenVoiceTakes={() => {
+          setRecordingBlockName(
+            sections.find((sec) => sec.id === activeSectionId)?.name || 'Verse',
+          );
+          setAudioRecordingVisible(true);
+        }}
+        onOpenLexicon={() => setLexiconModalVisible(true)}
+      />
 
-          <Pressable
-            onPress={handleRedo}
-            disabled={historyIndex >= history.length - 1}
-            style={[
-              styles.navIconButton,
-              historyIndex >= history.length - 1 && styles.navButtonDisabled,
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel="Redo"
-          >
-            {Platform.OS === 'web' ? (
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={historyIndex >= history.length - 1 ? 'rgba(229, 165, 10, 0.35)' : '#E5A50A'} strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}>
-                <path d="M21 7v6h-6" />
-                <path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13" />
-              </svg>
-            ) : (
-              <Text style={styles.navActionIcon}>↻</Text>
-            )}
-          </Pressable>
-
-          {/* Bar Numbers On / Off Toggle */}
-          <Pressable
-            onPress={() => setShowBars((prev) => !prev)}
-            style={[styles.barToggleBtn, showBars && styles.barToggleBtnActive]}
-            accessibilityRole="button"
-            accessibilityLabel={showBars ? "Hide Bar Numbers" : "Show Bar Numbers"}
-          >
-            <Text style={[styles.barToggleText, showBars && styles.barToggleTextActive]}>
-              {showBars ? 'Bars On' : 'Bars Off'}
-            </Text>
-          </Pressable>
-
-          {/* Rhymes On / Off Toggle */}
-          <Pressable
-            onPress={() => setShowRhymeMap((prev) => !prev)}
-            style={[styles.barToggleBtn, showRhymeMap && styles.barToggleBtnActive]}
-            accessibilityRole="button"
-            accessibilityLabel={showRhymeMap ? "Hide Syllable Rhymes" : "Show Syllable Rhymes"}
-          >
-            <Text style={[styles.barToggleText, showRhymeMap && styles.barToggleTextActive]}>
-              {showRhymeMap ? 'Rhymes On' : 'Rhymes Off'}
-            </Text>
-          </Pressable>
-
-          {/* Format Toolbar Button */}
-          <Pressable
-            onPress={() => setShowFormatBar((v) => !v)}
-            style={styles.navIconButton}
-            accessibilityRole="button"
-            accessibilityLabel="Formatting"
-          >
-            <Text style={[styles.navActionIcon, showFormatBar && styles.navActionIconActive]}>Aa</Text>
-          </Pressable>
-
-          {/* Done Checkmark */}
-          <Pressable
-            onPress={() => {
-              onClose?.();
-            }}
-            style={styles.doneCheckButton}
-            accessibilityRole="button"
-            accessibilityLabel="Done"
-          >
-            {Platform.OS === 'web' ? (
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}>
-                <path d="M20 6 L9 17 L4 12" />
-              </svg>
-            ) : (
-              <Text style={styles.doneCheckText}>✓</Text>
-            )}
-          </Pressable>
-        </View>
-      </View>
+      {/* 2. Affine Workspace Top Header & Dual Mode HUD */}
+      <AffineHeaderBar
+        onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        showBars={showBars}
+        onToggleShowBars={() => setShowBars((prev) => !prev)}
+        showRhymeMap={showRhymeMap}
+        onToggleShowRhymeMap={() => setShowRhymeMap((prev) => !prev)}
+        canUndo={historyIndex > 0}
+        canRedo={historyIndex < history.length - 1}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
+        onOpenSettings={() => setSongSettingsVisible(true)}
+      />
 
       {/* Main Screen Mode: Texture vs Cadence */}
       {viewMode === 'texture' ? (
@@ -938,6 +941,9 @@ export function CadencePaperStudio({
       >
         {/* Title & Song Settings Header Row */}
         <View style={styles.headerSection}>
+          {activeSectionName && (
+            <Text style={styles.titleEyebrow}>{activeSectionName.toUpperCase()}</Text>
+          )}
           <Pressable
             onPress={() => setSongSettingsVisible(true)}
             style={styles.titleRowPressable}
@@ -1337,6 +1343,55 @@ export function CadencePaperStudio({
         onClearOverride={handleClearSyllableOverride}
         onApplyEnunciation={handleApplyEnunciation}
       />
+
+      {/* Audio Recording Memo Modal */}
+      <AudioRecordingModal
+        visible={audioRecordingVisible}
+        blockName={recordingBlockName}
+        onClose={() => setAudioRecordingVisible(false)}
+        onSaveTake={handleSaveVoiceTake}
+      />
+
+      {/* Lexicon & Rhyme Armory Modal */}
+      <LexiconModal
+        visible={lexiconModalVisible}
+        onClose={() => setLexiconModalVisible(false)}
+      />
+
+      {/* Practice / Velocity Drill Modal */}
+      <PracticeModal
+        visible={practiceModalVisible}
+        bpm={metadata.defaultBpm || 120}
+        onClose={() => setPracticeModalVisible(false)}
+      />
+
+      {/* AFFiNE Slash Command Menu */}
+      <AffineSlashMenu
+        visible={slashMenuVisible}
+        onClose={() => setSlashMenuVisible(false)}
+        onSelectCommand={handleSelectSlashCommand}
+      />
+
+      {/* WHOOP-Style Floating Speed Dial */}
+      <AffineSpeedDial
+        onOpenVoiceTake={() => {
+          setRecordingBlockName(
+            sections.find((sec) => sec.id === activeSectionId)?.name || 'Verse',
+          );
+          setAudioRecordingVisible(true);
+        }}
+        onOpenWhiteboard={() => setWhiteboardModalVisible(true)}
+        onOpenStructure={() => {
+          const targetSection =
+            sections.find((sec) => sec.id === activeSectionId) || sections[0];
+          if (targetSection?.blocks[0]) {
+            handleOpenPhraseSelector(targetSection.id, targetSection.blocks[0].blockIndex);
+          }
+        }}
+        onOpenSettings={() => setSongSettingsVisible(true)}
+        onOpenLexicon={() => setLexiconModalVisible(true)}
+        onOpenPractice={() => setPracticeModalVisible(true)}
+      />
     </KeyboardAvoidingView>
   );
 }
@@ -1346,99 +1401,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000000',
   },
-  topNavBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    backgroundColor: '#000000',
-  },
-  navLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  navCenter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  navRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  navIconButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 6,
-    borderRadius: 8,
-  },
-  navIconButtonActive: {
-    backgroundColor: 'rgba(229, 165, 10, 0.15)',
-  },
-  navButtonDisabled: {
-    opacity: 0.35,
-  },
-  navBackIcon: {
-    fontSize: 28,
-    color: '#E5A50A',
-    marginRight: 4,
-    fontWeight: '300',
-    lineHeight: 28,
-  },
-  navBackText: {
-    fontSize: 17,
-    color: '#E5A50A',
-    fontWeight: '400',
-  },
-  navActionIcon: {
-    fontSize: 20,
-    color: '#E5A50A',
-    fontWeight: '600',
-  },
-  navActionIconActive: {
-    color: '#D97706',
-    fontWeight: '800',
-  },
-  barToggleBtn: {
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    backgroundColor: 'transparent',
-  },
-  barToggleBtnActive: {
-    borderColor: '#E5A50A',
-    backgroundColor: 'rgba(229, 165, 10, 0.15)',
-  },
-  barToggleText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.5)',
-  },
-  barToggleTextActive: {
-    color: '#E5A50A',
-  },
-  doneCheckButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#E5A50A',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  doneCheckText: {
-    color: '#000000',
-    fontSize: 15,
-    fontWeight: '700',
-  },
   paperScrollView: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: 'transparent',
   },
   paperScrollContent: {
     paddingHorizontal: 20,
@@ -1451,6 +1416,13 @@ const styles = StyleSheet.create({
   headerSection: {
     marginBottom: 16,
     gap: 4,
+  },
+  titleEyebrow: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1.4,
+    color: 'rgba(255, 255, 255, 0.4)',
+    marginBottom: 2,
   },
   titleRowPressable: {
     flexDirection: 'row',
@@ -1591,16 +1563,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
     color: 'rgba(255, 255, 255, 0.6)',
-  },
-  textureMoodTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  textureMoodTagText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.8)',
   },
   blockRowGroup: {
     marginBottom: 4,
