@@ -1264,7 +1264,7 @@ export function CadencePaperStudio({
                     style={styles.sectionCanvasBlock}
                   >
                     {/* Section Header: Name, Phrase length, and Texture Button */}
-                    <LiquidGlassCard style={styles.sectionHeaderBar} borderRadius={12}>
+                    <View style={styles.sectionHeaderBar}>
                       <View style={styles.sectionTitleRow}>
                         <Text style={styles.sectionTitleText}>{sec.name}</Text>
                         {showBars && (
@@ -1285,26 +1285,24 @@ export function CadencePaperStudio({
                         {sec.blocks.length > 1 && (
                           <Pressable
                             onPress={() => handleMergeBlocks(sec.id)}
-                            style={styles.textureBadgeBtn} // reusing textureBadgeBtn styles for consistency
+                            style={styles.textureBadgeBtn}
                             accessibilityLabel="Merge section blocks"
                           >
                             <Text style={styles.textureBadgeText}>Merge</Text>
                           </Pressable>
                         )}
-
-                        {/* Texture Button */}
                         <Pressable
                           onPress={() => {
                             handleSelectSection(sec.id);
                             setViewMode('texture');
                           }}
                           style={styles.textureBadgeBtn}
-                          accessibilityLabel="Open Texture Screen for this block"
+                          accessibilityLabel="Open Texture Screen for this section"
                         >
                           <Text style={styles.textureBadgeText}>Texture</Text>
                         </Pressable>
                       </View>
-                    </LiquidGlassCard>
+                    </View>
 
                     {/* Cadence Blocks in this Section */}
                     {sec.blocks.map((block) => {
@@ -1793,9 +1791,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 8,
-    paddingTop: 10,
-    paddingBottom: 6,
+    paddingVertical: 4,
+    paddingHorizontal: 0,
+    marginBottom: 8,
   },
   sectionTitleRow: {
     flexDirection: 'row',
