@@ -540,6 +540,43 @@ export function CadencePaperStudio({
   const [practiceModalVisible, setPracticeModalVisible] = useState<boolean>(false);
   const [slashMenuVisible, setSlashMenuVisible] = useState<boolean>(false);
 
+  // Scroll visibility for Section Bar
+  const [isSectionBarHidden, setIsSectionBarHidden] = useState(false);
+  const sectionBarOpacity = useRef(new Animated.Value(1)).current;
+  const lastScrollY = useRef(0);
+  const scrollUpAccumulator = useRef(0);
+
+  const handleScroll = useCallback((e: any) => {
+    const y = e.nativeEvent.contentOffset.y;
+    const delta = y - lastScrollY.current;
+    lastScrollY.current = y;
+
+    if (y < 50) {
+      // If at top, always show
+      if (isSectionBarHidden) {
+        setIsSectionBarHidden(false);
+        Animated.timing(sectionBarOpacity, { toValue: 1, duration: 250, useNativeDriver: true }).start();
+      }
+      return;
+    }
+
+    if (delta > 5) {
+      // Scrolling down
+      scrollUpAccumulator.current = 0;
+      if (!isSectionBarHidden && y > 100) {
+        setIsSectionBarHidden(true);
+        Animated.timing(sectionBarOpacity, { toValue: 0, duration: 250, useNativeDriver: true }).start();
+      }
+    } else if (delta < -5) {
+      // Scrolling up
+      scrollUpAccumulator.current += Math.abs(delta);
+      if (isSectionBarHidden && scrollUpAccumulator.current > 150) {
+        setIsSectionBarHidden(false);
+        Animated.timing(sectionBarOpacity, { toValue: 1, duration: 250, useNativeDriver: true }).start();
+      }
+    }
+  }, [isSectionBarHidden, sectionBarOpacity]);
+
   // Formatting state
   const [formatState, setFormatState] = useState<PaperFormatState>({
     isBold: false,
@@ -979,31 +1016,40 @@ export function CadencePaperStudio({
         />
       ) : (
         <>
-          {/* 2. Section Timeline & Movement Bar (Only shown in Bars On mode) */}
-          {showBars && (
+        {/* 2. Section Timeline & Movement Bar (Only shown in Bars On mode) */}
+        {showBars && (
+          <Animated.View
+            pointerEvents={isSectionBarHidden ? 'none' : 'auto'}
+            style={{ opacity: sectionBarOpacity }}
+          >
             <SectionTimelineBar
               movements={movements}
               sections={sections}
               activeSectionId={activeSectionId}
               onSelectSection={handleSelectSection}
               onOpenTexture={(secId) => {
-                handleSelectSection(secId);
-                setViewMode('texture');
+                const targetSec = sections.find((s) => s.id === secId);
+                if (targetSec) {
+                  setTextureModal({ visible: true, section: targetSec });
+                }
               }}
               onAddSection={handleAddNewSection}
               onAddBeatSwitch={handleAddBeatSwitch}
             />
-          )}
+          </Animated.View>
+        )}
 
-      {/* 3. Main Paper Canvas */}
-      <ScrollView
-        ref={scrollViewRef}
-        style={styles.paperScrollView}
-        contentContainerStyle={styles.paperScrollContent}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={true}
-      >
-        {/* Title & Song Settings Header Row */}
+        {/* 3. Main Paper Canvas */}
+        <ScrollView
+          ref={scrollViewRef}
+          style={styles.paperScrollView}
+          contentContainerStyle={styles.paperScrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={true}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+        >
+          {/* Title & Song Settings Header Row */}
         <View style={styles.headerSection}>
           {activeSectionName && (
             <Text style={styles.titleEyebrow}>{activeSectionName.toUpperCase()}</Text>
@@ -1624,7 +1670,7 @@ export function CadencePaperStudio({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: 'transparent',
   },
   paperScrollView: {
     flex: 1,
