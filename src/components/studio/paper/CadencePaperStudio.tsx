@@ -503,16 +503,12 @@ export function CadencePaperStudio({
   });
   const [showFormatBar, setShowFormatBar] = useState<boolean>(false);
 
-  // Active focused bar
+  // Active focused bar (null initially so all bars immediately render full rhyme color mapping)
   const [activeFocus, setActiveFocus] = useState<{
     sectionId: string;
     blockIndex: number;
     barIndex: number;
-  }>({
-    sectionId: initialData.sections[0]?.id || '',
-    blockIndex: 1,
-    barIndex: 1,
-  });
+  } | null>(null);
 
   // Scroll View Ref and section layouts for single-tap navigation
   const scrollViewRef = useRef<ScrollView>(null);
@@ -736,6 +732,7 @@ export function CadencePaperStudio({
   // Formatting toggles on active bar
   const handleToggleFormat = useCallback(
     (format: 'italic' | 'underline' | 'bold') => {
+      if (!activeFocus) return;
       const { sectionId, blockIndex, barIndex } = activeFocus;
       const updatedSections = sections.map((sec) => {
         if (sec.id !== sectionId) return sec;
@@ -1183,6 +1180,7 @@ export function CadencePaperStudio({
                         <View key={block.id} style={styles.blockRowGroup}>
                           {block.bars.map((bar) => {
                             const isActive =
+                              activeFocus !== null &&
                               activeFocus.sectionId === sec.id &&
                               activeFocus.blockIndex === block.blockIndex &&
                               activeFocus.barIndex === bar.barIndex;

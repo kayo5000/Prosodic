@@ -83,8 +83,8 @@ export function TextureScreen({
   const [playingTakeId, setPlayingTakeId] = useState<string | null>(null);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Focus tracking for Bars mode
-  const [focusedBarIdx, setFocusedBarIdx] = useState<number>(1);
+  // Focus tracking for Bars mode (null initially so full rhyme mapping renders on open)
+  const [focusedBarIdx, setFocusedBarIdx] = useState<number | null>(null);
 
   // Active block text
   const currentBlockText = activeBlock ? blockToText(activeBlock) : '';
@@ -244,7 +244,7 @@ export function TextureScreen({
             </View>
 
             {activeBlock?.bars.map((bar) => {
-              const isActive = focusedBarIdx === bar.barIndex;
+              const isActive = focusedBarIdx !== null && focusedBarIdx === bar.barIndex;
               return (
                 <CadenceBarRow
                   key={bar.id}
