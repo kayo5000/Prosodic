@@ -1081,7 +1081,7 @@ export function CadencePaperStudio({
 
         {/* 4. Canvas Content: Single Blank Field (Bars Off) vs Structured Measures (Bars On) */}
         {!showBars ? (
-          <View style={styles.blankCanvasContainer}>
+          <View style={[styles.blankCanvasContainer, { flex: 1 }]}>
             {/* Interactive Lyrics View (Press Any Word to Pop Up Word & Syllable Inspector) */}
             {showRhymeMap && blankText.trim().length > 0 && blankRhymeAnalysis && !isEditingBlankText ? (
               <View style={styles.interactiveLyricsSheet}>
@@ -1105,135 +1105,94 @@ export function CadencePaperStudio({
                 {blankRhymeAnalysis.lineTokens.map((tokens, lineIdx) => {
                   const lineSylls = blankRhymeAnalysis.lineSyllables[lineIdx] || [];
                   const hasContent = tokens.some((t) => t.isWord);
+
                   if (!hasContent && tokens.length === 0) {
-                    return <View key={lineIdx} style={styles.interactiveEmptyLine} />;
+                    return <View key={`line-${lineIdx}`} style={styles.interactiveEmptyLine} />;
                   }
 
                   return (
-                    <View key={lineIdx} style={styles.interactiveLyricLine}>
-                      <Text style={styles.interactiveLineNumber}>{lineIdx + 1}</Text>
-                      <View style={styles.interactiveWordsRow}>
-                        {tokens.map((tok, tokIdx) => {
-                          if (!tok.isWord) {
-                            return (
-                              <Text key={tokIdx} style={styles.interactiveWhitespace}>
-                                {tok.text}
-                              </Text>
-                            );
-                          }
-
-                          const wordSyllables = lineSylls.filter((s) => s.wordIndex === tok.wordIndex);
-                          const isRhyming = tok.colorId > 0;
-                          const wordColor = isRhyming ? tok.color : '#FFFFFF';
-
+                    <View key={`line-${lineIdx}`} style={styles.interactiveLyricsLine}>
+                      {tokens.map((tok, tIdx) => {
+                        if (!tok.isWord) {
                           return (
-                            <Pressable
-                              key={tokIdx}
-                              onPress={() => {
-                                handleOpenWordInspector(
-                                  tok.word || tok.text,
-                                  lineIdx,
-                                  tok.wordIndex ?? 0,
-                                  wordSyllables.length > 0 ? wordSyllables : [tok],
-                                  0,
-                                );
-                              }}
-                              style={styles.interactiveWordPressable}
-                              hitSlop={{ top: 6, bottom: 6, left: 2, right: 2 }}
-                              accessibilityRole="button"
-                              accessibilityLabel={`Word ${tok.text}, tap to inspect syllables`}
-                            >
-                              {wordSyllables && wordSyllables.length > 0 ? (
-                                <View style={styles.syllableClusterRow}>
-                                  {wordSyllables.map((syl, sIdx) => {
-                                    const isSyllRhyming = syl.colorId > 0;
-                                    const syllColor = isSyllRhyming ? syl.color : '#FFFFFF';
-                                    return (
-                                      <View
-                                        key={`syll-${sIdx}-${syl.text}`}
-                                        style={[
-                                          styles.syllableSpanWrap,
-                                          isSyllRhyming && {
-                                            borderBottomColor: syl.color,
-                                            borderBottomWidth: 2,
-                                          },
-                                        ]}
-                                      >
-                                        <Text
-                                          style={[
-                                            styles.interactiveWordText,
-                                            { color: syllColor },
-                                            isSyllRhyming && styles.interactiveWordTextRhyming,
-                                          ]}
-                                        >
-                                          {syl.text}
-                                        </Text>
-                                      </View>
-                                    );
-                                  })}
-                                </View>
-                              ) : (
-                                <Text
-                                  style={[
-                                    styles.interactiveWordText,
-                                    { color: wordColor },
-                                    isRhyming && styles.interactiveWordTextRhyming,
-                                    isRhyming && {
-                                      borderBottomColor: tok.color,
-                                      borderBottomWidth: 2,
-                                    },
-                                  ]}
-                                >
-                                  {tok.text}
-                                </Text>
-                              )}
-                            </Pressable>
+                            <Text key={`space-${tIdx}`} style={styles.interactiveSpaceText}>
+                              {tok.text}
+                            </Text>
                           );
-                        })}
-                      </View>
+                        }
+
+                        const wordSylls = lineSylls.filter((s) => s.wordIndex === tok.wordIndex);
+                        const isRhyming = tok.colorId > 0;
+                        const wordColor = isRhyming ? tok.color : '#FFFFFF';
+
+                        return (
+                          <Pressable
+                            key={`word-${tIdx}-${tok.wordIndex}`}
+                            onPress={() => {
+                              handleOpenWordInspector(
+                                tok.word || tok.text,
+                                lineIdx,
+                                tok.wordIndex ?? 0,
+                                wordSylls.length > 0 ? wordSylls : [tok],
+                                tok.syllableIndex ?? 0,
+                              );
+                            }}
+                            style={[
+                              styles.interactiveWordPressable,
+                              isRhyming && {
+                                borderBottomColor: tok.color,
+                                borderBottomWidth: 2,
+                              },
+                            ]}
+                            hitSlop={6}
+                          >
+                            <Text
+                              style={[
+                                styles.interactiveWordText,
+                                { color: wordColor },
+                                isRhyming && styles.interactiveWordTextRhyming,
+                              ]}
+                            >
+                              {tok.text}
+                            </Text>
+                          </Pressable>
+                        );
+                      })}
                     </View>
                   );
                 })}
               </View>
             ) : (
-              /* When keyboard is up: show a slim placeholder in the scroll so
-                 content doesn't jump. The real TextInput is rendered as an
-                 absolute-positioned bottom dock (see outside ScrollView below). */
-              !keyboardVisible ? (
-                <View style={styles.blankInputWrapper}>
-                  {showRhymeMap && blankText.trim().length > 0 && (
-                    <View style={styles.blankInputNoticeRow}>
-                      <Pressable
-                        onPress={() => setIsEditingBlankText(false)}
-                        style={styles.doneEditingNoticeBtn}
-                        accessibilityRole="button"
-                      >
-                        <Text style={styles.doneEditingNoticeBtnText}>
-                          Done Editing • View & Tap Rhyme Words ▾
-                        </Text>
-                      </Pressable>
-                    </View>
-                  )}
-                  <TextInput
-                    ref={blankInputRef}
-                    value={blankText}
-                    onChangeText={handleBlankTextChange}
-                    multiline
-                    scrollEnabled={false}
-                    autoCapitalize="sentences"
-                    autoCorrect={false}
-                    placeholder="Start writing freely..."
-                    placeholderTextColor="rgba(255, 255, 255, 0.25)"
-                    style={[
-                      styles.blankTextInput,
-                      Platform.OS === 'web' ? ({ outlineStyle: 'none' } as any) : null,
-                    ]}
-                  />
-                </View>
-              ) : (
-                /* Keyboard is open: ghost spacer keeps scroll height stable */
-                <View style={styles.blankKeyboardSpacer} />
-              )
+              <View style={[styles.blankInputWrapper, { flex: 1 }]}>
+                {showRhymeMap && blankText.trim().length > 0 && (
+                  <View style={styles.blankInputNoticeRow}>
+                    <Pressable
+                      onPress={() => setIsEditingBlankText(false)}
+                      style={styles.doneEditingNoticeBtn}
+                      accessibilityRole="button"
+                    >
+                      <Text style={styles.doneEditingNoticeBtnText}>
+                        Done Editing • View & Tap Rhyme Words ▾
+                      </Text>
+                    </Pressable>
+                  </View>
+                )}
+                <TextInput
+                  ref={blankInputRef}
+                  value={blankText}
+                  onChangeText={handleBlankTextChange}
+                  multiline
+                  scrollEnabled={false}
+                  autoCapitalize="sentences"
+                  autoCorrect={false}
+                  placeholder="Start writing freely..."
+                  placeholderTextColor="rgba(255, 255, 255, 0.25)"
+                  style={[
+                    styles.blankTextInput,
+                    Platform.OS === 'web' ? ({ outlineStyle: 'none' } as any) : null,
+                  ]}
+                />
+              </View>
             )}
           </View>
         ) : (
@@ -1585,41 +1544,6 @@ export function CadencePaperStudio({
         onOpenLexicon={() => setLexiconModalVisible(true)}
         onOpenPractice={() => setPracticeModalVisible(true)}
       />
-
-      {/* Keyboard-Docked Bottom Input Bar (Bars Off, editing mode, keyboard up) */}
-      {!showBars && isEditingBlankText && keyboardVisible && (
-        <View style={styles.dockedInputBar}>
-          <View style={styles.dockedInputInner}>
-            {showRhymeMap && blankText.trim().length > 0 && (
-              <Pressable
-                onPress={() => {
-                  setIsEditingBlankText(false);
-                  Keyboard.dismiss();
-                }}
-                style={styles.dockedDoneBtn}
-                accessibilityRole="button"
-              >
-                <Text style={styles.dockedDoneBtnText}>Done</Text>
-              </Pressable>
-            )}
-            <TextInput
-              ref={blankInputRef}
-              value={blankText}
-              onChangeText={handleBlankTextChange}
-              multiline
-              scrollEnabled={true}
-              autoCapitalize="sentences"
-              autoCorrect={false}
-              placeholder="Start writing freely..."
-              placeholderTextColor="rgba(255, 255, 255, 0.25)"
-              style={[
-                styles.dockedTextInput,
-                Platform.OS === 'web' ? ({ outlineStyle: 'none' } as any) : null,
-              ]}
-            />
-          </View>
-        </View>
-      )}
 
       {/* BPM Prompt Modal */}
       {showBpmPrompt && (
