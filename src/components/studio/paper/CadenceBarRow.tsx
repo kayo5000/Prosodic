@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 
-import type { CadenceBarLine } from './types';
+import type { CadenceBarLine, CrossBarAlignment } from './types';
 import type { VerseRhymeToken } from '../../../services/rhymeDetectionEngine';
 
 interface CadenceBarRowProps {
@@ -26,6 +26,7 @@ interface CadenceBarRowProps {
   onBackspaceEmpty?: () => void;
   onGutterPress?: () => void;
   onSelectSyllable?: (token: VerseRhymeToken, allWordSyllables?: VerseRhymeToken[]) => void;
+  onToggleCrossBarAlignment?: (barId: string, wordKey: string, nextAlignment: CrossBarAlignment) => void;
 }
 
 export function CadenceBarRow({
@@ -42,8 +43,10 @@ export function CadenceBarRow({
   onBackspaceEmpty,
   onGutterPress,
   onSelectSyllable,
+  onToggleCrossBarAlignment,
 }: CadenceBarRowProps) {
   const inputRef = useRef<TextInput>(null);
+  const lastTapRef = useRef<Record<string, number>>({});
 
   // Derive styles from formatting spans
   const isItalic = bar.spans.some((s) => s.italic);
@@ -62,6 +65,40 @@ export function CadenceBarRow({
     if (rhymeTokens && rhymeTokens.length > 0) return rhymeTokens;
     return [];
   }, [showRhymeMap, bar.rawText, rhymeTokens]);
+
+  const getAlignment = (wordIdx?: number, text?: string): CrossBarAlignment => {
+    if (wordIdx !== undefined && bar.crossBarAlignments?.[String(wordIdx)]) {
+      return bar.crossBarAlignments[String(wordIdx)];
+    }
+    if (text && bar.crossBarAlignments?.[text]) {
+      return bar.crossBarAlignments[text];
+    }
+    return 'in-bar';
+  };
+
+  // Segment tokens into pre-bar, in-bar, and post-bar
+  const { preBarTokens, inBarTokens, postBarTokens } = React.useMemo(() => {
+    const pre: VerseRhymeToken[] = [];
+    const inB: VerseRhymeToken[] = [];
+    const post: VerseRhymeToken[] = [];
+
+    tokensToRender.forEach((tok) => {
+      if (!tok.isWord) {
+        inB.push(tok);
+        return;
+      }
+      const align = getAlignment(tok.wordIndex, tok.text);
+      if (align === 'pre-bar') {
+        pre.push(tok);
+      } else if (align === 'post-bar') {
+        post.push(tok);
+      } else {
+        inB.push(tok);
+      }
+    });
+
+    return { preBarTokens: pre, inBarTokens: inB, postBarTokens: post };
+  }, [tokensToRender, bar.crossBarAlignments]);
 
   // Dynamic width calculation:
   // If aligned across page: flex 1 (full width)
@@ -88,6 +125,90 @@ export function CadenceBarRow({
       e.preventDefault?.();
       onChangeText(clipboardText);
     }
+  };
+
+  const handleTokenPress = (tok: VerseRhymeToken, currentAlignment: CrossBarAlignment) => {
+    const wordKey = String(tok.wordIndex ?? tok.text);
+    const now = Date.now();
+    const lastTap = lastTapRef.current[wordKey] || 0;
+    const isDoubleTap = now - lastTap < 320;
+    lastTapRef.current[wordKey] = now;
+
+    if (isDoubleTap) {
+      // Shift cycle: post-bar -> pre-bar -> in-bar -> post-bar
+      let nextAlignment: CrossBarAlignment = 'post-bar';
+      if (currentAlignment === 'post-bar') {
+        nextAlignment = 'pre-bar';
+      } else if (currentAlignment === 'pre-bar') {
+        nextAlignment = 'in-bar';
+      } else {
+        nextAlignment = 'post-bar';
+      }
+      onToggleCrossBarAlignment?.(bar.id, wordKey, nextAlignment);
+    } else {
+      const wordSylls = syllableTokens?.filter(
+        (s) => s.wordIndex === tok.wordIndex && s.lineIndex === tok.lineIndex,
+      );
+      onSelectSyllable?.(tok, wordSylls);
+    }
+  };
+
+  const handleTokenLongPress = (tok: VerseRhymeToken) => {
+    const wordSylls = syllableTokens?.filter(
+      (s) => s.wordIndex === tok.wordIndex && s.lineIndex === tok.lineIndex,
+    );
+    onSelectSyllable?.(tok, wordSylls);
+  };
+
+  const renderToken = (tok: VerseRhymeToken, tIdx: number, alignment: CrossBarAlignment) => {
+    if (!tok.isWord) {
+      return (
+        <Text key={`space-${tIdx}`} style={[styles.wordChipText, styles.whitespaceText, textStyle]}>
+          {tok.text}
+        </Text>
+      );
+    }
+
+    const isRhyming = tok.colorId > 0;
+    const wordColor = isRhyming ? tok.color : '#FFFFFF';
+
+    return (
+      <Pressable
+        key={`tok-${tIdx}-${tok.wordIndex}-${alignment}`}
+        onPress={(e) => {
+          e.stopPropagation();
+          handleTokenPress(tok, alignment);
+        }}
+        onLongPress={(e) => {
+          e.stopPropagation();
+          handleTokenLongPress(tok);
+        }}
+        delayLongPress={400}
+        hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+        style={[
+          styles.interactiveWordPressable,
+          alignment !== 'in-bar' && styles.crossBarPill,
+          isRhyming && {
+            borderBottomColor: tok.color,
+            borderBottomWidth: 2,
+          },
+        ]}
+        accessibilityRole="button"
+        accessibilityLabel={`Word ${tok.text}, ${alignment}. Double-tap to shift cross-bar position, hold to inspect syllables.`}
+      >
+        <Text
+          style={[
+            styles.wordChipText,
+            textStyle,
+            { color: wordColor },
+            alignment !== 'in-bar' && styles.crossBarText,
+            isRhyming && styles.interactiveWordTextRhyming,
+          ]}
+        >
+          {tok.text}
+        </Text>
+      </Pressable>
+    );
   };
 
   const shouldRenderRhymeChips = showRhymeMap && !isActive && tokensToRender.length > 0;
@@ -123,7 +244,17 @@ export function CadenceBarRow({
           </Pressable>
         )}
 
-        {/* 2. Measure Wrapper (starts as small gap or expands across full page) */}
+        {/* 2. Pre-Bar Anacrusis Container (Rendered before |•) */}
+        {(preBarTokens.length > 0 || bar.preBarText) && (
+          <View style={styles.preBarContainer}>
+            {bar.preBarText ? (
+              <Text style={[styles.preBarTextStatic, textStyle]}>{bar.preBarText}</Text>
+            ) : null}
+            {preBarTokens.map((tok, idx) => renderToken(tok, idx, 'pre-bar'))}
+          </View>
+        )}
+
+        {/* 3. Measure Wrapper (starts as small gap or expands across full page) */}
         <View
           style={[
             styles.measureContainer,
@@ -149,55 +280,7 @@ export function CadenceBarRow({
                 }}
                 style={styles.interactiveWordRow}
               >
-                {tokensToRender.map((tok, tIdx) => {
-                  if (!tok.isWord) {
-                    return (
-                      <Text
-                        key={`space-${tIdx}`}
-                        style={[styles.wordChipText, styles.whitespaceText, textStyle]}
-                      >
-                        {tok.text}
-                      </Text>
-                    );
-                  }
-
-                  const isRhyming = tok.colorId > 0;
-                  const wordColor = isRhyming ? tok.color : '#FFFFFF';
-
-                  return (
-                    <Pressable
-                      key={`tok-${tIdx}-${tok.wordIndex}`}
-                      onPress={(e) => {
-                        e.stopPropagation();
-                        const wordSylls = syllableTokens?.filter(
-                          (s) => s.wordIndex === tok.wordIndex && s.lineIndex === tok.lineIndex,
-                        );
-                        onSelectSyllable?.(tok, wordSylls);
-                      }}
-                      hitSlop={{ top: 8, bottom: 8, left: 2, right: 2 }}
-                      style={[
-                        styles.interactiveWordPressable,
-                        isRhyming && {
-                          borderBottomColor: tok.color,
-                          borderBottomWidth: 2,
-                        },
-                      ]}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Word ${tok.text}, tap to inspect syllables and annunciation`}
-                    >
-                      <Text
-                        style={[
-                          styles.wordChipText,
-                          textStyle,
-                          { color: wordColor },
-                          isRhyming && styles.interactiveWordTextRhyming,
-                        ]}
-                      >
-                        {tok.text}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
+                {inBarTokens.map((tok, tIdx) => renderToken(tok, tIdx, 'in-bar'))}
               </Pressable>
             ) : (
               <TextInput
@@ -230,15 +313,29 @@ export function CadenceBarRow({
           )}
         </View>
 
-        {/* 3. Syllable Count Badge on Right - Tap to Inspect Bar Words & Syllables */}
+        {/* 4. Post-Bar Spillover Container (Rendered after •|) */}
+        {(postBarTokens.length > 0 || bar.postBarText) && (
+          <View style={styles.postBarContainer}>
+            {postBarTokens.map((tok, idx) => renderToken(tok, idx, 'post-bar'))}
+            {bar.postBarText ? (
+              <Text style={[styles.postBarTextStatic, textStyle]}>{bar.postBarText}</Text>
+            ) : null}
+          </View>
+        )}
+
+        {/* 5. Syllable Count Badge on Right - Tap to Inspect Bar Words & Syllables */}
         <Pressable
           onPress={(e) => {
             e.stopPropagation();
             if (tokensToRender.length > 0 && onSelectSyllable) {
-              const firstRhymeTok = tokensToRender.find((t) => t.isWord && t.colorId > 0) || tokensToRender.find((t) => t.isWord);
+              const firstRhymeTok =
+                tokensToRender.find((t) => t.isWord && t.colorId > 0) ||
+                tokensToRender.find((t) => t.isWord);
               if (firstRhymeTok) {
                 const wordSylls = syllableTokens?.filter(
-                  (s) => s.wordIndex === firstRhymeTok.wordIndex && s.lineIndex === firstRhymeTok.lineIndex,
+                  (s) =>
+                    s.wordIndex === firstRhymeTok.wordIndex &&
+                    s.lineIndex === firstRhymeTok.lineIndex,
                 );
                 onSelectSyllable(firstRhymeTok, wordSylls);
               } else {
@@ -253,7 +350,12 @@ export function CadenceBarRow({
           accessibilityRole="button"
           accessibilityLabel={`Bar ${bar.barIndex} has ${bar.syllableCount} syllables. Tap to inspect words and syllables`}
         >
-          <View style={[styles.syllableBadgePill, showRhymeMap && bar.syllableCount > 0 && styles.syllableBadgePillActive]}>
+          <View
+            style={[
+              styles.syllableBadgePill,
+              showRhymeMap && bar.syllableCount > 0 && styles.syllableBadgePillActive,
+            ]}
+          >
             <Text
               style={[
                 styles.syllableText,
@@ -274,7 +376,7 @@ const styles = StyleSheet.create({
   rowContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 44,
+    minHeight: 44,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.08)',
     paddingHorizontal: 12,
@@ -301,6 +403,50 @@ const styles = StyleSheet.create({
   activeBarNumberText: {
     color: '#FFFFFF',
     fontWeight: '700',
+  },
+  preBarContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginRight: 4,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255, 214, 10, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 214, 10, 0.25)',
+  },
+  postBarContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginLeft: 4,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255, 214, 10, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 214, 10, 0.25)',
+  },
+  preBarTextStatic: {
+    fontSize: 14,
+    color: '#FFD60A',
+    fontWeight: '600',
+    marginRight: 4,
+  },
+  postBarTextStatic: {
+    fontSize: 14,
+    color: '#FFD60A',
+    fontWeight: '600',
+    marginLeft: 4,
+  },
+  crossBarPill: {
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    paddingHorizontal: 4,
+    borderRadius: 3,
+    marginHorizontal: 2,
+  },
+  crossBarText: {
+    fontStyle: 'italic',
+    letterSpacing: -0.3,
   },
   measureContainer: {
     flexDirection: 'row',
@@ -350,7 +496,7 @@ const styles = StyleSheet.create({
   },
   interactiveWordPressable: {
     paddingVertical: 1,
-    paddingHorizontal: 1,
+    paddingHorizontal: 2,
     borderRadius: 2,
     marginVertical: 1,
   },
@@ -406,4 +552,5 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 });
+
 

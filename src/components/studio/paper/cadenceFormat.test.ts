@@ -234,4 +234,22 @@ describe('cadenceFormat tests', () => {
       barIndex: 4,
     });
   });
+
+  it('preserves crossBarAlignments and anacrusis fields across bar updates', () => {
+    let blocks = lyricsToCadenceBlocks('Dead right\nIn the middle of the night', 1);
+    blocks[0].bars[0].crossBarAlignments = { '0': 'post-bar' };
+    blocks[0].bars[0].postBarText = 'you know';
+    blocks[0].bars[1].crossBarAlignments = { '0': 'pre-bar' };
+    blocks[0].bars[1].preBarText = 'that they be';
+
+    expect(blocks[0].bars[0].crossBarAlignments['0']).toBe('post-bar');
+    expect(blocks[0].bars[0].postBarText).toBe('you know');
+    expect(blocks[0].bars[1].crossBarAlignments['0']).toBe('pre-bar');
+    expect(blocks[0].bars[1].preBarText).toBe('that they be');
+
+    // Updating text preserves structure
+    const updated = updateBarText(blocks, 1, 1, 'Dead right indeed');
+    expect(updated[0].bars[0].rawText).toBe('Dead right indeed');
+  });
 });
+

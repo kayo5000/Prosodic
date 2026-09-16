@@ -248,5 +248,23 @@ describe('RhymeDetectionEngine (Vetted Port of Python Suite)', () => {
       expect(result.rhymeGroups).toHaveLength(0);
     });
   });
+
+  describe('Cross-Bar Rhyme & Flow Anacrusis Detection', () => {
+    it('detects cross-bar pickup phrases spanning across bar boundaries', () => {
+      const biggieLyrics = [
+        'Dead right you know that they be lurkin',
+        'Lurkin in the dark until the clock is workin',
+      ];
+      const result = analyzeVerseRhymes(biggieLyrics);
+      expect(result.rhymeGroups.length).toBeGreaterThan(0);
+      expect(result.crossBarPhrases.length).toBeGreaterThan(0);
+
+      const phrase = result.crossBarPhrases[0];
+      expect(phrase.fromLineIndex).toBe(0);
+      expect(phrase.toLineIndex).toBe(1);
+      expect(phrase.isPickupAnacrusis).toBe(true);
+    });
+  });
 });
+
 

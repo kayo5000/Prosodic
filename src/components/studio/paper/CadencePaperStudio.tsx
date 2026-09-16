@@ -39,6 +39,7 @@ import { SongWhiteboardModal } from './SongWhiteboardModal';
 import { TextureScreen } from './TextureScreen';
 import type {
   BeatMovement,
+  CrossBarAlignment,
   PaperFormatState,
   PaperSection,
   PhrasePreset,
@@ -708,6 +709,36 @@ export function CadencePaperStudio({
     [sections],
   );
 
+  // Cross-Bar alignment shifting (double-tap flow anacrusis cycle)
+  const handleToggleCrossBarAlignment = useCallback(
+    (barId: string, wordKey: string, nextAlignment: CrossBarAlignment) => {
+      setSections((prev) => {
+        const next = prev.map((s) => ({
+          ...s,
+          blocks: s.blocks.map((b) => ({
+            ...b,
+            bars: b.bars.map((bar) => {
+              if (bar.id === barId) {
+                const nextAlignments = {
+                  ...(bar.crossBarAlignments || {}),
+                  [wordKey]: nextAlignment,
+                };
+                return {
+                  ...bar,
+                  crossBarAlignments: nextAlignments,
+                };
+              }
+              return bar;
+            }),
+          })),
+        }));
+        pushHistory(next);
+        return next;
+      });
+    },
+    [pushHistory],
+  );
+
   // Phrase selector handlers
   const handleOpenPhraseSelector = useCallback(
     (sectionId: string, blockIndex: number) => {
@@ -1216,6 +1247,7 @@ export function CadencePaperStudio({
                                     tok.syllableIndex ?? 0,
                                   );
                                 }}
+                                onToggleCrossBarAlignment={handleToggleCrossBarAlignment}
                               />
                             );
                           })}
@@ -1267,7 +1299,7 @@ export function CadencePaperStudio({
         onClose={() => setSongSettingsVisible(false)}
         onUpdateTitle={(newTitle) => setMetadata((prev) => ({ ...prev, title: newTitle }))}
         onUpdateBpm={(newBpm) => setMetadata((prev) => ({ ...prev, defaultBpm: newBpm }))}
-        onAttachAudio={(audioInfo) => setMetadata((prev) => ({ ...prev, audioFile: audioInfo }))}
+        onAttachAudio={(audioInfo) => setMetadata((prev) => ({ ...prev, audioFile: audioInfo || undefined }))}
         onAddSection={handleAddNewSection}
         onAddBeatSwitch={handleAddBeatSwitch}
         onSelectSection={handleSelectSection}

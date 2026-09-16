@@ -5,6 +5,8 @@ export interface FormattedSpan {
   bold?: boolean;
 }
 
+export type CrossBarAlignment = 'in-bar' | 'post-bar' | 'pre-bar';
+
 export interface CadenceBarLine {
   id: string;
   barIndex: number; // 1 to 4 within a 4-bar cadence block
@@ -12,6 +14,9 @@ export interface CadenceBarLine {
   spans: FormattedSpan[];
   rawText: string;
   syllableCount: number;
+  preBarText?: string;   // Pickup / anacrusis syllables before the left barline |•
+  postBarText?: string;  // Overflow syllables behind the right barline •|
+  crossBarAlignments?: Record<string, CrossBarAlignment>; // word/syllable key -> 'in-bar' | 'post-bar' | 'pre-bar'
 }
 
 export type PhrasePreset = '4/4' | '4/8' | '4/16' | '-/-';
@@ -114,26 +119,28 @@ export interface PaperSection {
   isFavorite?: boolean;
 }
 
+export interface AudioTrackMetadata {
+  name: string;
+  uri: string;
+  durationSec?: number;
+  bpm?: number;
+  waveform?: number[];
+  transientsCount?: number;
+  confidence?: number;
+}
+
 export interface BeatMovement {
   id: string;
   name: string;
   bpm: number;
-  audioFile?: {
-    name: string;
-    uri: string;
-    durationSec?: number;
-  };
+  audioFile?: AudioTrackMetadata;
   sectionIds: string[];
 }
 
 export interface SongMetadata {
   title: string;
   defaultBpm: number;
-  audioFile?: {
-    name: string;
-    uri: string;
-    durationSec?: number;
-  };
+  audioFile?: AudioTrackMetadata;
   whiteboard: TextureArtifact;
 }
 

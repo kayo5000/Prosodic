@@ -84,11 +84,21 @@ export interface VerseRhymeToken {
   rhymeUnit?: string[];
 }
 
+export interface CrossBarFlowPhrase {
+  fromLineIndex: number;
+  toLineIndex: number;
+  syllables: VerseSyllable[];
+  rhymeFamilyColorId: number;
+  isPickupAnacrusis: boolean;
+  words: string[];
+}
+
 export interface VerseRhymeAnalysis {
   stream: VerseSyllable[];
   candidates: RhymeCandidate[];
   rhymeGroups: RhymeGroup[];
   compoundSequences: CompoundSequence[];
+  crossBarPhrases: CrossBarFlowPhrase[];
   totalFamilies: number;
   lineTokens: VerseRhymeToken[][];
   lineSyllables: VerseRhymeToken[][];
@@ -852,14 +862,100 @@ export function analyzeVerseRhymes(verseLines: string[]): VerseRhymeAnalysis {
     return tokens;
   });
 
+  // Detect cross-bar flow compounds and pickup anacrusis phrases
+  const crossBarPhrases = detectCrossBarFlowPhrases(stream, compounds, wordColorMap);
+
   return {
     stream,
     candidates,
     rhymeGroups: motifGroups,
     compoundSequences: compounds,
+    crossBarPhrases,
     totalFamilies: rawIds.length,
     lineTokens,
     lineSyllables,
     wordColorMap,
   };
 }
+
+/**
+ * Detects cross-bar flow phrases and pickup anacrusis units across bar boundaries.
+ */
+export function detectCrossBarFlowPhrases(
+  stream: VerseSyllable[],
+  compounds: CompoundSequence[],
+  wordColorMap: Map<string, number>
+): CrossBarFlowPhrase[] {
+  const phrases: CrossBarFlowPhrase[] = [];
+
+  // 1. Cross-line compound sequences
+  for (const cmp of compounds) {
+    const linesA = Array.from(new Set(cmp.seqA.map((s) => s.lineIndex))).sort((a, b) => a - b);
+    if (linesA.length >= 2) {
+      const fromLine = linesA[0];
+      const toLine = linesA[linesA.length - 1];
+      const firstSyll = cmp.seqA[0];
+      const cId = wordColorMap.get(`${firstSyll.lineIndex}:${firstSyll.wordIndex}`) || 1;
+      const uniqueWords = Array.from(new Set(cmp.seqA.map((s) => s.cleanWord)));
+      phrases.push({
+        fromLineIndex: fromLine,
+        toLineIndex: toLine,
+        syllables: cmp.seqA,
+        rhymeFamilyColorId: cId,
+        isPickupAnacrusis: true,
+        words: uniqueWords,
+      });
+    }
+
+    const linesB = Array.from(new Set(cmp.seqB.map((s) => s.lineIndex))).sort((a, b) => a - b);
+    if (linesB.length >= 2) {
+      const fromLine = linesB[0];
+      const toLine = linesB[linesB.length - 1];
+      const firstSyll = cmp.seqB[0];
+      const cId = wordColorMap.get(`${firstSyll.lineIndex}:${firstSyll.wordIndex}`) || 1;
+      const uniqueWords = Array.from(new Set(cmp.seqB.map((s) => s.cleanWord)));
+      phrases.push({
+        fromLineIndex: fromLine,
+        toLineIndex: toLine,
+        syllables: cmp.seqB,
+        rhymeFamilyColorId: cId,
+        isPickupAnacrusis: true,
+        words: uniqueWords,
+      });
+    }
+  }
+
+  // 2. Anacrusis / pickup rhymes linking line tail with next line head
+  const maxLine = stream.reduce((max, s) => Math.max(max, s.lineIndex), 0);
+  for (let li = 0; li < maxLine; li++) {
+    const lineSylls = stream.filter((s) => s.lineIndex === li);
+    const nextLineSylls = stream.filter((s) => s.lineIndex === li + 1);
+    if (lineSylls.length === 0 || nextLineSylls.length === 0) continue;
+
+    const lastSyll = lineSylls[lineSylls.length - 1];
+    const firstNextSyll = nextLineSylls[0];
+
+    const cIdLast = wordColorMap.get(`${li}:${lastSyll.wordIndex}`) || 0;
+    const cIdNext = wordColorMap.get(`${li + 1}:${firstNextSyll.wordIndex}`) || 0;
+
+    if (cIdLast > 0 && cIdLast === cIdNext) {
+      const words = Array.from(new Set([lastSyll.cleanWord, firstNextSyll.cleanWord]));
+      const alreadyExists = phrases.some(
+        (p) => p.fromLineIndex === li && p.toLineIndex === li + 1 && p.rhymeFamilyColorId === cIdLast
+      );
+      if (!alreadyExists) {
+        phrases.push({
+          fromLineIndex: li,
+          toLineIndex: li + 1,
+          syllables: [lastSyll, firstNextSyll],
+          rhymeFamilyColorId: cIdLast,
+          isPickupAnacrusis: true,
+          words,
+        });
+      }
+    }
+  }
+
+  return phrases;
+}
+
