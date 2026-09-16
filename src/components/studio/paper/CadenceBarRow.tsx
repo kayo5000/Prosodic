@@ -332,7 +332,7 @@ export function CadenceBarRow({
           )}
 
           {/* Lyric Input Field / Interactive Rhyme Chips */}
-          <LiquidGlassCard style={styles.inputWrapper} borderRadius={4} blurIntensity="sm" glowIntensity="none">
+          <View style={styles.inputWrapper}>
             {shouldRenderRhymeChips ? (
               <Pressable
                 onPress={() => {
@@ -365,7 +365,7 @@ export function CadenceBarRow({
                 ]}
               />
             )}
-          </LiquidGlassCard>
+          </View>
 
           {/* Right Repeat Barline Marker •| */}
           {showBarNumber && (
