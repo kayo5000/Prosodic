@@ -8,13 +8,12 @@ node_modules/
 .vscode/
 .claude
 .claude/
-scripts
-scripts/
+backend
+backend/
 scratch
 scratch/
 scratch_*
 *.log
 *.sqlite
 *.db
-dist
-dist/
+
