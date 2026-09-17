@@ -539,7 +539,7 @@ export function CadencePaperStudio({
 
   // Affine Workspace & Speed Dial Navigation State
 
-  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);\n  const sidebarOpenRef = useRef(false);\n  useEffect(() => { sidebarOpenRef.current = sidebarOpen; }, [sidebarOpen]);
 
   const screenWidth = Dimensions.get('window').width;
   const SIDEBAR_WIDTH = Math.min(280, screenWidth * 0.85);
@@ -547,23 +547,20 @@ export function CadencePaperStudio({
 
   const sidebarPanResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: (evt) => {
-        const isEdge = evt.nativeEvent.pageX < 30;
-        return isEdge;
-      },
+      onStartShouldSetPanResponder: () => false,
       onMoveShouldSetPanResponder: (evt, gs) => {
-        const isEdgeSwipe = evt.nativeEvent.pageX < 40 && gs.dx > 5;
-        const isClosing = sidebarOpen && gs.dx < -5;
+        const isEdgeSwipe = gs.x0 < 45 && gs.dx > 5;
+        const isClosing = sidebarOpenRef.current && gs.dx < -5;
         return isEdgeSwipe || isClosing;
       },
       onPanResponderMove: (evt, gs) => {
-        let newX = (sidebarOpen ? 0 : -SIDEBAR_WIDTH) + gs.dx;
+        let newX = (sidebarOpenRef.current ? 0 : -SIDEBAR_WIDTH) + gs.dx;
         if (newX > 0) newX = 0;
         if (newX < -SIDEBAR_WIDTH) newX = -SIDEBAR_WIDTH;
         sidebarPanX.setValue(newX);
       },
       onPanResponderRelease: (evt, gs) => {
-        let newOpen = sidebarOpen;
+        let newOpen = sidebarOpenRef.current;
         if (sidebarOpen && gs.dx < -50) newOpen = false;
         if (!sidebarOpen && gs.dx > 50) newOpen = true;
         if (Math.abs(gs.vx) > 0.5) {
@@ -1075,7 +1072,7 @@ export function CadencePaperStudio({
   const activeSectionName = sections.find((s) => s.id === activeSectionId)?.name;
 
   return (
-    <KeyboardAvoidingView
+    <KeyboardAvoidingView {...sidebarPanResponder.panHandlers}
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
