@@ -47,7 +47,7 @@ export const AffineSidebar: React.FC<AffineSidebarProps> = ({
       <View style={styles.workspaceHeader}>
         <View style={styles.workspaceBrandRow}>
           <View style={styles.workspaceLogoBadge}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#E5A50A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polygon points="12 2 2 7 12 12 22 7 12 2" />
               <polyline points="2 17 12 22 22 17" />
               <polyline points="2 12 12 17 22 12" />
@@ -88,7 +88,7 @@ export const AffineSidebar: React.FC<AffineSidebarProps> = ({
             activeOpacity={0.7}
           >
             <View style={styles.navIconSlot}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#E5A50A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                 <polyline points="14 2 14 8 20 8" />
                 <line x1="16" y1="13" x2="8" y2="13" />
@@ -165,7 +165,7 @@ export const AffineSidebar: React.FC<AffineSidebarProps> = ({
               onPress={() => onAddSection('verse')}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#E5A50A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19" />
                 <line x1="5" y1="12" x2="19" y2="12" />
               </svg>
@@ -289,9 +289,9 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 8,
-    backgroundColor: 'rgba(229, 165, 10, 0.12)',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
     borderWidth: 1,
-    borderColor: 'rgba(229, 165, 10, 0.3)',
+    borderColor: 'rgba(255, 255, 255, 0.3)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -387,7 +387,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.25)',
   },
   sectionDotActive: {
-    backgroundColor: '#E5A50A',
+    backgroundColor: '#FFFFFF',
     width: 7,
     height: 7,
     borderRadius: 3.5,
@@ -437,14 +437,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
-    backgroundColor: 'rgba(229, 165, 10, 0.12)',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
     borderWidth: 1,
-    borderColor: 'rgba(229, 165, 10, 0.25)',
+    borderColor: 'rgba(255, 255, 255, 0.25)',
   },
   bpmIndicatorText: {
     fontSize: 10.5,
     fontWeight: '700',
-    color: '#E5A50A',
+    color: '#FFFFFF',
     letterSpacing: 0.4,
   },
 });

@@ -208,17 +208,17 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   beatSwitchBadge: {
-    backgroundColor: 'rgba(229, 165, 10, 0.15)',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     paddingVertical: 5,
     paddingHorizontal: 10,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: 'rgba(229, 165, 10, 0.4)',
+    borderColor: 'rgba(255, 255, 255, 0.4)',
   },
   beatSwitchText: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#E5A50A',
+    color: '#FFFFFF',
     letterSpacing: 0.5,
   },
   sectionPill: {
@@ -233,7 +233,7 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   sectionPillActive: {
-    backgroundColor: '#E5A50A',
+    backgroundColor: '#FFFFFF',
   },
   sectionPillText: {
     fontSize: 13,
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#E5A50A',
+    backgroundColor: '#FFFFFF',
   },
   addPillBtn: {
     paddingVertical: 6,
@@ -319,20 +319,20 @@ const styles = StyleSheet.create({
   menuItemNewSectionText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#E5A50A',
+    color: '#FFFFFF',
   },
   addSectionGlobalBtn: {
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 16,
-    backgroundColor: 'rgba(229, 165, 10, 0.12)',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
     borderWidth: 1,
-    borderColor: '#E5A50A',
+    borderColor: '#FFFFFF',
     marginLeft: 4,
   },
   addSectionGlobalText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#E5A50A',
+    color: '#FFFFFF',
   },
 });

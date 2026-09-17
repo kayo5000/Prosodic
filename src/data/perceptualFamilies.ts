@@ -169,7 +169,7 @@ export const PERCEPTUAL_FAMILIES: Record<PerceptualFamilyName, PerceptualFamilyM
     name: 'OW_FAMILY',
     nucleus: 'OW',
     label: 'OW (Long O) Family',
-    color: '#FBBF24', // Amber
+    color: '#FFFFFF', // Amber
     phoneticSymbol: '/oʊ/',
     anchors: ['know', 'flow', 'soul', 'cold', 'road'],
     boundaryWords: ['door', 'more', 'floor', 'store'],
@@ -260,7 +260,7 @@ export const PERCEPTUAL_FAMILIES: Record<PerceptualFamilyName, PerceptualFamilyM
     name: 'AE_FAMILY',
     nucleus: 'AE',
     label: 'AE (Short A) Family',
-    color: '#EAB308', // Yellow
+    color: '#FFFFFF', // Yellow
     phoneticSymbol: '/æ/',
     anchors: ['back', 'track', 'rap', 'trap', 'black'],
     boundaryWords: ['ask', 'past', 'last'],

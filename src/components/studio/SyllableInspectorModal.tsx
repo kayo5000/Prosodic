@@ -564,7 +564,7 @@ const styles = StyleSheet.create({
   sheetTitle: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#E5A50A',
+    color: '#FFFFFF',
     textTransform: 'uppercase',
     letterSpacing: 0.8,
   },
@@ -637,13 +637,13 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   enunciationCardTop: {
-    borderColor: '#E5A50A',
-    backgroundColor: 'rgba(229, 165, 10, 0.08)',
+    borderColor: '#FFFFFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
   },
   enunciationCardSelected: {
-    borderColor: '#E5A50A',
+    borderColor: '#FFFFFF',
     borderWidth: 2,
-    backgroundColor: 'rgba(229, 165, 10, 0.18)',
+    backgroundColor: 'rgba(255, 255, 255, 0.18)',
   },
   enunciationTopRow: {
     flexDirection: 'row',
@@ -664,7 +664,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   rankTagTop: {
-    backgroundColor: '#E5A50A',
+    backgroundColor: '#FFFFFF',
   },
   rankTagText: {
     fontSize: 9,
@@ -687,7 +687,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
   },
   matchPercentPillTop: {
-    backgroundColor: 'rgba(229, 165, 10, 0.25)',
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
   },
   matchPercentText: {
     fontSize: 11,
@@ -695,7 +695,7 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.65)',
   },
   matchPercentTextTop: {
-    color: '#E5A50A',
+    color: '#FFFFFF',
   },
   enunciationDescText: {
     fontSize: 11,
@@ -743,7 +743,7 @@ const styles = StyleSheet.create({
   },
   previewStressBadge: {
     fontSize: 9,
-    color: '#E5A50A',
+    color: '#FFFFFF',
     fontWeight: '900',
   },
   contextReasonRow: {
@@ -777,7 +777,7 @@ const styles = StyleSheet.create({
   applyActionText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#E5A50A',
+    color: '#FFFFFF',
     letterSpacing: 0.2,
   },
   syllableChipsRow: {
@@ -797,8 +797,8 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   syllableSelectPillActive: {
-    borderColor: '#E5A50A',
-    backgroundColor: 'rgba(229, 165, 10, 0.15)',
+    borderColor: '#FFFFFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     transform: [{ scale: 1.04 }],
   },
   syllableSelectDot: {
@@ -817,7 +817,7 @@ const styles = StyleSheet.create({
   stressBadge: {
     fontSize: 12,
     fontWeight: '900',
-    color: '#E5A50A',
+    color: '#FFFFFF',
   },
   stressBadgeSecondary: {
     fontSize: 12,
@@ -870,8 +870,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
   },
   gridStepPocket: {
-    borderColor: 'rgba(229, 165, 10, 0.4)',
-    backgroundColor: 'rgba(229, 165, 10, 0.1)',
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   gridStepSelected: {
     borderColor: '#FFFFFF',

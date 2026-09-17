@@ -138,7 +138,7 @@ export function getSyllablePocketStatus(
  * - 0 syllables: White / default text color
  * - Low / warming: Light Mint Green (#34D399)
  * - In Pocket ([min, target]): Rich Green (#10B981)
- * - Dense pocket ((target, max]): Warm Yellow / Amber (#FBBF24)
+ * - Dense pocket ((target, max]): Warm Yellow / Amber (#FFFFFF)
  * - High density near threshold: Bright Orange (#F97316)
  * - Overcrowded (> max): Fiery Red (#EF4444)
  */
@@ -169,7 +169,7 @@ export function getDensityHeatColor(
   // 4. Moderate density expansion (Yellow)
   const yellowThreshold = targetSyllables + (maxSyllables - targetSyllables) * 0.5;
   if (syllableCount <= yellowThreshold) {
-    return '#FBBF24'; // Yellow
+    return '#FFFFFF'; // Yellow
   }
 
   // 5. High density / Approaching ceiling (Orange)

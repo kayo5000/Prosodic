@@ -23,7 +23,7 @@ export const colors = {
 // a generated ramp, so adjacent ids stay visually distinct even with a
 // small palette.
 export const FAMILY_COLORS = [
-  '#F87171', '#FB923C', '#FBBF24', '#A3E635',
+  '#F87171', '#FB923C', '#FFFFFF', '#A3E635',
   '#4ADE80', '#34D399', '#2DD4BF', '#22D3EE',
   '#60A5FA', '#818CF8', '#C084FC', '#F472B6',
 ];

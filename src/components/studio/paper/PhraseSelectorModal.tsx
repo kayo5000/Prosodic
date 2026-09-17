@@ -317,8 +317,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   presetCardActive: {
-    backgroundColor: 'rgba(229, 165, 10, 0.15)',
-    borderColor: '#E5A50A',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderColor: '#FFFFFF',
   },
   presetCardTitle: {
     fontSize: 16,
@@ -326,7 +326,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   presetCardTitleActive: {
-    color: '#E5A50A',
+    color: '#FFFFFF',
   },
   presetCardDesc: {
     fontSize: 11,
@@ -334,7 +334,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   presetCardDescActive: {
-    color: '#E5A50A',
+    color: '#FFFFFF',
     fontWeight: '600',
   },
   customSection: {
@@ -393,7 +393,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: '#2C2C2E',
     borderWidth: 2,
-    borderColor: '#E5A50A',
+    borderColor: '#FFFFFF',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
@@ -407,7 +407,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   applyButton: {
-    backgroundColor: '#E5A50A',
+    backgroundColor: '#FFFFFF',
     paddingVertical: 12,
     borderRadius: 14,
     alignItems: 'center',

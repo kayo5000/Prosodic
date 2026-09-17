@@ -71,7 +71,7 @@ export const AffineHeaderBar: React.FC<AffineHeaderBarProps> = ({
             onPress={onToggleShowRhymeMap}
             accessibilityLabel="Toggle Rhyme Map"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={showRhymeMap ? '#E5A50A' : 'rgba(255,255,255,0.45)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={showRhymeMap ? '#FFFFFF' : 'rgba(255,255,255,0.45)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="7" cy="12" r="3.2" />
               <circle cx="17" cy="12" r="3.2" />
               <path d="M9.8 10.2 14.2 13.8" />
@@ -83,7 +83,7 @@ export const AffineHeaderBar: React.FC<AffineHeaderBarProps> = ({
             onPress={onToggleShowBars}
             accessibilityLabel="Toggle Bar Grid"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={showBars ? '#E5A50A' : 'rgba(255,255,255,0.45)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={showBars ? '#FFFFFF' : 'rgba(255,255,255,0.45)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="4" y1="4" x2="4" y2="20" />
               <line x1="12" y1="4" x2="12" y2="20" />
               <line x1="20" y1="4" x2="20" y2="20" />
@@ -182,6 +182,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   utilityIconButtonActive: {
-    backgroundColor: 'rgba(229, 165, 10, 0.14)',
+    backgroundColor: 'rgba(255, 255, 255, 0.14)',
   },
 });

@@ -172,6 +172,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   dockIconHighlight: {
-    backgroundColor: '#E5A50A',
+    backgroundColor: '#FFFFFF',
   },
 });

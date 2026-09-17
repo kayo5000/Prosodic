@@ -51,7 +51,7 @@ export const VOWEL_FAMILIES: Record<VowelFamilyKey, VowelFamilyMeta> = {
   AY_FAMILY:  { key: 'AY_FAMILY',  label: 'AY Family',         color: '#60A5FA', phoneticSymbol: '/aɪ/' }, // Electric Blue
   EE_FAMILY:  { key: 'EE_FAMILY',  label: 'EE Family',         color: '#34D399', phoneticSymbol: '/iː/' }, // Emerald Green
   EY_FAMILY:  { key: 'EY_FAMILY',  label: 'EY Family',         color: '#A78BFA', phoneticSymbol: '/eɪ/' }, // Violet Purple
-  OH_FAMILY:  { key: 'OH_FAMILY',  label: 'OH Family',         color: '#FBBF24', phoneticSymbol: '/oʊ/' }, // Amber Gold
+  OH_FAMILY:  { key: 'OH_FAMILY',  label: 'OH Family',         color: '#FFFFFF', phoneticSymbol: '/oʊ/' }, // Amber Gold
   OO_FAMILY:  { key: 'OO_FAMILY',  label: 'OO Family',         color: '#38BDF8', phoneticSymbol: '/uː/' }, // Cyan
   AH_FAMILY:  { key: 'AH_FAMILY',  label: 'AH Family',         color: '#F87171', phoneticSymbol: '/ɑː/' }, // Coral Red
   EH_FAMILY:  { key: 'EH_FAMILY',  label: 'EH Family',         color: '#FB923C', phoneticSymbol: '/ɛ/' },  // Orange
@@ -607,7 +607,7 @@ export function dissectLineIntoSyllableTokens(lineText: string): SyllableToken[]
         }
       }
 
-      const color = VOWEL_FAMILIES[fam]?.color || '#E5A50A';
+      const color = VOWEL_FAMILIES[fam]?.color || '#FFFFFF';
 
       tokens.push({
         text: sylText,

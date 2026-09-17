@@ -617,7 +617,7 @@ const styles = StyleSheet.create({
     fontWeight: '400',
   },
   syllableTextHighlight: {
-    color: '#E5A50A', // Amber highlight when editing
+    color: '#FFFFFF', // Amber highlight when editing
     fontWeight: '700',
   },
 });

@@ -263,7 +263,7 @@ export const IntroComposition: React.FC = () => {
                     width: `${bar.width}px`,
                     height: '26px',
                     borderRadius: '5px',
-                    background: 'linear-gradient(135deg, #FDE047 0%, #EAB308 100%)',
+                    background: 'linear-gradient(135deg, #FFFFFF 0%, #FFFFFF 100%)',
                     boxShadow: isHit
                       ? '0 0 28px rgba(234, 179, 8, 0.85), 0 0 10px rgba(253, 224, 71, 0.9)'
                       : '0 3px 8px rgba(0, 0, 0, 0.08)',

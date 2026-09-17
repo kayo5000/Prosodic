@@ -1692,20 +1692,20 @@ const styles = StyleSheet.create({
   beatSwitchDividerLine: {
     flex: 1,
     height: 1.5,
-    backgroundColor: 'rgba(229, 165, 10, 0.4)',
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
   },
   beatSwitchBadgeCanvas: {
-    backgroundColor: 'rgba(229, 165, 10, 0.15)',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     paddingVertical: 4,
     paddingHorizontal: 12,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(229, 165, 10, 0.4)',
+    borderColor: 'rgba(255, 255, 255, 0.4)',
   },
   beatSwitchBadgeText: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#E5A50A',
+    color: '#FFFFFF',
     letterSpacing: 0.6,
   },
   sectionCanvasBlock: {
@@ -1795,7 +1795,7 @@ const styles = StyleSheet.create({
   interactiveLyricsInstruction: {
     fontSize: 10,
     fontWeight: '800',
-    color: '#E5A50A',
+    color: '#FFFFFF',
     letterSpacing: 0.8,
     textTransform: 'uppercase',
   },
@@ -1874,14 +1874,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
-    backgroundColor: 'rgba(229, 165, 10, 0.15)',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     borderWidth: 1,
-    borderColor: '#E5A50A',
+    borderColor: '#FFFFFF',
   },
   doneEditingNoticeBtnText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#E5A50A',
+    color: '#FFFFFF',
   },
   // Ghost spacer in scroll when keyboard is open (prevents content jump)
   blankKeyboardSpacer: {
@@ -1910,15 +1910,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: 8,
-    backgroundColor: 'rgba(229, 165, 10, 0.15)',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     borderWidth: 1,
-    borderColor: '#E5A50A',
+    borderColor: '#FFFFFF',
     flexShrink: 0,
   },
   dockedDoneBtnText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#E5A50A',
+    color: '#FFFFFF',
   },
   dockedTextInput: {
     flex: 1,

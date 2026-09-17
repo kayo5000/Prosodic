@@ -316,8 +316,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   familyPillActive: {
-    backgroundColor: 'rgba(229, 165, 10, 0.18)',
-    borderColor: '#E5A50A',
+    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+    borderColor: '#FFFFFF',
   },
   familyColorDot: {
     width: 8,
@@ -363,7 +363,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     backgroundColor: '#2C2C2E',
     borderWidth: 1,
-    borderColor: 'rgba(229, 165, 10, 0.4)',
+    borderColor: 'rgba(255, 255, 255, 0.4)',
   },
   rhymeChipText: {
     fontSize: 13,

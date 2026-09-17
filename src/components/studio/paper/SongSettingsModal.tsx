@@ -485,7 +485,7 @@ const styles = StyleSheet.create({
   headerSaveText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#E5A50A',
+    color: '#FFFFFF',
   },
   headerTitle: {
     fontSize: 17,
@@ -521,15 +521,15 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   tapTempoBtn: {
-    backgroundColor: 'rgba(229, 165, 10, 0.15)',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     paddingVertical: 4,
     paddingHorizontal: 10,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(229, 165, 10, 0.35)',
+    borderColor: 'rgba(255, 255, 255, 0.35)',
   },
   tapTempoBtnText: {
-    color: '#E5A50A',
+    color: '#FFFFFF',
     fontSize: 11,
     fontWeight: '700',
   },
@@ -539,7 +539,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     paddingVertical: 6,
     borderBottomWidth: 1.5,
-    borderBottomColor: '#E5A50A',
+    borderBottomColor: '#FFFFFF',
   },
   bpmRow: {
     flexDirection: 'row',
@@ -586,14 +586,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 6,
-    backgroundColor: 'rgba(229, 165, 10, 0.15)',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     borderWidth: 1,
-    borderColor: 'rgba(229, 165, 10, 0.4)',
+    borderColor: 'rgba(255, 255, 255, 0.4)',
   },
   confidenceBadgeText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#E5A50A',
+    color: '#FFFFFF',
     letterSpacing: 0.5,
   },
   analyzingBox: {
@@ -663,7 +663,7 @@ const styles = StyleSheet.create({
     minHeight: 4,
   },
   waveformBarActive: {
-    backgroundColor: '#E5A50A',
+    backgroundColor: '#FFFFFF',
   },
   audioMetaRow: {
     flexDirection: 'row',
@@ -740,13 +740,13 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   addBeatSwitchBtn: {
-    backgroundColor: 'rgba(229, 165, 10, 0.12)',
-    borderColor: '#E5A50A',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    borderColor: '#FFFFFF',
   },
   addBeatSwitchBtnText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#E5A50A',
+    color: '#FFFFFF',
   },
   sectionsList: {
     gap: 6,
@@ -770,7 +770,7 @@ const styles = StyleSheet.create({
   sectionRowIdx: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#E5A50A',
+    color: '#FFFFFF',
   },
   sectionRowName: {
     fontSize: 15,

@@ -239,20 +239,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#161618',
     borderRadius: 22,
     borderWidth: 1.5,
-    borderColor: 'rgba(229, 165, 10, 0.35)',
+    borderColor: 'rgba(255, 255, 255, 0.35)',
     padding: 18,
     marginVertical: 10,
   },
   statusPill: {
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(229, 165, 10, 0.15)',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
     marginBottom: 8,
   },
   statusPillText: {
-    color: '#E5A50A',
+    color: '#FFFFFF',
     fontSize: 11,
     fontWeight: '800',
   },
@@ -279,13 +279,13 @@ const styles = StyleSheet.create({
   },
   speedometerFill: {
     height: '100%',
-    backgroundColor: '#E5A50A',
+    backgroundColor: '#FFFFFF',
     borderRadius: 5,
   },
   speedometerText: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#E5A50A',
+    color: '#FFFFFF',
   },
   beatSection: {
     marginVertical: 10,
@@ -311,8 +311,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   beatCircleActive: {
-    backgroundColor: '#E5A50A',
-    borderColor: '#E5A50A',
+    backgroundColor: '#FFFFFF',
+    borderColor: '#FFFFFF',
     transform: [{ scale: 1.08 }],
   },
   beatText: {
@@ -327,7 +327,7 @@ const styles = StyleSheet.create({
   startBtn: {
     height: 54,
     borderRadius: 27,
-    backgroundColor: '#E5A50A',
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
   },
   stylePillActive: {
-    backgroundColor: '#E5A50A', // Amber active pill
+    backgroundColor: '#FFFFFF', // Amber active pill
   },
   stylePillText: {
     fontSize: 14,
@@ -257,6 +257,6 @@ const styles = StyleSheet.create({
   actionButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#E5A50A',
+    color: '#FFFFFF',
   },
 });

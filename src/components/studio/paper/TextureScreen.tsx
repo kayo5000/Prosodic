@@ -496,7 +496,7 @@ const styles = StyleSheet.create({
   phrasePillText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#E5A50A',
+    color: '#FFFFFF',
     letterSpacing: 0.5,
   },
   modeToggleGroup: {

@@ -160,6 +160,6 @@ const styles = StyleSheet.create({
     opacity: 0.45,
   },
   crossBarWord: {
-    color: '#facc15', // yellow-400
+    color: '#FFFFFF', // yellow-400
   },
 });
