@@ -223,7 +223,7 @@ export function AppIntroModal({ onDismiss }: AppIntroModalProps) {
 
   const handleOverlayPress = () => {
     const video = videoRef.current;
-    // If video is paused (e.g. Low Power Mode), first tap starts playback rather than dismissing
+    // If video is paused (e.g. Low Power Mode), tapping anywhere will just start playback, but it will NOT dismiss the screen anymore.
     if (video && video.paused) {
       const playPromise = video.play();
       if (playPromise !== undefined) {
@@ -234,10 +234,7 @@ export function AppIntroModal({ onDismiss }: AppIntroModalProps) {
           })
           .catch(() => {});
       }
-      return;
     }
-
-    handleEnter();
   };
 
   return (
