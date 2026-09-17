@@ -482,6 +482,24 @@ export function SyllableInspectorModal({
               </View>
 
               <View style={styles.familiesGrid}>
+                <Pressable
+                  onPress={() => onSaveOverride(currentToken, { ...activeOverride, colorId: 0 })}
+                  style={[
+                    styles.familyCard,
+                    activeColorId === 0 && { borderColor: '#FFFFFF', backgroundColor: 'rgba(255, 255, 255, 0.08)' },
+                  ]}
+                >
+                  <View style={[styles.familyColorDot, { backgroundColor: 'transparent', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.5)' }]} />
+                  <View style={styles.familyTextGroup}>
+                    <Text style={[styles.familyNameText, activeColorId === 0 && { color: '#FFFFFF', fontWeight: '700' }]}>
+                      Unmapped (Off)
+                    </Text>
+                    <Text style={styles.familyExamplesText} numberOfLines={1}>
+                      Exclude from rhyme map
+                    </Text>
+                  </View>
+                </Pressable>
+
                 {PERCEPTUAL_FAMILY_NAMES.map((fam) => {
                   const isFamActive = activeColorId === fam.id;
                   const famColor = colorForFamily(fam.id);
