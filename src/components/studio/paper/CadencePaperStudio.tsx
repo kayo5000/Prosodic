@@ -10,6 +10,8 @@ import {
   Text,
   TextInput,
   View,
+  PanResponder,
+  Dimensions,
 } from 'react-native';
 
 import { AppleNotesFormatBar } from './AppleNotesFormatBar';
@@ -536,7 +538,54 @@ export function CadencePaperStudio({
   });
 
   // Affine Workspace & Speed Dial Navigation State
+
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
+
+  const screenWidth = Dimensions.get('window').width;
+  const SIDEBAR_WIDTH = Math.min(280, screenWidth * 0.85);
+  const sidebarPanX = useRef(new Animated.Value(-SIDEBAR_WIDTH)).current;
+
+  const sidebarPanResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: (evt) => {
+        const isEdge = evt.nativeEvent.pageX < 30;
+        return isEdge;
+      },
+      onMoveShouldSetPanResponder: (evt, gs) => {
+        const isEdgeSwipe = evt.nativeEvent.pageX < 40 && gs.dx > 5;
+        const isClosing = sidebarOpen && gs.dx < -5;
+        return isEdgeSwipe || isClosing;
+      },
+      onPanResponderMove: (evt, gs) => {
+        let newX = (sidebarOpen ? 0 : -SIDEBAR_WIDTH) + gs.dx;
+        if (newX > 0) newX = 0;
+        if (newX < -SIDEBAR_WIDTH) newX = -SIDEBAR_WIDTH;
+        sidebarPanX.setValue(newX);
+      },
+      onPanResponderRelease: (evt, gs) => {
+        let newOpen = sidebarOpen;
+        if (sidebarOpen && gs.dx < -50) newOpen = false;
+        if (!sidebarOpen && gs.dx > 50) newOpen = true;
+        if (Math.abs(gs.vx) > 0.5) {
+          newOpen = gs.vx > 0;
+        }
+
+        setSidebarOpen(newOpen);
+        Animated.spring(sidebarPanX, {
+          toValue: newOpen ? 0 : -SIDEBAR_WIDTH,
+          useNativeDriver: false,
+        }).start();
+      },
+    })
+  ).current;
+
+  useEffect(() => {
+    Animated.spring(sidebarPanX, {
+      toValue: sidebarOpen ? 0 : -SIDEBAR_WIDTH,
+      useNativeDriver: false,
+    }).start();
+  }, [sidebarOpen]);
+
   const [audioRecordingVisible, setAudioRecordingVisible] = useState<boolean>(false);
   const [recordingBlockName, setRecordingBlockName] = useState<string>('Verse');
   const [lexiconModalVisible, setLexiconModalVisible] = useState<boolean>(false);
@@ -1035,6 +1084,7 @@ export function CadencePaperStudio({
 
       {/* 1. Affine Collapsible Workspace Sidebar */}
       <AffineSidebar
+        panX={sidebarPanX}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         sections={sections}

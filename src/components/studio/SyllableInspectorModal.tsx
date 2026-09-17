@@ -9,6 +9,7 @@ import {
   StyleSheet,
   Text,
   View,
+  PanResponder,
 } from 'react-native';
 
 import { colorForFamily } from '../../theme/theme';
@@ -90,9 +91,33 @@ export function SyllableInspectorModal({
 
   // Smooth Motion Transition Animation
   const animValue = useRef(new Animated.Value(0)).current;
+  const panY = useRef(new Animated.Value(0)).current;
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gs) => gs.dy > 5 && Math.abs(gs.dy) > Math.abs(gs.dx),
+      onPanResponderMove: Animated.event([null, { dy: panY }], { useNativeDriver: false }),
+      onPanResponderRelease: (_, gs) => {
+        if (gs.dy > 120 || gs.vy > 1.5) {
+          Animated.timing(panY, {
+            toValue: 800,
+            duration: 200,
+            useNativeDriver: false,
+          }).start(onClose);
+        } else {
+          Animated.spring(panY, {
+            toValue: 0,
+            useNativeDriver: false,
+          }).start();
+        }
+      },
+    })
+  ).current;
 
   useEffect(() => {
     if (visible) {
+      panY.setValue(0);
       setSelectedSyllableIdx(Math.min(initialSyllableIndex, Math.max(0, activeSyllablesList.length - 1)));
       setSelectedEnunciationId(null);
       Animated.timing(animValue, {
@@ -207,11 +232,12 @@ export function SyllableInspectorModal({
       <Animated.View style={[styles.backdrop, { opacity: backdropOpacity }]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
         <Animated.View
+          {...panResponder.panHandlers}
           style={[
             styles.sheetContainer,
             {
               transform: [
-                { translateY: sheetTranslateY },
+                { translateY: Animated.add(sheetTranslateY, panY) },
                 { scale: sheetScale },
               ],
             },
@@ -229,7 +255,7 @@ export function SyllableInspectorModal({
               <Text style={styles.wordHeading}>
                 "{displayWord.trim()}"
                 <Text style={styles.syllableCountSubtext}>
-                  {' '}• {totalWordSyllables} {totalWordSyllables === 1 ? 'Syllable' : 'Syllables'}
+                  {' '}â€¢ {totalWordSyllables} {totalWordSyllables === 1 ? 'Syllable' : 'Syllables'}
                 </Text>
               </Text>
             </View>
@@ -322,7 +348,7 @@ export function SyllableInspectorModal({
 
                         {/* Quick Apply Action */}
                         <View style={styles.applyActionRow}>
-                          <Text style={styles.applyActionText}>Tap to Apply This Delivery Profile ▾</Text>
+                          <Text style={styles.applyActionText}>Tap to Apply This Delivery Profile â–¾</Text>
                         </View>
                       </Pressable>
                     );
@@ -381,7 +407,7 @@ export function SyllableInspectorModal({
                         {tok.text}
                       </Text>
                       {tokStress === 1 && <Text style={styles.stressBadge}>*</Text>}
-                      {tokStress === 2 && <Text style={styles.stressBadgeSecondary}>•</Text>}
+                      {tokStress === 2 && <Text style={styles.stressBadgeSecondary}>â€¢</Text>}
                     </Pressable>
                   );
                 })}
@@ -414,7 +440,7 @@ export function SyllableInspectorModal({
                   ]}
                 >
                   <Text style={[styles.stressOptionText, activeStress === 2 && styles.stressOptionTextActive]}>
-                    Secondary (•)
+                    Secondary (â€¢)
                   </Text>
                 </Pressable>
 

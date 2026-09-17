@@ -12,7 +12,10 @@ import {
 
 import { PaperSection, SongMetadata } from '../paper/types';
 
+import { Animated } from 'react-native';
+
 interface AffineSidebarProps {
+  panX?: Animated.Value;
   isOpen: boolean;
   onClose: () => void;
   sections: PaperSection[];
@@ -38,11 +41,12 @@ export const AffineSidebar: React.FC<AffineSidebarProps> = ({
   onOpenWhiteboard,
   onOpenVoiceTakes,
   onOpenLexicon,
+  panX,
 }) => {
-  if (!isOpen) return null;
+  // We render it always so we can animate it via parent
 
   const content = (
-    <View style={styles.sidebarContainer}>
+    <Animated.View style={[styles.sidebarContainer, panX && { transform: [{ translateX: panX }] }]}>
       {/* 1. Workspace Header */}
       <View style={styles.workspaceHeader}>
         <View style={styles.workspaceBrandRow}>
@@ -226,22 +230,18 @@ export const AffineSidebar: React.FC<AffineSidebarProps> = ({
           <Text style={styles.bpmIndicatorText}>{metadata.defaultBpm || 120} BPM</Text>
         </View>
       </View>
-    </View>
+    </Animated.View>
   );
 
   // On Mobile / Web overlay rendering
   return (
-    <Modal
-      visible={isOpen}
-      transparent
-      animationType="fade"
-      onRequestClose={onClose}
-    >
-      <View style={styles.modalBackdrop}>
-        <Pressable style={styles.backdropPressable} onPress={onClose} />
-        {content}
-      </View>
-    </Modal>
+    <View style={[StyleSheet.absoluteFill, { zIndex: 1000 }]} pointerEvents={isOpen ? 'auto' : 'none'}>
+      <Pressable 
+        style={[styles.backdropPressable, { opacity: isOpen ? 1 : 0, backgroundColor: 'rgba(0,0,0,0.65)' }]} 
+        onPress={onClose} 
+      />
+      {content}
+    </View>
   );
 };
 
