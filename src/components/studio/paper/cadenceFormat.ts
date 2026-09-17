@@ -320,7 +320,7 @@ export function createSection(
 
 export function createBeatSwitchMovement(
   existingMovements: import('./types').BeatMovement[],
-  defaultBpm: number = 120,
+  defaultBpm: number = 77,
 ): import('./types').BeatMovement {
   const switchCount = existingMovements.length;
   return {
@@ -340,7 +340,7 @@ export function createInitialSongState(): {
   const mainMovement: import('./types').BeatMovement = {
     id: mainMovementId,
     name: 'Section 1',
-    bpm: 120,
+    bpm: 77,
     sectionIds: [],
   };
 
@@ -349,7 +349,7 @@ export function createInitialSongState(): {
 
   const metadata: import('./types').SongMetadata = {
     title: 'New Song',
-    defaultBpm: 120,
+    defaultBpm: 77,
     whiteboard: createBlankTexture('song-whiteboard'),
   };
 

@@ -7,6 +7,7 @@ import {
   TextInput,
   type TextStyle,
   View,
+  Animated,
 } from 'react-native';
 
 import type { CadenceBarLine, CrossBarAlignment } from './types';
@@ -60,6 +61,33 @@ export function CadenceBarRow({
   const [cursorPos, setCursorPos] = React.useState<number | null>(null);
 
   const heatColor = getDensityHeatColor(bar.syllableCount, getBarMetrics(bpm, stylePreset));
+
+  const blinkAnim = useRef(new Animated.Value(1)).current;
+  const overlayFade = useRef(new Animated.Value(0)).current;
+  const [showRecommendation, setShowRecommendation] = React.useState(false);
+  const prevHeatColorRef = useRef(heatColor);
+
+  React.useEffect(() => {
+    if (heatColor === '#EF4444' && prevHeatColorRef.current !== '#EF4444') {
+      blinkAnim.setValue(1);
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(blinkAnim, { toValue: 0.1, duration: 400, useNativeDriver: true }),
+          Animated.timing(blinkAnim, { toValue: 1, duration: 400, useNativeDriver: true })
+        ]),
+        { iterations: 6 }
+      ).start();
+    }
+    prevHeatColorRef.current = heatColor;
+  }, [heatColor, blinkAnim]);
+
+  React.useEffect(() => {
+    if (showRecommendation) {
+      Animated.timing(overlayFade, { toValue: 1, duration: 250, useNativeDriver: true }).start();
+    } else {
+      Animated.timing(overlayFade, { toValue: 0, duration: 200, useNativeDriver: true }).start();
+    }
+  }, [showRecommendation, overlayFade]);
 
   // Derive styles from formatting spans
   const isItalic = bar.spans.some((s) => s.italic);
@@ -396,6 +424,10 @@ export function CadenceBarRow({
         <Pressable
           onPress={(e) => {
             e.stopPropagation();
+            if (heatColor === '#EF4444') {
+              setShowRecommendation(true);
+              return;
+            }
             if (tokensToRender.length > 0 && onSelectSyllable) {
               const firstRhymeTok =
                 tokensToRender.find((t) => t.isWord && t.colorId > 0) ||
@@ -419,7 +451,7 @@ export function CadenceBarRow({
           accessibilityRole="button"
           accessibilityLabel={`Bar ${bar.barIndex} has ${bar.syllableCount} syllables. Tap to inspect words and syllables`}
         >
-          <View
+          <Animated.View
             style={[
               styles.syllableBadgePill,
               showRhymeMap && bar.syllableCount > 0 && {
@@ -427,6 +459,7 @@ export function CadenceBarRow({
                 borderWidth: 2,
                 backgroundColor: 'transparent',
               },
+              { opacity: blinkAnim }
             ]}
           >
             <Text
@@ -438,8 +471,24 @@ export function CadenceBarRow({
             >
               {bar.syllableCount}
             </Text>
-          </View>
+          </Animated.View>
         </Pressable>
+        {showRecommendation && (
+          <Animated.View style={[styles.recommendationOverlay, { opacity: overlayFade }]}>
+            <Text style={styles.recommendationText}>
+              Cadence Overflow: Bar elongated beyond optimal pocket.
+            </Text>
+            <View style={{ flexDirection: 'row', gap: 12, marginTop: 8 }}>
+              <Pressable onPress={() => setShowRecommendation(false)} style={styles.recommendationActionBtn}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.59-9.21l-5.44-5.44"/></svg>
+                <Text style={styles.recommendationActionText}>Recommend Fix</Text>
+              </Pressable>
+              <Pressable onPress={() => setShowRecommendation(false)} style={styles.recommendationActionBtn}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </Pressable>
+            </View>
+          </Animated.View>
+        )}
       </Pressable>
     </View>
   );
@@ -630,6 +679,42 @@ const styles = StyleSheet.create({
   syllableTextHighlight: {
     color: '#FFFFFF', // Amber highlight when editing
     fontWeight: '700',
+  },
+  recommendationOverlay: {
+    position: 'absolute',
+    right: 0,
+    top: 40,
+    backgroundColor: 'rgba(239, 68, 68, 0.95)',
+    padding: 12,
+    borderRadius: 8,
+    zIndex: 100,
+    width: 240,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  recommendationText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '600',
+    lineHeight: 18,
+  },
+  recommendationActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(0,0,0,0.25)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  recommendationActionText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
   },
 });
 
