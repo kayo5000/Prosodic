@@ -60,6 +60,7 @@ import type {
   SectionType,
   SongMetadata,
   TextureArtifact,
+  Artist,
 } from './types';
 
 interface CadencePaperStudioProps {
@@ -241,7 +242,6 @@ export function CadencePaperStudio({
     syllables: [],
     initialSyllableIndex: 0,
   });
-  const [isEditingBlankText, setIsEditingBlankText] = useState<boolean>(false);
   const [syllableOverrides, setSyllableOverrides] = useState<Map<string, SyllableOverride>>(new Map());
   const [keyboardVisible, setKeyboardVisible] = useState<boolean>(false);
 
@@ -1149,118 +1149,23 @@ export function CadencePaperStudio({
         {/* 4. Canvas Content: Single Blank Field (Bars Off) vs Structured Measures (Bars On) */}
         {!showBars ? (
           <View style={[styles.blankCanvasContainer, { flex: 1 }]}>
-            {/* Interactive Lyrics View (Press Any Word to Pop Up Word & Syllable Inspector) */}
-            {showRhymeMap && blankText.trim().length > 0 && blankRhymeAnalysis && !isEditingBlankText ? (
-              <View style={styles.interactiveLyricsSheet}>
-                <View style={styles.interactiveLyricsHeader}>
-                  <Text style={styles.interactiveLyricsInstruction}>
-                    TAP ANY WORD TO INSPECT & TUNE SYLLABLES
-                  </Text>
-                  <Pressable
-                    onPress={() => {
-                      setIsEditingBlankText(true);
-                      setTimeout(() => blankInputRef.current?.focus(), 50);
-                    }}
-                    style={styles.editModeSwitchBtn}
-                    accessibilityRole="button"
-                    accessibilityLabel="Edit lyrics text"
-                  >
-                    <Text style={styles.editModeSwitchBtnText}>Edit Text</Text>
-                  </Pressable>
-                </View>
-
-                {blankRhymeAnalysis.lineTokens.map((tokens, lineIdx) => {
-                  const lineSylls = blankRhymeAnalysis.lineSyllables[lineIdx] || [];
-                  const hasContent = tokens.some((t) => t.isWord);
-
-                  if (!hasContent && tokens.length === 0) {
-                    return <View key={`line-${lineIdx}`} style={styles.interactiveEmptyLine} />;
-                  }
-
-                  return (
-                    <View key={`line-${lineIdx}`} style={styles.interactiveLyricsLine}>
-                      {tokens.map((tok, tIdx) => {
-                        if (!tok.isWord) {
-                          return (
-                            <Text key={`space-${tIdx}`} style={styles.interactiveSpaceText}>
-                              {tok.text}
-                            </Text>
-                          );
-                        }
-
-                        const wordSylls = lineSylls.filter((s) => s.wordIndex === tok.wordIndex);
-                        const isRhyming = tok.colorId > 0;
-                        const wordColor = isRhyming ? tok.color : '#FFFFFF';
-
-                        return (
-                          <Pressable
-                            key={`word-${tIdx}-${tok.wordIndex}`}
-                            onPress={() => {
-                              handleOpenWordInspector(
-                                tok.word || tok.text,
-                                lineIdx,
-                                tok.wordIndex ?? 0,
-                                wordSylls.length > 0 ? wordSylls : [tok],
-                                tok.syllableIndex ?? 0,
-                              );
-                            }}
-                            style={[
-                              styles.interactiveWordPressable,
-                              isRhyming && {
-                                borderBottomColor: tok.color,
-                                borderBottomWidth: 2,
-                              },
-                            ]}
-                            hitSlop={6}
-                          >
-                            <Text
-                              style={[
-                                styles.interactiveWordText,
-                                { color: wordColor },
-                                isRhyming && styles.interactiveWordTextRhyming,
-                              ]}
-                            >
-                              {tok.text}
-                            </Text>
-                          </Pressable>
-                        );
-                      })}
-                    </View>
-                  );
-                })}
-              </View>
-            ) : (
-              <View style={[styles.blankInputWrapper, { flex: 1 }]}>
-                {showRhymeMap && blankText.trim().length > 0 && (
-                  <View style={styles.blankInputNoticeRow}>
-                    <Pressable
-                      onPress={() => setIsEditingBlankText(false)}
-                      style={styles.doneEditingNoticeBtn}
-                      accessibilityRole="button"
-                    >
-                      <Text style={styles.doneEditingNoticeBtnText}>
-                        Done Editing • View & Tap Rhyme Words ▾
-                      </Text>
-                    </Pressable>
-                  </View>
-                )}
-                <TextInput
-                  ref={blankInputRef}
-                  value={blankText}
-                  onChangeText={handleBlankTextChange}
-                  multiline
-                  scrollEnabled={false}
-                  autoCapitalize="sentences"
-                  autoCorrect={false}
-                  placeholder="Start writing freely..."
-                  placeholderTextColor="rgba(255, 255, 255, 0.25)"
-                  style={[
-                    styles.blankTextInput,
-                    Platform.OS === 'web' ? ({ outlineStyle: 'none' } as any) : null,
-                  ]}
-                />
-              </View>
-            )}
+            <View style={[styles.blankInputWrapper, { flex: 1 }]}>
+              <TextInput
+                ref={blankInputRef}
+                value={blankText}
+                onChangeText={handleBlankTextChange}
+                multiline
+                scrollEnabled={false}
+                autoCapitalize="sentences"
+                autoCorrect={false}
+                placeholder="Start writing freely..."
+                placeholderTextColor="rgba(255, 255, 255, 0.25)"
+                style={[
+                  styles.blankTextInput,
+                  Platform.OS === 'web' ? ({ outlineStyle: 'none' } as any) : null,
+                ]}
+              />
+            </View>
           </View>
         ) : (
         <View style={styles.sectionsContainer}>
@@ -1571,7 +1476,6 @@ export function CadencePaperStudio({
         onSelectRhyme={(word) => {
           const appended = blankText.trimEnd() + (blankText.length > 0 ? ' ' : '') + word + ' ';
           handleBlankTextChange(appended);
-          setIsEditingBlankText(true);
           setLexiconModalVisible(false);
           // Cursor lands at end of the appended word
           setTimeout(() => blankInputRef.current?.focus(), 80);
