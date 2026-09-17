@@ -1,20 +1,11 @@
 import React from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 /**
- * Full-screen ambient backdrop — shows the user's chosen image with no
- * black overlay or background. Sits beneath all content as a pure visual.
+ * Full-screen ambient backdrop — solid black for brutalist DAW layout.
  */
 export function StudioBackdrop() {
-  return (
-    <View style={styles.root} pointerEvents="none">
-      <Image
-        source={require('@/assets/images/studio/studio-backdrop.png')}
-        style={styles.image}
-        resizeMode="cover"
-      />
-    </View>
-  );
+  return <View style={styles.root} pointerEvents="none" />;
 }
 
 const styles = StyleSheet.create({
@@ -24,10 +15,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
+    backgroundColor: '#000000',
     overflow: 'hidden',
-  },
-  image: {
-    width: '100%',
-    height: '100%',
   },
 });

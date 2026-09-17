@@ -279,14 +279,6 @@ export function CadenceBarRow({
           isActive && styles.activeRowHighlight,
         ]}
       >
-        <LiquidGlassCard
-          style={StyleSheet.absoluteFill as any}
-          blurIntensity="sm"
-          borderRadius={0}
-          shadowIntensity="none"
-          glowIntensity="none"
-        />
-
         {/* 1. Bar Number Column - Tapping anywhere in this gutter opens phrase length */}
         {showBarNumber && (
           <Pressable
@@ -438,7 +430,8 @@ const styles = StyleSheet.create({
   rowContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    minHeight: 44,
+    height: 96, /* 4 Beats * 24px = 96px fixed height */
+    overflow: 'hidden',
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.08)',
     paddingHorizontal: 12,
