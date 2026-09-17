@@ -46,7 +46,7 @@ export function CadenceBarRow({
   rhymeTokens,
   syllableTokens,
   bpm = 120,
-  stylePreset = 'dense',
+  stylePreset = 'standard',
   onFocus,
   onChangeText,
   onSubmitEditing,
@@ -65,7 +65,7 @@ export function CadenceBarRow({
   const blinkAnim = useRef(new Animated.Value(1)).current;
   const overlayFade = useRef(new Animated.Value(0)).current;
   const [showRecommendation, setShowRecommendation] = React.useState(false);
-  const prevHeatColorRef = useRef(heatColor);
+  const prevHeatColorRef = useRef<string | null>(null);
 
   React.useEffect(() => {
     if (heatColor === '#EF4444' && prevHeatColorRef.current !== '#EF4444') {
@@ -312,6 +312,7 @@ export function CadenceBarRow({
           styles.rowContainer,
           !showBarNumber && styles.rowContainerBorderless,
           isActive && styles.activeRowHighlight,
+          showRecommendation && { zIndex: 9999 },
         ]}
       >
         <LiquidGlassCard

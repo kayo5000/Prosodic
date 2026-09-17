@@ -539,7 +539,9 @@ export function CadencePaperStudio({
 
   // Affine Workspace & Speed Dial Navigation State
 
-  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);\n  const sidebarOpenRef = useRef(false);\n  useEffect(() => { sidebarOpenRef.current = sidebarOpen; }, [sidebarOpen]);
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
+  const sidebarOpenRef = useRef(false);
+  useEffect(() => { sidebarOpenRef.current = sidebarOpen; }, [sidebarOpen]);
 
   const screenWidth = Dimensions.get('window').width;
   const SIDEBAR_WIDTH = Math.min(280, screenWidth * 0.85);
@@ -1213,7 +1215,7 @@ export function CadencePaperStudio({
                 onChangeText={handleBlankTextChange}
                 multiline
                 scrollEnabled={false}
-                  showsVerticalScrollIndicator={false}
+                  
                 autoCapitalize="sentences"
                 autoCorrect={false}
                 placeholder="Start writing freely..."
