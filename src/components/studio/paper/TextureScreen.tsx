@@ -47,6 +47,7 @@ interface TextureScreenProps {
   onDuplicateSection?: (sectionId: string) => void;
   onToggleFavoriteSection?: (sectionId: string) => void;
   onReorderSections?: (reorderedSections: PaperSection[]) => void;
+  onClose?: () => void;
 }
 
 export function TextureScreen({
@@ -70,6 +71,7 @@ export function TextureScreen({
   onDuplicateSection,
   onToggleFavoriteSection,
   onReorderSections,
+    onClose,
 }: TextureScreenProps) {
   // Find active section (block)
   const activeSection = sections.find((s) => s.id === activeSectionId) || sections[0];
@@ -198,6 +200,15 @@ export function TextureScreen({
       >
         {/* Title & Song Settings Header Row */}
         <View style={styles.headerSection}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+            <Pressable onPress={onClose} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.1)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, gap: 6, alignSelf: 'flex-start' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+              </svg>
+              <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600' }}>Back to Cadence</Text>
+            </Pressable>
+          </View>
           <Pressable
             onPress={onOpenSongSettings}
             style={styles.titleRowPressable}
