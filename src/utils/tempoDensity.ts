@@ -169,7 +169,7 @@ export function getDensityHeatColor(
   // 4. Moderate density expansion (Yellow)
   const yellowThreshold = targetSyllables + (maxSyllables - targetSyllables) * 0.5;
   if (syllableCount <= yellowThreshold) {
-    return '#FFFFFF'; // Yellow
+    return '#FBBF24'; // Yellow
   }
 
   // 5. High density / Approaching ceiling (Orange)

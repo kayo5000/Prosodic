@@ -75,7 +75,7 @@ describe('Tempo & Syllable Density Engine', () => {
     // 12 syllables (in pocket target) -> solid green
     expect(getDensityHeatColor(12, metrics, defaultColor)).toBe('#10B981');
     // 13 syllables (moderate) -> yellow
-    expect(getDensityHeatColor(13, metrics, defaultColor)).toBe('#FFFFFF');
+    expect(getDensityHeatColor(13, metrics, defaultColor)).toBe('#FBBF24');
     // 15 syllables (high near ceiling) -> orange
     expect(getDensityHeatColor(15, metrics, defaultColor)).toBe('#F97316');
     // 19 syllables (overcrowded) -> red

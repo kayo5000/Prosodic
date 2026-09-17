@@ -1295,6 +1295,7 @@ export function CadencePaperStudio({
                                 showRhymeMap={showRhymeMap}
                                 rhymeTokens={barData?.words}
                                 syllableTokens={barData?.syllables}
+                                bpm={movement.bpm || metadata.defaultBpm}
                                 onFocus={() =>
                                   setActiveFocus({
                                     sectionId: sec.id,

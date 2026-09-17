@@ -12,6 +12,7 @@ import {
 import type { CadenceBarLine, CrossBarAlignment } from './types';
 import type { VerseRhymeToken } from '../../../services/rhymeDetectionEngine';
 import { LiquidGlassCard } from '../../ui/LiquidGlassCard';
+import { getBarMetrics, getDensityHeatColor } from '../../../utils/tempoDensity';
 
 interface CadenceBarRowProps {
   bar: CadenceBarLine;
@@ -22,6 +23,8 @@ interface CadenceBarRowProps {
   showRhymeMap?: boolean;
   rhymeTokens?: VerseRhymeToken[];
   syllableTokens?: VerseRhymeToken[];
+  bpm?: number;
+  stylePreset?: any;
   onFocus: () => void;
   onChangeText: (newText: string) => void;
   onSubmitEditing: () => void;
@@ -41,6 +44,8 @@ export function CadenceBarRow({
   showRhymeMap = true,
   rhymeTokens,
   syllableTokens,
+  bpm = 120,
+  stylePreset = 'dense',
   onFocus,
   onChangeText,
   onSubmitEditing,
@@ -53,6 +58,8 @@ export function CadenceBarRow({
   const inputRef = useRef<TextInput>(null);
   const lastTapRef = useRef<Record<string, number>>({});
   const [cursorPos, setCursorPos] = React.useState<number | null>(null);
+
+  const heatColor = getDensityHeatColor(bar.syllableCount, getBarMetrics(bpm, stylePreset));
 
   // Derive styles from formatting spans
   const isItalic = bar.spans.some((s) => s.italic);
@@ -415,14 +422,18 @@ export function CadenceBarRow({
           <View
             style={[
               styles.syllableBadgePill,
-              showRhymeMap && bar.syllableCount > 0 && styles.syllableBadgePillActive,
+              showRhymeMap && bar.syllableCount > 0 && {
+                borderColor: heatColor,
+                borderWidth: 2,
+                backgroundColor: 'transparent',
+              },
             ]}
           >
             <Text
               style={[
                 styles.syllableText,
                 bar.syllableCount > 0 ? styles.syllableTextActive : styles.syllableTextZero,
-                isActive && styles.syllableTextHighlight,
+                isActive && { color: heatColor, fontWeight: '700' },
               ]}
             >
               {bar.syllableCount}
@@ -593,16 +604,16 @@ const styles = StyleSheet.create({
     marginLeft: 'auto',
   },
   syllableBadgePill: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     backgroundColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: 'transparent',
   },
-  syllableBadgePillActive: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
-  },
+  // removed syllableBadgePillActive since we do it inline now
   syllableText: {
     fontSize: 13,
     fontVariant: ['tabular-nums'],
