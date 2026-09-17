@@ -95,82 +95,16 @@ export function AppIntroModal({ onDismiss }: AppIntroModalProps) {
       document.head.appendChild(styleEl);
     }
 
-    const video = videoRef.current;
-    if (video) {
-      video.defaultMuted = true;
-      video.muted = true;
-      video.setAttribute('muted', '');
-      video.setAttribute('playsinline', '');
-      video.setAttribute('webkit-playsinline', '');
-      video.setAttribute('preload', 'auto');
+    // Lock page background to pure black
+    const origBodyBg = document.body.style.backgroundColor;
+    const origHtmlBg = document.documentElement.style.backgroundColor;
+    document.body.style.backgroundColor = '#000000';
+    document.documentElement.style.backgroundColor = '#000000';
 
-      const attemptPlay = () => {
-        const playPromise = video.play();
-        if (playPromise !== undefined) {
-          playPromise
-            .then(() => {
-              setIsAutoplayBlocked(false);
-              setIsVideoPlaying(true);
-            })
-            .catch(() => {
-              // iOS Low Power Mode or browser autoplay policy blocked autoplay
-              setIsAutoplayBlocked(true);
-              setIsVideoPlaying(false);
-            });
-        }
-      };
-
-      attemptPlay();
-
-      const onPlay = () => {
-        setIsVideoPlaying(true);
-        setIsAutoplayBlocked(false);
-      };
-      const onPause = () => {
-        setIsVideoPlaying(false);
-      };
-
-      video.addEventListener('play', onPlay);
-      video.addEventListener('pause', onPause);
-
-      // On any user touch or click anywhere on screen, immediately activate video playback
-      const handleUserGesture = () => {
-        if (video.paused) {
-          attemptPlay();
-        }
-      };
-
-      window.addEventListener('touchstart', handleUserGesture, { passive: true });
-      window.addEventListener('pointerdown', handleUserGesture, { passive: true });
-      window.addEventListener('click', handleUserGesture, { passive: true });
-
-      const handleTimeUpdate = () => {
-        const t = video.currentTime;
-        // Segment 3 fades to black starting at 7.0s and reaches full black at 8.0s;
-        // Segment 4 is pure black from 8.0s to 11.0s
-        const outro = t >= 7.4 && t <= 11.0;
-        setIsOutroPhase(outro);
-      };
-
-      video.addEventListener('timeupdate', handleTimeUpdate);
-
-      // Lock page background to pure black while intro plays to prevent any white gap peeking through
-      const origBodyBg = document.body.style.backgroundColor;
-      const origHtmlBg = document.documentElement.style.backgroundColor;
-      document.body.style.backgroundColor = '#000000';
-      document.documentElement.style.backgroundColor = '#000000';
-
-      return () => {
-        video.removeEventListener('timeupdate', handleTimeUpdate);
-        video.removeEventListener('play', onPlay);
-        video.removeEventListener('pause', onPause);
-        window.removeEventListener('touchstart', handleUserGesture);
-        window.removeEventListener('pointerdown', handleUserGesture);
-        window.removeEventListener('click', handleUserGesture);
-        document.body.style.backgroundColor = origBodyBg;
-        document.documentElement.style.backgroundColor = origHtmlBg;
-      };
-    }
+    return () => {
+      document.body.style.backgroundColor = origBodyBg;
+      document.documentElement.style.backgroundColor = origHtmlBg;
+    };
   }, []);
 
   const [showPwaPrompt, setShowPwaPrompt] = useState(false);
@@ -222,19 +156,7 @@ export function AppIntroModal({ onDismiss }: AppIntroModalProps) {
   };
 
   const handleOverlayPress = () => {
-    const video = videoRef.current;
-    // If video is paused (e.g. Low Power Mode), tapping anywhere will just start playback, but it will NOT dismiss the screen anymore.
-    if (video && video.paused) {
-      const playPromise = video.play();
-      if (playPromise !== undefined) {
-        playPromise
-          .then(() => {
-            setIsAutoplayBlocked(false);
-            setIsVideoPlaying(true);
-          })
-          .catch(() => {});
-      }
-    }
+    // Intentionally empty: The user must click the "Test Your Craft" button to proceed.
   };
 
   return (
@@ -271,30 +193,17 @@ export function AppIntroModal({ onDismiss }: AppIntroModalProps) {
       onPress={handleOverlayPress}
       accessibilityLabel="Prosodic Entrance Screen"
     >
-      {/* Background Video (11-second cinematic loop ending on pure black outro) */}
-      <video
-        ref={videoRef}
-        src="./assets/videos/intro-bg.mp4?v=6"
-        autoPlay
-        loop
-        muted
-        playsInline
-        preload="auto"
-        controls={false}
-        disablePictureInPicture
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100vw',
-          height: '100vh',
-          objectFit: 'cover',
-          pointerEvents: 'none',
-          zIndex: 0,
-        }}
-      >
-        <source src="./assets/videos/intro-bg.mp4?v=6" type="video/mp4" />
-      </video>
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: '#000000',
+            zIndex: 0,
+          }}
+        />
 
       {/* Cinematic Dark Gradient Overlay */}
       <View
