@@ -196,7 +196,7 @@ export function TextureScreen({
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={true}
+        showsVerticalScrollIndicator={false}
       >
         {/* Title & Song Settings Header Row */}
         <View style={styles.headerSection}>

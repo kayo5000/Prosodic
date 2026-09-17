@@ -1170,7 +1170,7 @@ export function CadencePaperStudio({
           style={styles.paperScrollView}
           contentContainerStyle={styles.paperScrollContent}
           keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={true}
+          showsVerticalScrollIndicator={false}
           onScroll={handleScroll}
           scrollEventThrottle={16}
         >
@@ -1213,6 +1213,7 @@ export function CadencePaperStudio({
                 onChangeText={handleBlankTextChange}
                 multiline
                 scrollEnabled={false}
+                  showsVerticalScrollIndicator={false}
                 autoCapitalize="sentences"
                 autoCorrect={false}
                 placeholder="Start writing freely..."
