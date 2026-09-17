@@ -8,12 +8,16 @@ import {
   View,
 } from 'react-native';
 
-import type { BeatMovement, PaperSection, SectionType } from './types';
+import type { Artist, BeatMovement, PaperSection, SectionType } from './types';
 
 interface SectionTimelineBarProps {
   movements: BeatMovement[];
   sections: PaperSection[];
   activeSectionId: string;
+  artists?: Artist[];
+  onMergeBlocks?: (sourceId: string, targetId: string) => void;
+  onCreateArtist?: (artist: Artist) => void;
+  onAssignArtist?: (sectionId: string, artistId: string | null) => void;
   onSelectSection: (sectionId: string) => void;
   onOpenTexture: (sectionId: string) => void;
   onAddSection: (type: SectionType, movementId: string) => void;
@@ -29,6 +33,10 @@ export function SectionTimelineBar({
   movements,
   sections,
   activeSectionId,
+  artists = [],
+  onMergeBlocks,
+  onCreateArtist,
+  onAssignArtist,
   onSelectSection,
   onOpenTexture,
   onAddSection,
@@ -40,9 +48,20 @@ export function SectionTimelineBar({
   });
 
   const [addMenuMovementId, setAddMenuMovementId] = useState<string | null>(null);
+  const [mergingSourceId, setMergingSourceId] = useState<string | null>(null);
+  const [settingsSectionId, setSettingsSectionId] = useState<string | null>(null);
+  const [showArtistCreator, setShowArtistCreator] = useState(false);
 
   const handlePress = React.useCallback(
     (sectionId: string) => {
+      if (mergingSourceId) {
+        if (mergingSourceId !== sectionId) {
+          onMergeBlocks?.(mergingSourceId, sectionId);
+        }
+        setMergingSourceId(null);
+        return;
+      }
+
       const now = typeof performance !== 'undefined' ? performance.now() : 0;
       const last = lastTapRef.current;
 
@@ -51,13 +70,18 @@ export function SectionTimelineBar({
         lastTapRef.current = { sectionId: '', timestamp: 0 };
         onOpenTexture(sectionId);
       } else {
-        // Single Tap: Jump to Section
+        // Single Tap
         lastTapRef.current = { sectionId, timestamp: now };
         onSelectSection(sectionId);
       }
     },
-    [onOpenTexture, onSelectSection],
+    [onOpenTexture, onSelectSection, mergingSourceId, onMergeBlocks],
   );
+
+  const handleLongPress = React.useCallback((sectionId: string) => {
+    if (mergingSourceId) return; // Prevent menu while merging
+    setSettingsSectionId(sectionId);
+  }, [mergingSourceId]);
 
   return (
     <View style={styles.container}>
@@ -81,19 +105,39 @@ export function SectionTimelineBar({
               {/* Block Pills */}
               {movementSections.map((sec) => {
                 const isActive = sec.id === activeSectionId;
+                const isMergingSource = sec.id === mergingSourceId;
+                const isMergingTarget = mergingSourceId && !isMergingSource; // Hover state? We don't have hover, just wait for tap.
                 const hasTexture = Boolean(sec.texture.mood || sec.texture.reflectionComment);
+                const assignedArtist = artists.find((a) => a.id === sec.artistId);
+                const customBg = assignedArtist?.color;
+
+                const baseStyle = [
+                  styles.sectionPill,
+                  customBg && { backgroundColor: `${customBg}1A`, borderColor: customBg },
+                  isActive && (customBg ? { backgroundColor: customBg } : styles.sectionPillActive),
+                  isMergingSource && { backgroundColor: '#FBBF24', borderColor: '#FBBF24' },
+                ];
+
+                const textColor = isMergingSource
+                  ? '#000000'
+                  : isActive
+                  ? '#000000'
+                  : customBg
+                  ? customBg
+                  : 'rgba(255, 255, 255, 0.75)';
 
                 return (
                   <Pressable
                     key={sec.id}
                     onPress={() => handlePress(sec.id)}
-                    style={[styles.sectionPill, isActive && styles.sectionPillActive]}
-                    accessibilityLabel={`${sec.name}. Single tap to jump, double tap for texture and mood.`}
+                    onLongPress={() => handleLongPress(sec.id)}
+                    style={baseStyle}
+                    accessibilityLabel={`${sec.name}. Single tap to jump, double tap for texture. Long press for settings.`}
                   >
-                    <Text style={[styles.sectionPillText, isActive && styles.sectionPillTextActive]}>
+                    <Text style={[styles.sectionPillText, { color: textColor }]}>
                       {sec.name}
                     </Text>
-                    {hasTexture && <View style={styles.textureDot} />}
+                    {hasTexture && <View style={[styles.textureDot, isActive ? { backgroundColor: '#000' } : (customBg ? { backgroundColor: customBg } : {})]} />}
                   </Pressable>
                 );
               })}
@@ -119,6 +163,98 @@ export function SectionTimelineBar({
           <Text style={styles.addSectionGlobalText}>+ Section</Text>
         </Pressable>
       </ScrollView>
+
+      {/* Block Settings Popover */}
+      {settingsSectionId && (
+        <Modal transparent animationType="fade" visible={Boolean(settingsSectionId)}>
+          <Pressable
+            style={styles.menuOverlay}
+            onPress={() => setSettingsSectionId(null)}
+          >
+            <View style={styles.menuPopover}>
+              <Text style={styles.menuTitle}>Block Settings</Text>
+
+              <Pressable
+                onPress={() => {
+                  setMergingSourceId(settingsSectionId);
+                  setSettingsSectionId(null);
+                }}
+                style={styles.menuItem}
+              >
+                <Text style={styles.menuItemText}>Merge with...</Text>
+              </Pressable>
+
+              <View style={styles.menuDivider} />
+              <Text style={styles.menuTitle}>Assign Artist</Text>
+
+              <Pressable
+                onPress={() => {
+                  onAssignArtist?.(settingsSectionId, null);
+                  setSettingsSectionId(null);
+                }}
+                style={styles.menuItem}
+              >
+                <Text style={styles.menuItemText}>No Artist (Default)</Text>
+              </Pressable>
+
+              {artists.map((artist) => (
+                <Pressable
+                  key={artist.id}
+                  onPress={() => {
+                    onAssignArtist?.(settingsSectionId, artist.id);
+                    setSettingsSectionId(null);
+                  }}
+                  style={[styles.menuItem, { flexDirection: 'row', alignItems: 'center', gap: 8 }]}
+                >
+                  <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: artist.color }} />
+                  <Text style={styles.menuItemText}>{artist.name}</Text>
+                </Pressable>
+              ))}
+
+              <Pressable
+                onPress={() => {
+                  setShowArtistCreator(true);
+                  // keep settings open or close? Let's close settings, open creator
+                  setSettingsSectionId(null);
+                }}
+                style={[styles.menuItem, { marginTop: 4 }]}
+              >
+                <Text style={[styles.menuItemText, { color: '#0A84FF' }]}>+ New Artist</Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Modal>
+      )}
+
+      {/* New Artist Creator Modal */}
+      {showArtistCreator && (
+        <Modal transparent animationType="fade" visible={showArtistCreator}>
+          <Pressable
+            style={styles.menuOverlay}
+            onPress={() => setShowArtistCreator(false)}
+          >
+            <Pressable style={styles.menuPopover} onPress={(e) => e.stopPropagation()}>
+              <Text style={styles.menuTitle}>Create New Artist</Text>
+              {/* Very simple list of color presets */}
+              <View style={{ flexDirection: 'row', gap: 8, marginVertical: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
+                {['#F87171', '#FB923C', '#FBBF24', '#A3E635', '#4ADE80', '#2DD4BF', '#38BDF8', '#818CF8', '#C084FC', '#F472B6'].map((color) => (
+                  <Pressable
+                    key={color}
+                    onPress={() => {
+                      // Immediate create with a default name for now, they can rename later or just assume 'Artist X'
+                      const newArtist = { id: Math.random().toString(), name: `Artist ${artists.length + 1}`, color };
+                      onCreateArtist?.(newArtist);
+                      setShowArtistCreator(false);
+                    }}
+                    style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: color }}
+                  />
+                ))}
+              </View>
+              <Text style={[styles.menuTitle, { textAlign: 'center' }]}>Tap a color to create</Text>
+            </Pressable>
+          </Pressable>
+        </Modal>
+      )}
 
       {/* Add Block & Section Action Sheet Popover */}
       {addMenuMovementId && (

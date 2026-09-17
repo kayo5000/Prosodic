@@ -635,6 +635,69 @@ export function CadencePaperStudio({
     [movements, sections, pushHistory, onLyricsChange],
   );
 
+  const handleMergeSections = useCallback(
+    (sourceId: string, targetId: string) => {
+      setSections((prev) => {
+        const sourceIndex = prev.findIndex((s) => s.id === sourceId);
+        const targetIndex = prev.findIndex((s) => s.id === targetId);
+        if (sourceIndex === -1 || targetIndex === -1) return prev;
+
+        const source = prev[sourceIndex];
+        const target = prev[targetIndex];
+
+        // Deep copy the blocks and re-parent them (if they had parent refs, but they don't explicitly need it here)
+        const updatedTarget = {
+          ...target,
+          blocks: [...target.blocks, ...source.blocks],
+        };
+
+        const newSections = prev.filter((s) => s.id !== sourceId);
+        const updatedTargetIndex = newSections.findIndex((s) => s.id === targetId);
+        if (updatedTargetIndex !== -1) {
+          newSections[updatedTargetIndex] = updatedTarget;
+        }
+
+        const reindexed = reindexSectionsGlobalBars(newSections);
+        pushHistory(reindexed);
+        onLyricsChange?.(sectionsToLyrics(reindexed));
+        return reindexed;
+      });
+
+      setMovements((prev) => {
+        return prev.map((m) => ({
+          ...m,
+          sectionIds: m.sectionIds.filter((id) => id !== sourceId),
+        }));
+      });
+
+      if (activeSectionId === sourceId) {
+        setActiveSectionId(targetId);
+      }
+    },
+    [activeSectionId, pushHistory, onLyricsChange],
+  );
+
+  const handleCreateArtist = useCallback((artist: Artist) => {
+    setMetadata((prev) => ({
+      ...prev,
+      artists: [...(prev.artists || []), artist],
+    }));
+  }, []);
+
+  const handleAssignArtist = useCallback(
+    (sectionId: string, artistId: string | null) => {
+      setSections((prev) => {
+        const next = prev.map((s) =>
+          s.id === sectionId ? { ...s, artistId: artistId || undefined } : s,
+        );
+        pushHistory(next);
+        onLyricsChange?.(sectionsToLyrics(next));
+        return next;
+      });
+    },
+    [pushHistory, onLyricsChange],
+  );
+
   const handleAddBeatSwitch = useCallback(() => {
     const newMovement = createBeatSwitchMovement(movements, metadata.defaultBpm);
     const totalCurrentBars = sections.reduce(
@@ -1036,6 +1099,10 @@ export function CadencePaperStudio({
               }}
               onAddSection={handleAddNewSection}
               onAddBeatSwitch={handleAddBeatSwitch}
+              artists={metadata.artists || []}
+              onMergeBlocks={handleMergeSections}
+              onCreateArtist={handleCreateArtist}
+              onAssignArtist={handleAssignArtist}
             />
           </Animated.View>
         )}

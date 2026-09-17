@@ -114,6 +114,7 @@ export interface PaperSection {
   type: SectionType;
   name: string;
   movementId: string;
+  artistId?: string;
   texture: TextureArtifact;
   blocks: CadenceBlock[];
   isFavorite?: boolean;
@@ -129,12 +130,10 @@ export interface AudioTrackMetadata {
   confidence?: number;
 }
 
-export interface BeatMovement {
+export interface Artist {
   id: string;
   name: string;
-  bpm: number;
-  audioFile?: AudioTrackMetadata;
-  sectionIds: string[];
+  color: string;
 }
 
 export interface SongMetadata {
@@ -142,5 +141,14 @@ export interface SongMetadata {
   defaultBpm: number;
   audioFile?: AudioTrackMetadata;
   whiteboard: TextureArtifact;
+  artists?: Artist[];
+}
+
+export interface BeatMovement {
+  id: string;
+  name: string;
+  bpm: number;
+  audioFile?: AudioTrackMetadata;
+  sectionIds: string[];
 }
 
