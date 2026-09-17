@@ -1,1 +1,0 @@
-import { countLineSyllables } from './src/utils/syllableCounter'; console.log('1:', countLineSyllables('The tears rise to the sides to their')); console.log('2:', countLineSyllables('My grandkids carried the coffin to'));
