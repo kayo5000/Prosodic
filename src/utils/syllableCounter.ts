@@ -243,6 +243,74 @@ export interface LineSyllableAnalysis {
 }
 
 /**
+ * Returns an array of valid character indices where a word can be hyphenated.
+ * Based on basic English phonetic heuristics (V-CV, VC-CV).
+ */
+export function getValidHyphenationPoints(word: string): number[] {
+  const cleaned = word.replace(/[^a-zA-Z]/g, '').toLowerCase();
+  if (cleaned.length <= 3) return [];
+  const vowels = /[aeiouy]+/gi;
+  const matches = [...cleaned.matchAll(vowels)];
+  if (matches.length <= 1) return [];
+  const points: number[] = [];
+  for (let i = 0; i < matches.length - 1; i++) {
+    const currentVowelEnd = matches[i].index! + matches[i][0].length;
+    const nextVowelStart = matches[i + 1].index!;
+    const consonantsBetween = nextVowelStart - currentVowelEnd;
+    if (consonantsBetween === 0) {
+      points.push(currentVowelEnd); // Hiatus (e.g. cha-os)
+    } else if (consonantsBetween === 1) {
+      points.push(currentVowelEnd); // V-CV (e.g. be-fore)
+    } else {
+      points.push(currentVowelEnd + Math.floor(consonantsBetween / 2)); // VC-CV (e.g. un-der)
+    }
+  }
+  return points;
+}
+
+/**
+ * Validates and snaps an invalid cross-bar hyphenation split to the nearest valid linguistic boundary.
+ */
+export function autocorrectHyphenation(leftPart: string, rightPart: string): [string, string] {
+  const isHyphenatedLeft = leftPart.endsWith('-');
+  const isHyphenatedRight = rightPart.startsWith('-');
+  
+  if (!isHyphenatedLeft && !isHyphenatedRight) {
+    return [leftPart, rightPart]; // not a split word
+  }
+
+  const cleanLeft = leftPart.replace(/-$/, '');
+  const cleanRight = rightPart.replace(/^-/, '');
+  const fullWord = cleanLeft + cleanRight;
+  
+  const validPoints = getValidHyphenationPoints(fullWord);
+  if (validPoints.length === 0) return [leftPart, rightPart]; // Can't safely split
+
+  const attemptedSplit = cleanLeft.length;
+  if (validPoints.includes(attemptedSplit)) {
+    return [leftPart, rightPart]; // Already valid
+  }
+
+  // Find nearest valid split
+  let nearest = validPoints[0];
+  let minDiff = Math.abs(attemptedSplit - nearest);
+  for (const pt of validPoints) {
+    const diff = Math.abs(attemptedSplit - pt);
+    if (diff < minDiff) {
+      nearest = pt;
+      minDiff = diff;
+    }
+  }
+
+  // Keep original casing/punctuation, just slice at `nearest`
+  // We need to apply `nearest` against the original string, not just the cleaned one.
+  // Assuming words don't have punctuation in the middle for this basic check.
+  const newLeft = fullWord.slice(0, nearest) + '-';
+  const newRight = '-' + fullWord.slice(nearest);
+  return [newLeft, newRight];
+}
+
+/**
  * Counts total syllables in a single lyric line.
  */
 export function countLineSyllables(lineText: string): number {

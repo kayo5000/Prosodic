@@ -27,6 +27,7 @@ import {
   updateBarText,
   updateBlockFromText,
   updateSectionsFromLyrics,
+  syncCrossBarHyphenation,
 } from './cadenceFormat';
 import { analyzeVerseRhymes, type VerseRhymeToken } from '../../../services/rhymeDetectionEngine';
 import { countLineSyllables } from '../../../utils/syllableCounter';
@@ -829,16 +830,18 @@ export function CadencePaperStudio({
         setActiveFocus(finalFocus);
         onLyricsChange?.(sectionsToLyrics(newSections));
       } else {
-        const updatedSections = sections.map((sec) => {
-          if (sec.id !== sectionId) return sec;
-          const updatedBlocks = updateBarText(sec.blocks, blockIndex, barIndex, newText);
-          return { ...sec, blocks: updatedBlocks };
-        });
+          let updatedSections = sections.map((sec) => {
+            if (sec.id !== sectionId) return sec;
+            const updatedBlocks = updateBarText(sec.blocks, blockIndex, barIndex, newText);
+            return { ...sec, blocks: updatedBlocks };
+          });
 
-        setSections(updatedSections);
-        pushHistory(updatedSections);
-        onLyricsChange?.(sectionsToLyrics(updatedSections));
-      }
+          updatedSections = syncCrossBarHyphenation(updatedSections);
+
+          setSections(updatedSections);
+          pushHistory(updatedSections);
+          onLyricsChange?.(sectionsToLyrics(updatedSections));
+        }
     },
     [sections, pushHistory, onLyricsChange],
   );

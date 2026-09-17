@@ -1,4 +1,4 @@
-import { countLineSyllables } from '@/utils/syllableCounter';
+import { countLineSyllables, autocorrectHyphenation } from '@/utils/syllableCounter';
 
 import type { CadenceBarLine, CadenceBlock, FormattedSpan } from './types';
 
@@ -447,6 +447,73 @@ export function updateBlockFromText(
       bars: updatedBars,
     };
   });
+}
+
+/**
+ * Synchronizes hyphenation state across adjacent bars.
+ * If Bar 1 ends with '-', it automatically prepends '-' to Bar 2.
+ * It also strictly enforces valid linguistic boundaries for the split.
+ */
+export function syncCrossBarHyphenation(sections: import('./types').PaperSection[]): import('./types').PaperSection[] {
+  const allBars: { secIndex: number; blockIndex: number; barIndex: number; bar: CadenceBarLine }[] = [];
+  
+  sections.forEach((sec, sIdx) => {
+    sec.blocks.forEach((block, bIdx) => {
+      block.bars.forEach((bar, barIdx) => {
+        allBars.push({ secIndex: sIdx, blockIndex: bIdx, barIndex: barIdx, bar: { ...bar } });
+      });
+    });
+  });
+
+  for (let i = 0; i < allBars.length - 1; i++) {
+    const current = allBars[i].bar;
+    const next = allBars[i + 1].bar;
+
+    const currentText = current.rawText.trimEnd();
+    const nextText = next.rawText.trimStart();
+
+    if (currentText.endsWith('-') && nextText.length > 0) {
+      let rightPart = nextText.split(/\s+/)[0]; 
+      if (!rightPart.startsWith('-')) {
+        rightPart = '-' + rightPart;
+      }
+      
+      const leftPart = currentText.split(/\s+/).pop()!; 
+
+      const [newLeft, newRight] = autocorrectHyphenation(leftPart, rightPart);
+
+      if (newLeft !== leftPart || newRight !== rightPart || !nextText.startsWith('-')) {
+        const curWords = currentText.split(/\s+/);
+        curWords[curWords.length - 1] = newLeft;
+        current.rawText = curWords.join(' ') + (current.rawText.endsWith(' ') ? ' ' : '');
+        current.spans = [{ text: current.rawText }];
+        current.syllableCount = countLineSyllables(current.rawText);
+
+        let nxtWords = nextText.split(/\s+/);
+        if (!nextText.startsWith('-') && newRight === rightPart) {
+           nxtWords[0] = '-' + nxtWords[0];
+        } else {
+           nxtWords[0] = newRight;
+        }
+        next.rawText = (next.rawText.startsWith(' ') ? ' ' : '') + nxtWords.join(' ');
+        next.spans = [{ text: next.rawText }];
+        next.syllableCount = countLineSyllables(next.rawText);
+      }
+    } else if (!currentText.endsWith('-') && nextText.startsWith('-')) {
+      const nxtWords = nextText.split(/\s+/);
+      nxtWords[0] = nxtWords[0].replace(/^-/, '');
+      next.rawText = (next.rawText.startsWith(' ') ? ' ' : '') + nxtWords.join(' ');
+      next.spans = [{ text: next.rawText }];
+      next.syllableCount = countLineSyllables(next.rawText);
+    }
+  }
+
+  const newSections = JSON.parse(JSON.stringify(sections));
+  allBars.forEach((item) => {
+    newSections[item.secIndex].blocks[item.blockIndex].bars[item.barIndex] = item.bar;
+  });
+
+  return newSections;
 }
 
 /**
