@@ -29,6 +29,7 @@ import {
   updateSectionsFromLyrics,
 } from './cadenceFormat';
 import { analyzeVerseRhymes, type VerseRhymeToken } from '../../../services/rhymeDetectionEngine';
+import { countLineSyllables } from '../../../utils/syllableCounter';
 import { colorForFamily } from '../../../theme/theme';
 import { SyllableInspectorModal, type SyllableOverride } from '../SyllableInspectorModal';
 import { LexiconModal } from '../LexiconModal';
@@ -1303,6 +1304,7 @@ export function CadencePaperStudio({
                                       ...newBars[barIndexObj],
                                       rawText: textBefore,
                                       spans: [{ text: textBefore }],
+                                      syllableCount: countLineSyllables(textBefore),
                                     };
 
                                     newBars.splice(barIndexObj + 1, 0, {
@@ -1311,7 +1313,7 @@ export function CadencePaperStudio({
                                       globalBarNumber: 0,
                                       spans: [{ text: textAfter }],
                                       rawText: textAfter,
-                                      syllableCount: 0,
+                                      syllableCount: countLineSyllables(textAfter),
                                     });
 
                                     newBlock.bars = newBars.map((b, i) => ({
