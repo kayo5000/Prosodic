@@ -178,10 +178,11 @@ export function AppIntroModal({ onDismiss }: AppIntroModalProps) {
   const handleEnter = () => {
     if (hasEnteredRef.current) return;
     
-    // Check if running in browser vs PWA standalone
+    // Only show on mobile browsers, skip on desktop or if already standalone PWA
+    const isMobile = typeof window !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     const isStandalone = typeof window !== 'undefined' && (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone);
     
-    if (!isStandalone && typeof window !== 'undefined') {
+    if (isMobile && !isStandalone) {
       setShowPwaPrompt(true);
       return;
     }
@@ -246,14 +247,14 @@ export function AppIntroModal({ onDismiss }: AppIntroModalProps) {
         <View style={styles.centerContainer}>
           <LiquidGlassCard borderRadius={16} style={{ padding: 24, maxWidth: 400, alignItems: 'center' }}>
             <Text style={{ color: '#fff', fontSize: 20, fontWeight: 'bold', marginBottom: 16 }}>
-              For the best web experience
+              For the BEST Mobile Experience
             </Text>
             <View style={{ alignItems: 'flex-start', marginBottom: 24, gap: 8 }}>
-              <Text style={{ color: '#ccc', fontSize: 16 }}>• Press Share (in browser)</Text>
+              <Text style={{ color: '#ccc', fontSize: 16 }}>• Press Share (In Browser)</Text>
               <Text style={{ color: '#ccc', fontSize: 16 }}>• View More</Text>
               <Text style={{ color: '#ccc', fontSize: 16 }}>• Add To Home Screen</Text>
               <Text style={{ color: '#ccc', fontSize: 16 }}>• Ensure "Open As Web App" toggle is enabled</Text>
-              <Text style={{ color: '#ccc', fontSize: 16 }}>• Close browser & open web app from Home Screen</Text>
+              <Text style={{ color: '#ccc', fontSize: 16 }}>• Close Browser & Open Web App From Home Screen</Text>
             </View>
             <Pressable
               onPress={proceedFromPwaPrompt}
@@ -288,8 +289,8 @@ export function AppIntroModal({ onDismiss }: AppIntroModalProps) {
           position: 'absolute',
           top: 0,
           left: 0,
-          width: '100%',
-          height: '100%',
+          width: '100vw',
+          height: '100vh',
           objectFit: 'cover',
           pointerEvents: 'none',
           zIndex: 0,
@@ -478,8 +479,8 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    width: '100%',
-    height: '100%',
+    width: '100vw',
+    height: '100vh',
     minHeight: '100dvh',
     zIndex: 99999,
     backgroundColor: '#000000',
@@ -546,12 +547,10 @@ const styles = StyleSheet.create({
   craftButtonHovered: {
     borderColor: '#FFFFFF',
     backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    transform: [{ scale: 1.02 }],
   } as any,
   craftButtonPressed: {
     borderColor: '#FFFFFF',
     backgroundColor: 'rgba(255, 255, 255, 0.12)',
-    transform: [{ scale: 0.98 }],
   } as any,
   craftButtonText: {
     fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
