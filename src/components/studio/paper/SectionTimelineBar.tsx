@@ -98,7 +98,7 @@ export function SectionTimelineBar({
               {/* Section Header Tag if multiple sections */}
               {(movements.length > 1 || mIdx > 0) && (
                 <View style={styles.beatSwitchBadge}>
-                  <Text style={styles.beatSwitchText}>{movement.name}</Text>
+                  <Text selectable={false} suppressHighlighting pointerEvents="none" style={styles.beatSwitchText}>{movement.name}</Text>
                 </View>
               )}
 
@@ -148,7 +148,7 @@ export function SectionTimelineBar({
                 style={styles.addPillBtn}
                 accessibilityLabel="Add block to this section"
               >
-                <Text style={styles.addPillText}>+ Block</Text>
+                <Text selectable={false} suppressHighlighting pointerEvents="none" style={styles.addPillText}>+ Block</Text>
               </Pressable>
             </View>
           );
@@ -160,7 +160,7 @@ export function SectionTimelineBar({
           style={styles.addSectionGlobalBtn}
           accessibilityLabel="Add new section"
         >
-          <Text style={styles.addSectionGlobalText}>+ Section</Text>
+          <Text selectable={false} suppressHighlighting pointerEvents="none" style={styles.addSectionGlobalText}>+ Section</Text>
         </Pressable>
       </ScrollView>
 
@@ -172,7 +172,9 @@ export function SectionTimelineBar({
             onPress={() => setSettingsSectionId(null)}
           >
             <View style={styles.menuPopover}>
-              <Text style={styles.menuTitle}>Block Settings</Text>
+              <Text style={styles.menuTitle} selectable={false} suppressHighlighting pointerEvents="none">
+                Block Settings
+              </Text>
 
               <Pressable
                 onPress={() => {
@@ -181,11 +183,11 @@ export function SectionTimelineBar({
                 }}
                 style={styles.menuItem}
               >
-                <Text style={styles.menuItemText}>Merge with...</Text>
+                <Text style={styles.menuItemText} selectable={false} suppressHighlighting pointerEvents="none">Merge with...</Text>
               </Pressable>
 
               <View style={styles.menuDivider} />
-              <Text style={styles.menuTitle}>Assign Artist</Text>
+              <Text style={styles.menuTitle} selectable={false} suppressHighlighting pointerEvents="none">Assign Artist</Text>
 
               <Pressable
                 onPress={() => {
@@ -194,7 +196,7 @@ export function SectionTimelineBar({
                 }}
                 style={styles.menuItem}
               >
-                <Text style={styles.menuItemText}>No Artist (Default)</Text>
+                <Text style={styles.menuItemText} selectable={false} suppressHighlighting pointerEvents="none">No Artist (Default)</Text>
               </Pressable>
 
               {artists.map((artist) => (
@@ -207,7 +209,7 @@ export function SectionTimelineBar({
                   style={[styles.menuItem, { flexDirection: 'row', alignItems: 'center', gap: 8 }]}
                 >
                   <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: artist.color }} />
-                  <Text style={styles.menuItemText}>{artist.name}</Text>
+                  <Text style={styles.menuItemText} selectable={false} suppressHighlighting pointerEvents="none">{artist.name}</Text>
                 </Pressable>
               ))}
 
@@ -219,7 +221,7 @@ export function SectionTimelineBar({
                 }}
                 style={[styles.menuItem, { marginTop: 4 }]}
               >
-                <Text style={[styles.menuItemText, { color: '#0A84FF' }]}>+ New Artist</Text>
+                <Text style={[styles.menuItemText, { color: '#0A84FF' }]} selectable={false} suppressHighlighting pointerEvents="none">+ New Artist</Text>
               </Pressable>
             </View>
           </Pressable>
@@ -234,7 +236,7 @@ export function SectionTimelineBar({
             onPress={() => setShowArtistCreator(false)}
           >
             <Pressable style={styles.menuPopover} onPress={(e) => e.stopPropagation()}>
-              <Text style={styles.menuTitle}>Create New Artist</Text>
+              <Text style={styles.menuTitle} selectable={false} suppressHighlighting pointerEvents="none">Create New Artist</Text>
               {/* Very simple list of color presets */}
               <View style={{ flexDirection: 'row', gap: 8, marginVertical: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
                 {['#F87171', '#FB923C', '#FBBF24', '#A3E635', '#4ADE80', '#2DD4BF', '#38BDF8', '#818CF8', '#C084FC', '#F472B6'].map((color) => (
@@ -250,7 +252,7 @@ export function SectionTimelineBar({
                   />
                 ))}
               </View>
-              <Text style={[styles.menuTitle, { textAlign: 'center' }]}>Tap a color to create</Text>
+              <Text style={[styles.menuTitle, { textAlign: 'center' }]} selectable={false} suppressHighlighting pointerEvents="none">Tap a color to create</Text>
             </Pressable>
           </Pressable>
         </Modal>
@@ -264,7 +266,7 @@ export function SectionTimelineBar({
             onPress={() => setAddMenuMovementId(null)}
           >
             <View style={styles.menuPopover}>
-              <Text style={styles.menuTitle}>Add Block</Text>
+              <Text style={styles.menuTitle} selectable={false} suppressHighlighting pointerEvents="none">Add Block</Text>
 
               <Pressable
                 onPress={() => {
@@ -273,7 +275,7 @@ export function SectionTimelineBar({
                 }}
                 style={styles.menuItem}
               >
-                <Text style={styles.menuItemText}>Verse</Text>
+                <Text style={styles.menuItemText} selectable={false} suppressHighlighting pointerEvents="none">Verse</Text>
               </Pressable>
 
               <Pressable
@@ -283,7 +285,7 @@ export function SectionTimelineBar({
                 }}
                 style={styles.menuItem}
               >
-                <Text style={styles.menuItemText}>Chorus / Hook</Text>
+                <Text style={styles.menuItemText} selectable={false} suppressHighlighting pointerEvents="none">Chorus / Hook</Text>
               </Pressable>
 
               <Pressable
@@ -293,7 +295,7 @@ export function SectionTimelineBar({
                 }}
                 style={styles.menuItem}
               >
-                <Text style={styles.menuItemText}>Bridge</Text>
+                <Text style={styles.menuItemText} selectable={false} suppressHighlighting pointerEvents="none">Bridge</Text>
               </Pressable>
 
               <Pressable
@@ -303,7 +305,7 @@ export function SectionTimelineBar({
                 }}
                 style={styles.menuItem}
               >
-                <Text style={styles.menuItemText}>Reprise</Text>
+                <Text style={styles.menuItemText} selectable={false} suppressHighlighting pointerEvents="none">Reprise</Text>
               </Pressable>
 
               <View style={styles.menuDivider} />
@@ -315,7 +317,7 @@ export function SectionTimelineBar({
                 }}
                 style={[styles.menuItem, styles.menuItemNewSection]}
               >
-                <Text style={styles.menuItemNewSectionText}>+ Section</Text>
+                <Text selectable={false} suppressHighlighting pointerEvents="none" style={styles.menuItemNewSectionText}>+ Section</Text>
               </Pressable>
             </View>
           </Pressable>
