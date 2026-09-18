@@ -36,6 +36,72 @@ interface CadenceBarRowProps {
   onToggleCrossBarAlignment?: (barId: string, wordKey: string, nextAlignment: CrossBarAlignment) => void;
 }
 
+function getOptimalSplitIndex(rawText: string, tokens: VerseRhymeToken[]): number {
+  if (!tokens || tokens.length === 0) return Math.floor(rawText.length / 2);
+
+  const totalSyllables = tokens.reduce((sum, t) => sum + (t.syllableCount || 0), 0);
+  const targetSyllables = totalSyllables / 2;
+
+  let bestIndex = Math.floor(rawText.length / 2);
+  let bestScore = -9999;
+
+  let runningSyllables = 0;
+  let runningCharIndex = 0;
+
+  for (let i = 0; i < tokens.length; i++) {
+    const tok = tokens[i];
+    const prevCharIndex = runningCharIndex;
+    runningCharIndex += tok.text.length;
+    runningSyllables += tok.syllableCount || 0;
+
+    if (!tok.isWord) continue;
+
+    // Only consider split points around the middle (between 30% and 70% of syllables)
+    const ratio = runningSyllables / totalSyllables;
+    if (ratio < 0.3 || ratio > 0.7) continue;
+
+    let score = 0;
+
+    // Penalty for being far from center
+    const distFromCenter = Math.abs(runningSyllables - targetSyllables);
+    score -= distFromCenter * 2;
+
+    // Look ahead at next token
+    const nextTok = tokens[i + 1];
+    if (nextTok) {
+      const nextWord = nextTok.isWord ? nextTok.text.toLowerCase().trim() : '';
+      const nextIsPunctuation = !nextTok.isWord && /^[.,;!?]+/.test(nextTok.text.trim());
+      
+      // Bonus for grammar/punctuation
+      if (tok.text.match(/[.,;!?]$/) || nextIsPunctuation) {
+        score += 50;
+      }
+      
+      // Bonus for conjunctions
+      const conjunctions = ['and', 'but', 'so', 'or', 'cause', 'because'];
+      if (conjunctions.includes(nextWord)) {
+        score += 30;
+      }
+    }
+
+    // Bonus for internal rhyme resolution
+    if (tok.colorId && tok.colorId > 0) {
+      score += 20;
+    }
+
+    if (score > bestScore) {
+      bestScore = score;
+      // We want to split AFTER this token and any immediate punctuation
+      bestIndex = runningCharIndex;
+      if (tokens[i+1] && !tokens[i+1].isWord && /^[.,;!?\s]+$/.test(tokens[i+1].text)) {
+        bestIndex += tokens[i+1].text.length;
+      }
+    }
+  }
+
+  return bestIndex;
+}
+
 export function CadenceBarRow({
   bar,
   isActive,
@@ -431,10 +497,28 @@ export function CadenceBarRow({
         {/* 5. Syllable Count Badge on Right - Tap to Inspect Bar Words & Syllables */}
         <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 'auto' }}>
           <Animated.View style={[{ overflow: 'hidden', flexDirection: 'row', alignItems: 'center', gap: 8 }, { width: overlayWidth, opacity: overlayFade }]}>
-            <Pressable onPress={() => setShowRecommendation(false)} style={styles.recommendationActionBtn}>
+            <Pressable 
+              onPress={() => {
+                setShowRecommendation(false);
+                if (onSplitBar && inBarTokens.length > 0) {
+                  const splitIndex = getOptimalSplitIndex(bar.rawText, inBarTokens);
+                  const part1 = bar.rawText.substring(0, splitIndex).trim();
+                  const part2 = bar.rawText.substring(splitIndex).trim();
+                  if (part1 && part2) {
+                    onSplitBar(part1, part2);
+                  }
+                }
+              }} 
+              style={styles.recommendationActionBtn}
+              accessibilityLabel="Apply intelligent split recommendation"
+            >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.59-9.21l-5.44-5.44"/></svg>
             </Pressable>
-            <Pressable onPress={() => setShowRecommendation(false)} style={styles.recommendationActionBtn}>
+            <Pressable 
+              onPress={() => setShowRecommendation(false)} 
+              style={styles.recommendationActionBtn}
+              accessibilityLabel="Dismiss recommendation"
+            >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </Pressable>
           </Animated.View>
