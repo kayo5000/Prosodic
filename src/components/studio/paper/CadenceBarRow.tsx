@@ -14,6 +14,7 @@ import type { CadenceBarLine, CrossBarAlignment } from './types';
 import type { VerseRhymeToken } from '../../../services/rhymeDetectionEngine';
 import { LiquidGlassCard } from '../../ui/LiquidGlassCard';
 import { getBarMetrics, getDensityHeatColor } from '../../../utils/tempoDensity';
+import { countWordSyllables } from '@/utils/syllableCounter';
 
 interface CadenceBarRowProps {
   bar: CadenceBarLine;
@@ -39,7 +40,7 @@ interface CadenceBarRowProps {
 function getOptimalSplitIndex(rawText: string, tokens: VerseRhymeToken[]): number {
   if (!tokens || tokens.length === 0) return Math.floor(rawText.length / 2);
 
-  const totalSyllables = tokens.reduce((sum, t) => sum + (t.syllableCount || 0), 0);
+  const totalSyllables = tokens.reduce((sum, t) => sum + countWordSyllables(t.text), 0);
   const targetSyllables = totalSyllables / 2;
 
   let bestIndex = Math.floor(rawText.length / 2);
@@ -52,7 +53,9 @@ function getOptimalSplitIndex(rawText: string, tokens: VerseRhymeToken[]): numbe
     const tok = tokens[i];
     const prevCharIndex = runningCharIndex;
     runningCharIndex += tok.text.length;
-    runningSyllables += tok.syllableCount || 0;
+    
+    const tokSyllables = countWordSyllables(tok.text);
+    runningSyllables += tokSyllables;
 
     if (!tok.isWord) continue;
 
