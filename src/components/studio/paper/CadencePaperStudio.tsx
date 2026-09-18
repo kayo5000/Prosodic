@@ -34,7 +34,7 @@ import {
 } from './cadenceFormat';
 import { analyzeVerseRhymes, type VerseRhymeToken } from '../../../services/rhymeDetectionEngine';
 import { countLineSyllables } from '../../../utils/syllableCounter';
-import { getOptimalSplitIndex } from '../../../utils/cadenceSplitter';
+import { getOptimalSplitIndex, getOptimalSplitResult } from '../../../utils/cadenceSplitter';
 import { colorForFamily } from '../../../theme/theme';
 import { SyllableInspectorModal, type SyllableOverride } from '../SyllableInspectorModal';
 import { LexiconModal } from '../LexiconModal';
@@ -276,6 +276,27 @@ export function CadencePaperStudio({
           blockAvg = validBars.reduce((sum, b) => sum + b.syllableCount, 0) / validBars.length;
         }
 
+        // FIND OPENING ANCHOR COLOR ID
+        const openingColors = new Map<number, number>();
+        block.bars.forEach((b) => {
+          const bData = barTokensMap.get(`${sec.id}:${block.blockIndex}:${b.barIndex}`);
+          if (bData && bData.words && bData.words.length > 0) {
+            const firstWord = bData.words.find((w) => w.isWord);
+            if (firstWord && firstWord.colorId > 0) {
+              openingColors.set(firstWord.colorId, (openingColors.get(firstWord.colorId) || 0) + 1);
+            }
+          }
+        });
+
+        let openingAnchorColorId = 0;
+        let maxCount = 0;
+        openingColors.forEach((count, colorId) => {
+          if (count >= 2 && count > maxCount) {
+            openingAnchorColorId = colorId;
+            maxCount = count;
+          }
+        });
+
         block.bars.forEach((bar) => {
           if (selectedBarsForSync.includes(bar.id)) {
             const metrics = getBarMetrics(movements[0]?.bpm || metadata.defaultBpm, 'dense');
@@ -286,9 +307,10 @@ export function CadencePaperStudio({
             if (heatColor === '#EF4444' || isAnomaly || isTwistaRate) {
               const barData = barTokensMap.get(`${sec.id}:${block.blockIndex}:${bar.barIndex}`);
               const inBarTokens = barData?.words || [];
-              const splitIndex = getOptimalSplitIndex(bar.rawText, inBarTokens);
-              const textBefore = bar.rawText.substring(0, splitIndex).trim();
-              const textAfter = bar.rawText.substring(splitIndex).trim();
+              const splitResult = getOptimalSplitResult(bar.rawText, inBarTokens, openingAnchorColorId);
+              
+              const textBefore = splitResult.textBefore;
+              const textAfter = splitResult.textAfter;
 
               newBars.push({
                 ...bar,
@@ -2164,6 +2186,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
+
 
 
 

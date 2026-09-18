@@ -445,20 +445,75 @@ export function buildVerseStream(verseLines: string[]): VerseSyllable[] {
 }
 
 export function extractRhymeCandidates(stream: VerseSyllable[]): RhymeCandidate[] {
-  const candidates: RhymeCandidate[] = [];
+  const strongCandidates: RhymeCandidate[] = [];
+  const weakCandidates: RhymeCandidate[] = [];
 
   for (const s of stream) {
     if (!s.isStressed) continue;
-    if (FUNCTION_WORDS.has(s.cleanWord.toLowerCase())) continue;
 
     const ru = s.rhymeUnit || getRhymeUnitFromPhonemes(s.phonemes);
     if (!ru) continue;
     s.rhymeUnit = ru;
-    candidates.push(s as RhymeCandidate);
+
+    if (FUNCTION_WORDS.has(s.cleanWord.toLowerCase())) {
+      weakCandidates.push(s as RhymeCandidate);
+    } else {
+      strongCandidates.push(s as RhymeCandidate);
+    }
   }
 
-  candidates.sort((a, b) => a.streamIndex - b.streamIndex);
-  return candidates;
+  // Pass 1: Build temporary strong groups to find "Tells"
+  const tempGroups = findRhymeGroups(strongCandidates);
+  const promotedSet = new Set<number>(); // streamIndex
+
+  // Helper to calculate metrical slot (syllables from end of line)
+  const getPocket = (s: VerseSyllable) => {
+    const lineSylls = stream.filter((x) => x.lineIndex === s.lineIndex);
+    return lineSylls.length - lineSylls.findIndex((x) => x.streamIndex === s.streamIndex);
+  };
+
+  // Pass 2: The Structural "Tell" (Metrical Promotion)
+  for (const group of tempGroups) {
+    if (group.length < 2) continue;
+
+    const pockets = group.map(getPocket);
+
+    for (const weak of weakCandidates) {
+      if (promotedSet.has(weak.streamIndex)) continue;
+
+      const weakPocket = getPocket(weak);
+      // If the filler word occupies the exact same metrical pocket (+/- 1 syllable)
+      const matchesPocket = pockets.some((p) => Math.abs(p - weakPocket) <= 1);
+
+      if (matchesPocket) {
+        const groupRep = group[0];
+        const similarity = syllableRhymeScore(groupRep.rhymeUnit, weak.rhymeUnit);
+        if (similarity >= RHYME_THRESHOLD - 0.05) { // Slightly softer threshold for Promoted rhymes
+          promotedSet.add(weak.streamIndex);
+
+          // Pass 3: Stateful Learning
+          // Once this word is proven to be a rhyme anchor, promote all instances of it in this scheme
+          for (const otherWeak of weakCandidates) {
+            if (
+              otherWeak.cleanWord.toLowerCase() === weak.cleanWord.toLowerCase() &&
+              syllableRhymeScore(groupRep.rhymeUnit, otherWeak.rhymeUnit) >= RHYME_THRESHOLD - 0.05
+            ) {
+              promotedSet.add(otherWeak.streamIndex);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Combine and return
+  const finalCandidates = [
+    ...strongCandidates,
+    ...weakCandidates.filter((w) => promotedSet.has(w.streamIndex)),
+  ];
+  finalCandidates.sort((a, b) => a.streamIndex - b.streamIndex);
+  
+  return finalCandidates;
 }
 
 // ── Union-Find Connected Components Grouping ─────────────────────────────────
