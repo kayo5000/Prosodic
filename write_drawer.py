@@ -1,12 +1,15 @@
-import React, { useRef, useState } from 'react';
+﻿import React, { useCallback, useState, useRef } from 'react';
 import {
+  Alert,
   Animated,
   Easing,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -98,6 +101,8 @@ export function SideColumnDrawer({
   activeSongId,
   onSelectSong,
   onCreateNewSong,
+  onDeleteSong,
+  onRenameSong,
 }: SideColumnDrawerProps) {
   // State for Accordions
   const [expProjects, setExpProjects] = useState(false);
@@ -164,15 +169,15 @@ export function SideColumnDrawer({
               {/* MY SONGS */}
               <View style={styles.section}>
                 <SectionTitle>MY SONGS</SectionTitle>
-                <DrawerItem title="New (Free Write or Song)" onPress={() => { onCreateNewSong(); onClose(); }} rightElement={<Text style={styles.accentText}>+</Text>} />
+                <DrawerItem title="New (Free Write or Song)" onPress={onCreateNewSong} rightElement={<Text style={styles.accentText}>+</Text>} />
                 <Text style={styles.subTitle}>Recent Drafts</Text>
                 <View style={styles.listContainer}>
                   {songs.map(song => (
                     <DrawerItem 
                       key={song.id} 
-                      title={song.title} 
+                      title={song.metadata.title} 
                       isActive={song.id === activeSongId}
-                      onPress={() => { onSelectSong(song.id); onClose(); }} 
+                      onPress={() => onSelectSong(song.id)} 
                     />
                   ))}
                 </View>
