@@ -34,6 +34,7 @@ import {
 } from './cadenceFormat';
 import { analyzeVerseRhymes, type VerseRhymeToken } from '../../../services/rhymeDetectionEngine';
 import { countLineSyllables } from '../../../utils/syllableCounter';
+import { getOptimalSplitIndex } from '../../../utils/cadenceSplitter';
 import { colorForFamily } from '../../../theme/theme';
 import { SyllableInspectorModal, type SyllableOverride } from '../SyllableInspectorModal';
 import { LexiconModal } from '../LexiconModal';
@@ -58,6 +59,7 @@ import { LiquidGlassCard } from '../../ui/LiquidGlassCard';
 import type {
   AudioRecordingData,
   BeatMovement,
+  CadenceBarLine,
   CrossBarAlignment,
   PaperFormatState,
   PaperSection,
@@ -262,11 +264,70 @@ export function CadencePaperStudio({
   }, []);
 
   const executeSelectedAutoSync = useCallback(() => {
-    // We will do the actual splitting of the selected bars here!
-    let updatedSections = [...sections];
-    // For now we just end selection mode. We MUST connect this to the engine next!
+    let updatedSections = sections.map((sec) => {
+      const newSec = { ...sec };
+      newSec.blocks = sec.blocks.map((block) => {
+        const newBlock = { ...block };
+        const newBars: CadenceBarLine[] = [];
+
+        let blockAvg = 0;
+        const validBars = block.bars.filter((b) => b.syllableCount > 0);
+        if (validBars.length > 0) {
+          blockAvg = validBars.reduce((sum, b) => sum + b.syllableCount, 0) / validBars.length;
+        }
+
+        block.bars.forEach((bar) => {
+          if (selectedBarsForSync.includes(bar.id)) {
+            const metrics = getBarMetrics(movements[0]?.bpm || metadata.defaultBpm, 'dense');
+            const heatColor = getDensityHeatColor(bar.syllableCount, metrics);
+            const isAnomaly = bar.syllableCount > 8 && blockAvg > 0 && bar.syllableCount > blockAvg * 2;
+            const isTwistaRate = bar.syllableCount > (10.866 * metrics.barDurationSeconds);
+
+            if (heatColor === '#EF4444' || isAnomaly || isTwistaRate) {
+              const barData = barTokensMap.get(`${sec.id}:${block.blockIndex}:${bar.barIndex}`);
+              const inBarTokens = barData?.words || [];
+              const splitIndex = getOptimalSplitIndex(bar.rawText, inBarTokens);
+              const textBefore = bar.rawText.substring(0, splitIndex).trim();
+              const textAfter = bar.rawText.substring(splitIndex).trim();
+
+              newBars.push({
+                ...bar,
+                rawText: textBefore,
+                spans: [{ text: textBefore }],
+                syllableCount: countLineSyllables(textBefore),
+              });
+
+              newBars.push({
+                id: `split-${Date.now()}-${Math.random()}`,
+                barIndex: 0,
+                globalBarNumber: 0,
+                spans: [{ text: textAfter }],
+                rawText: textAfter,
+                syllableCount: countLineSyllables(textAfter),
+              });
+              return;
+            }
+          }
+          newBars.push(bar);
+        });
+
+        newBlock.bars = newBars.map((b, i) => ({
+          ...b,
+          barIndex: i + 1,
+        }));
+        newBlock.targetBarCount = newBlock.bars.length;
+        return newBlock;
+      });
+      return newSec;
+    });
+
+    updatedSections = reindexSectionsGlobalBars(updatedSections);
+
+    setSections(updatedSections);
+    pushHistory(updatedSections);
     setSyncSelectionMode(false);
-  }, [selectedBarsForSync, sections]);
+    setSelectedBarsForSync([]);
+  }, [selectedBarsForSync, sections, movements, metadata.defaultBpm, pushHistory]);
 
   const cancelAutoSync = useCallback(() => {
     setSyncSelectionMode(false);
@@ -2103,6 +2164,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
+
+
+
+
 
 
 
