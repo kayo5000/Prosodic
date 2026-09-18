@@ -411,6 +411,7 @@ export function CadencePaperStudio({
     wordIndex: number;
     syllables: VerseRhymeToken[];
     initialSyllableIndex: number;
+    isCrossBarSplit?: boolean;
     surroundingContext?: EnunciationContext;
   }>({
     visible: false,
@@ -588,6 +589,7 @@ export function CadencePaperStudio({
       wordIndex: number,
       syllables: VerseRhymeToken[],
       initialSyllableIndex: number = 0,
+      isCrossBarSplit: boolean = false,
     ) => {
       // Extract surrounding words for contextual likelihood ranking
       const surroundingWords: string[] = [];
@@ -627,6 +629,7 @@ export function CadencePaperStudio({
           dominantFamilyId,
           currentLineIndex: lineIndex,
         },
+        isCrossBarSplit,
       });
     },
     [showBars, flatBarLines, blankText, verseRhymeAnalysis, blankRhymeAnalysis],
@@ -1612,18 +1615,47 @@ export function CadencePaperStudio({
                                   handleOpenPhraseSelector(sec.id, block.blockIndex)
                                 }
                                 onSelectSyllable={(tok, allWordSyllables) => {
-                                  const wordSyllables =
+                                  let wordSyllables =
                                     allWordSyllables && allWordSyllables.length > 0
                                       ? allWordSyllables
                                       : (barData?.syllables || []).filter(
                                           (s) => s.wordIndex === tok.wordIndex && s.lineIndex === tok.lineIndex,
                                         );
+                                  
+                                  let targetWord = tok.word || tok.text;
+                                  let isCrossBar = false;
+
+                                  if (targetWord.endsWith('-')) {
+                                    const nextBarData = barTokensMap.get(`${sec.id}:${block.blockIndex}:${bar.barIndex + 1}`);
+                                    if (nextBarData && nextBarData.words.length > 0) {
+                                      const firstWordNext = nextBarData.words.find(w => w.isWord);
+                                      if (firstWordNext) {
+                                         const nextSyllables = nextBarData.syllables.filter(s => s.wordIndex === firstWordNext.wordIndex);
+                                         wordSyllables = [...wordSyllables, ...nextSyllables];
+                                         targetWord = targetWord.replace(/-$/, '') + firstWordNext.text.replace(/^-/, '');
+                                         isCrossBar = true;
+                                      }
+                                    }
+                                  } else if (targetWord.startsWith('-')) {
+                                    const prevBarData = barTokensMap.get(`${sec.id}:${block.blockIndex}:${bar.barIndex - 1}`);
+                                    if (prevBarData && prevBarData.words.length > 0) {
+                                      const lastWordPrev = prevBarData.words.slice().reverse().find(w => w.isWord);
+                                      if (lastWordPrev && lastWordPrev.text.endsWith('-')) {
+                                         const prevSyllables = prevBarData.syllables.filter(s => s.wordIndex === lastWordPrev.wordIndex);
+                                         wordSyllables = [...prevSyllables, ...wordSyllables];
+                                         targetWord = lastWordPrev.text.replace(/-$/, '') + targetWord.replace(/^-/, '');
+                                         isCrossBar = true;
+                                      }
+                                    }
+                                  }
+
                                   handleOpenWordInspector(
-                                    tok.word || tok.text,
+                                    targetWord,
                                     tok.lineIndex ?? 0,
                                     tok.wordIndex ?? 0,
                                     wordSyllables.length > 0 ? wordSyllables : [tok],
                                     tok.syllableIndex ?? 0,
+                                    isCrossBar
                                   );
                                 }}
                                 onToggleCrossBarAlignment={handleToggleCrossBarAlignment}
@@ -1720,6 +1752,7 @@ export function CadencePaperStudio({
         wordIndex={inspectorModalData.wordIndex}
         syllables={inspectorModalData.syllables}
         initialSyllableIndex={inspectorModalData.initialSyllableIndex}
+        isCrossBarSplit={inspectorModalData.isCrossBarSplit}
         syllableOverrides={syllableOverrides}
         surroundingContext={inspectorModalData.surroundingContext}
         onClose={() => {
@@ -2186,6 +2219,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
+
 
 
 

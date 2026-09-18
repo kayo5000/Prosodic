@@ -345,6 +345,7 @@ export function CadenceBarRow({
                     isSyllRhyming && {
                       borderBottomColor: syl.color,
                       borderBottomWidth: 2,
+                      borderStyle: syl.isRelative ? 'dashed' : 'solid',
                     },
                   ]}
                 >
@@ -371,10 +372,11 @@ export function CadenceBarRow({
               { color: wordColor },
               alignment !== 'in-bar' && styles.crossBarText,
               isRhyming && styles.interactiveWordTextRhyming,
-              isRhyming && {
-                borderBottomColor: tok.color,
-                borderBottomWidth: 2,
-              },
+                isRhyming && {
+                  borderBottomColor: tok.color,
+                  borderBottomWidth: 2,
+                  borderStyle: tok.isRelative ? 'dashed' : 'solid',
+                },
             ]}
           >
             {tok.text}

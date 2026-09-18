@@ -35,6 +35,7 @@ export interface SyllableInspectorModalProps {
   syllables?: VerseRhymeToken[];
   syllable?: VerseRhymeToken | null;
   initialSyllableIndex?: number;
+  isCrossBarSplit?: boolean;
   currentOverride?: SyllableOverride;
   syllableOverrides?: Map<string, SyllableOverride>;
   surroundingContext?: EnunciationContext;
@@ -71,6 +72,7 @@ export function SyllableInspectorModal({
   syllables,
   syllable,
   initialSyllableIndex = 0,
+  isCrossBarSplit,
   currentOverride,
   syllableOverrides,
   surroundingContext,

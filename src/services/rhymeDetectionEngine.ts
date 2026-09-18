@@ -80,6 +80,7 @@ export interface VerseRhymeToken {
   globalSyllableIndex?: number;
   gridPosition?: number;
   stress?: number;
+  isRelative?: boolean;
   phonemes?: string[];
   rhymeUnit?: string[];
 }
@@ -743,6 +744,24 @@ export function syllableCharRanges(word: string, numSyllables: number): Array<[n
 /**
  * Analyzes verse lyrics, building the complete Rhyme Map and Line Tokens.
  */
+const VOWEL_PROXIMITY_MAP: Record<string, string[]> = {
+  'IY': ['IH', 'EY', 'ER'],
+  'IH': ['IY', 'EH', 'ER'],
+  'EY': ['IY', 'EH'],
+  'EH': ['IH', 'AE', 'ER'],
+  'AE': ['EH', 'AH'],
+  'AH': ['AE', 'UH', 'ER'],
+  'AA': ['AO', 'AH'],
+  'AO': ['AA', 'OW'],
+  'OW': ['AO', 'UH'],
+  'UH': ['OW', 'UW', 'AH'],
+  'UW': ['UH'],
+  'ER': ['IH', 'EH', 'AH', 'IY'],
+  'AY': ['AA', 'IY'],
+  'AW': ['AA', 'UW'],
+  'OY': ['AO', 'IY']
+};
+
 export function analyzeVerseRhymes(verseLines: string[]): VerseRhymeAnalysis {
   const stream = buildVerseStream(verseLines);
   const candidates = extractRhymeCandidates(stream);
@@ -791,6 +810,55 @@ export function analyzeVerseRhymes(verseLines: string[]): VerseRhymeAnalysis {
   for (const group of motifGroups) {
     if (idRemap.has(group.colorId)) {
       group.colorId = idRemap.get(group.colorId)!;
+    }
+  }
+
+  // Pass 4: Relative Rhymes (Phonetic DNA Matrix)
+  const relativeSet = new Set<string>(); // Tracks strictly relative syllables
+  const getPocket = (s: VerseSyllable) => {
+    const lineSylls = stream.filter((x) => x.lineIndex === s.lineIndex);
+    return lineSylls.length - lineSylls.findIndex((x) => x.streamIndex === s.streamIndex);
+  };
+
+  const groupPockets = new Map<number, number[]>();
+  for (const group of motifGroups) {
+    if (group.colorId > 0) {
+       const pockets = group.members.map(getPocket);
+       groupPockets.set(group.colorId, pockets);
+    }
+  }
+
+  for (const s of stream) {
+    const key = `${s.lineIndex}:${s.streamIndex}`;
+    if (motifMap.has(key) && motifMap.get(key)! > 0) continue; // Already mapped
+
+    if (!s.isStressed && !FUNCTION_WORDS.has(s.cleanWord.toLowerCase())) continue;
+
+    const sPocket = getPocket(s);
+    const sNuc = s.rhymeUnit ? basePhoneme(s.rhymeUnit[0]) : null;
+    if (!sNuc) continue;
+    
+    const relatives = VOWEL_PROXIMITY_MAP[sNuc] || [];
+
+    // Find if it matches any active pocket with a relative sound
+    let bestFamily = 0;
+    for (const group of motifGroups) {
+      if (group.colorId === 0) continue;
+      const pockets = groupPockets.get(group.colorId) || [];
+      const matchesPocket = pockets.some((p) => Math.abs(p - sPocket) <= 1);
+      
+      if (matchesPocket) {
+         const groupNuc = group.members[0].rhymeUnit ? basePhoneme(group.members[0].rhymeUnit[0]) : null;
+         if (groupNuc && (relatives.includes(groupNuc) || VOWEL_PROXIMITY_MAP[groupNuc]?.includes(sNuc))) {
+            bestFamily = group.colorId;
+            break;
+         }
+      }
+    }
+
+    if (bestFamily > 0) {
+      motifMap.set(key, bestFamily);
+      relativeSet.add(key);
     }
   }
 
@@ -843,6 +911,7 @@ export function analyzeVerseRhymes(verseLines: string[]): VerseRhymeAnalysis {
           stress: primarySyll ? primarySyll.stress : 1,
           phonemes: primarySyll ? primarySyll.phonemes : [],
           rhymeUnit: primarySyll ? primarySyll.rhymeUnit : [],
+          isRelative: primarySyll ? relativeSet.has(`${primarySyll.lineIndex}:${primarySyll.streamIndex}`) : false,
         });
         wordIdx++;
       } else {
@@ -901,6 +970,7 @@ export function analyzeVerseRhymes(verseLines: string[]): VerseRhymeAnalysis {
           stress: s.stress,
           phonemes: s.phonemes,
           rhymeUnit: s.rhymeUnit,
+          isRelative: relativeSet.has(`${s.lineIndex}:${s.streamIndex}`),
         });
 
         globalSyllIdx++;
@@ -1006,4 +1076,6 @@ export function detectCrossBarFlowPhrases(
 
   return phrases;
 }
+
+
 
