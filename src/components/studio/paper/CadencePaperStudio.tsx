@@ -67,22 +67,24 @@ import type {
   Artist,
 } from './types';
 
-interface CadencePaperStudioProps {
+export interface CadencePaperStudioProps {
   initialTitle?: string;
   initialLyrics?: string;
-  onLyricsChange?: (lyrics: string) => void;
+  initialBpm?: number;
   onClose?: () => void;
+  onLyricsChange?: (lyrics: string) => void;
 }
 
 export function CadencePaperStudio({
-  initialTitle = 'New Song',
-  initialLyrics = '',
-  onLyricsChange,
+  initialTitle,
+  initialLyrics,
+  initialBpm = 120,
   onClose,
+  onLyricsChange,
 }: CadencePaperStudioProps) {
   // 1. Initial State Setup
   const [initialData] = useState(() => {
-    const defaultState = createInitialSongState();
+    const defaultState = createInitialSongState(initialBpm);
     if (initialTitle && initialTitle !== 'New Song') {
       defaultState.metadata.title = initialTitle;
     }

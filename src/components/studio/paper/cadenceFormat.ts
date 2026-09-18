@@ -320,7 +320,7 @@ export function createSection(
 
 export function createBeatSwitchMovement(
   existingMovements: import('./types').BeatMovement[],
-  defaultBpm: number = 77,
+  defaultBpm: number = 120,
 ): import('./types').BeatMovement {
   const switchCount = existingMovements.length;
   return {
@@ -331,16 +331,16 @@ export function createBeatSwitchMovement(
   };
 }
 
-export function createInitialSongState(): {
+export function createInitialSongState(defaultBpm: number = 120): {
   metadata: import('./types').SongMetadata;
   movements: import('./types').BeatMovement[];
   sections: import('./types').PaperSection[];
 } {
-  const mainMovementId = 'movement-main';
+  const mainMovementId = `movement-${Date.now()}`;
   const mainMovement: import('./types').BeatMovement = {
     id: mainMovementId,
     name: 'Section 1',
-    bpm: 77,
+    bpm: defaultBpm,
     sectionIds: [],
   };
 
@@ -349,7 +349,7 @@ export function createInitialSongState(): {
 
   const metadata: import('./types').SongMetadata = {
     title: 'New Song',
-    defaultBpm: 77,
+    defaultBpm: defaultBpm,
     whiteboard: createBlankTexture('song-whiteboard'),
   };
 

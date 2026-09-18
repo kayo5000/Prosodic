@@ -427,24 +427,6 @@ export function CadenceBarRow({
             e.stopPropagation();
             if (heatColor === '#EF4444') {
               setShowRecommendation(true);
-              return;
-            }
-            if (tokensToRender.length > 0 && onSelectSyllable) {
-              const firstRhymeTok =
-                tokensToRender.find((t) => t.isWord && t.colorId > 0) ||
-                tokensToRender.find((t) => t.isWord);
-              if (firstRhymeTok) {
-                const wordSylls = syllableTokens?.filter(
-                  (s) =>
-                    s.wordIndex === firstRhymeTok.wordIndex &&
-                    s.lineIndex === firstRhymeTok.lineIndex,
-                );
-                onSelectSyllable(firstRhymeTok, wordSylls);
-              } else {
-                onGutterPress?.();
-              }
-            } else {
-              onGutterPress?.();
             }
           }}
           style={styles.syllableContainer}

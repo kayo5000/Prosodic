@@ -60,6 +60,7 @@ export default function DissectScreen() {
         <CadencePaperStudio
           initialTitle={DEFAULT_TITLE}
           initialLyrics={DEFAULT_LYRICS}
+          initialBpm={77}
           onClose={() => setShowIntro(true)}
         />
       )}
