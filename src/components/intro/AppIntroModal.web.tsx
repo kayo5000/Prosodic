@@ -175,11 +175,13 @@ export function AppIntroModal({ onDismiss }: AppIntroModalProps) {
 
   const [showPwaPrompt, setShowPwaPrompt] = useState(false);
   const hasEnteredRef = useRef(false);
+  
+  const isMobile = typeof window !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
   const handleEnter = () => {
     if (hasEnteredRef.current) return;
     
     // Only show on mobile browsers, skip on desktop or if already standalone PWA
-    const isMobile = typeof window !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     const isStandalone = typeof window !== 'undefined' && (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone);
     
     if (isMobile && !isStandalone) {
@@ -281,29 +283,33 @@ export function AppIntroModal({ onDismiss }: AppIntroModalProps) {
         }
       `}} />
       {/* Background Video (11-second cinematic loop ending on pure black outro) */}
-      <video
-        ref={videoRef}
-        src="./assets/videos/intro-bg.mp4?v=6"
-        autoPlay
-        loop
-        muted
-        playsInline
-        preload="auto"
-        controls={false}
-        disablePictureInPicture
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100vw',
-          height: '100vh',
-          objectFit: 'cover',
-          pointerEvents: 'none',
-          zIndex: 0,
-        }}
-      >
-        <source src="./assets/videos/intro-bg.mp4?v=6" type="video/mp4" />
-      </video>
+
+      {/* Conditionally render video only on Desktop to prevent iOS native play button overrides */}
+      {!isMobile && (
+        <video
+          ref={videoRef}
+          src="./assets/videos/intro-bg.mp4?v=6"
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="auto"
+          controls={false}
+          disablePictureInPicture
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            objectFit: 'cover',
+            pointerEvents: 'none',
+            zIndex: 0,
+          }}
+        >
+          <source src="./assets/videos/intro-bg.mp4?v=6" type="video/mp4" />
+        </video>
+      )}
 
       {/* Cinematic Dark Gradient Overlay */}
       <View
