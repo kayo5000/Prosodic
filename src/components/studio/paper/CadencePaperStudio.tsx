@@ -186,7 +186,7 @@ export function CadencePaperStudio({
   // Single blank text field state for Bars Off mode
   // Auto-Sync Selection Mode
   const [syncSelectionMode, setSyncSelectionMode] = useState<boolean>(false);
-  const [selectedBarsForSync, setSelectedBarsForSync] = useState<Set<string>>(new Set());
+  const [selectedBarsForSync, setSelectedBarsForSync] = useState<string[]>([]);
 
   // Global Twista Cap logic
   const globalBlinkAnim = useRef(new Animated.Value(1)).current;
@@ -239,12 +239,12 @@ export function CadencePaperStudio({
 
   const handleGlobalAutoSync = useCallback(() => {
     setSyncSelectionMode(true);
-    const initialSelection = new Set<string>();
+    const initialSelection: string[] = [];
     sections.forEach(sec => {
       sec.blocks.forEach(block => {
         block.bars.forEach(bar => {
           if (bar.syllableCount > 0) {
-            initialSelection.add(bar.id);
+            initialSelection.push(bar.id);
           }
         });
       });
@@ -254,9 +254,9 @@ export function CadencePaperStudio({
 
   const toggleBarSyncSelection = useCallback((barId: string) => {
     setSelectedBarsForSync(prev => {
-      const next = new Set(prev);
-      if (next.has(barId)) next.delete(barId);
-      else next.add(barId);
+      const next = [...prev];
+      if (next.includes(barId)) return next.filter(id => id !== barId);
+      else next.push(barId);
       return next;
     });
   }, []);
@@ -1305,7 +1305,7 @@ export function CadencePaperStudio({
         )}
 
         {/* Sync Selection Mode Banner */}
-        {syncSelectionMode && (
+        {syncSelectionMode ? (
           <LiquidGlassCard blurIntensity="lg" shadowIntensity="lg" borderRadius={0} style={{ padding: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold' }}>
               Select bars to auto-sync
@@ -1315,11 +1315,11 @@ export function CadencePaperStudio({
                 <Text style={{ color: '#fff' }}>Cancel</Text>
               </Pressable>
               <Pressable onPress={executeSelectedAutoSync} style={{ paddingHorizontal: 16, paddingVertical: 8, borderRadius: 16, backgroundColor: '#EF4444' }}>
-                <Text style={{ color: '#fff', fontWeight: 'bold' }}>Sync {selectedBarsForSync.size} Bars</Text>
+                <Text style={{ color: '#fff', fontWeight: 'bold' }}>Sync {selectedBarsForSync.length} Bars</Text>
               </Pressable>
             </View>
           </LiquidGlassCard>
-        )}
+        ) : null}
 
         {/* 4. Canvas Content: Single Blank Field (Bars Off) vs Structured Measures (Bars On) */}
         {!showBars ? (
@@ -1449,7 +1449,7 @@ export function CadencePaperStudio({
                                 isGlobalTwistaCap={isTwistaCap}
                                 onGlobalAutoSync={handleGlobalAutoSync}
                                 isSyncSelectionMode={syncSelectionMode}
-                                isSelectedForSync={selectedBarsForSync.has(bar.id)}
+                                isSelectedForSync={selectedBarsForSync.includes(bar.id)}
                                 onToggleSyncSelection={() => toggleBarSyncSelection(bar.id)}
                                 syllableTokens={barData?.syllables}
                                 bpm={movement.bpm || metadata.defaultBpm}
@@ -2103,6 +2103,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
+
+
 
 
 

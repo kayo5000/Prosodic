@@ -387,8 +387,8 @@ export function CadenceBarRow({
   const shouldRenderRhymeChips = showRhymeMap && !isActive && tokensToRender.length > 0;
 
   return (
-    <View style={[styles.barOuterWrapper, { opacity: isSyncSelectionMode && !isSelectedForSync ? 0.3 : 1 }]}>
-      {isSyncSelectionMode && (<Pressable onPress={onToggleSyncSelection} style={{ width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: '#fff', backgroundColor: isSelectedForSync ? '#EF4444' : 'transparent', marginRight: 12, marginTop: 12, justifyContent: 'center', alignItems: 'center' }}>{isSelectedForSync && <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: '#fff' }} />}</Pressable>)}
+    <View style={[styles.barOuterWrapper, { opacity: (isSyncSelectionMode && !isSelectedForSync) ? 0.3 : 1 }]}>
+      {isSyncSelectionMode ? (<Pressable onPress={onToggleSyncSelection} style={{ width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: '#fff', backgroundColor: isSelectedForSync ? '#EF4444' : 'transparent', marginRight: 12, marginTop: 12, justifyContent: 'center', alignItems: 'center' }}>{isSelectedForSync ? <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: '#fff' }} /> : null}</Pressable>) : null}
       <Pressable
         onPress={() => {
           onFocus();
@@ -772,6 +772,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(239, 68, 68, 0.4)',
   },
 });
+
+
 
 
 
