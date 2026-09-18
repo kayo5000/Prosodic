@@ -312,10 +312,12 @@ export function autocorrectHyphenation(leftPart: string, rightPart: string): [st
 
 /**
  * Counts total syllables in a single lyric line.
+ * Automatically ignores adlibs wrapped in parentheses e.g. (skrrt)
  */
 export function countLineSyllables(lineText: string): number {
   if (!lineText || !lineText.trim()) return 0;
-  const words = lineText.trim().split(/\s+/);
+  const noAdlibs = lineText.replace(/\([^)]*\)/g, '');
+  const words = noAdlibs.trim().split(/\s+/);
   return words.reduce((total, word) => total + countWordSyllables(word), 0);
 }
 

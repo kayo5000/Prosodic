@@ -764,13 +764,13 @@ export function analyzeVerseRhymes(verseLines: string[]): VerseRhymeAnalysis {
     if (!line.trim()) return [];
 
     const tokens: VerseRhymeToken[] = [];
-    // Tokenize preserving spaces and punctuation
-    const matches = Array.from(line.matchAll(/([a-zA-Z0-9']+|[^a-zA-Z0-9'\s]+|\s+)/g));
+    // Tokenize preserving spaces, punctuation, and allowing hyphens inside words
+    const matches = Array.from(line.matchAll(/([a-zA-Z0-9'-]+|[^a-zA-Z0-9'\-\s]+|\s+)/g));
     let wordIdx = 0;
 
     for (const match of matches) {
       const text = match[0];
-      const isWordMatch = /^[a-zA-Z0-9']+$/.test(text);
+      const isWordMatch = /^[a-zA-Z0-9'-]+$/.test(text);
 
       if (isWordMatch) {
         const cId = wordColorMap.get(`${li}:${wordIdx}`) || 0;

@@ -1,3 +1,4 @@
+import { getBarMetrics, getDensityHeatColor } from '@/utils/tempoDensity';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
@@ -183,6 +184,60 @@ export function CadencePaperStudio({
   );
 
   // Single blank text field state for Bars Off mode
+  // Global Twista Cap logic
+  const globalBlinkAnim = useRef(new Animated.Value(1)).current;
+
+  // Calculate red bars
+  const redBarsData = useMemo(() => {
+    const redBars: { secId: string; blockIndex: number; barIndex: number; isTwistaRate: boolean }[] = [];
+    sections.forEach((sec) => {
+      sec.blocks.forEach((block) => {
+        let blockAvg = 0;
+        const validBars = block.bars.filter((b) => b.syllableCount > 0);
+        if (validBars.length > 0) {
+          blockAvg = validBars.reduce((sum, b) => sum + b.syllableCount, 0) / validBars.length;
+        }
+
+        block.bars.forEach((bar) => {
+          const metrics = getBarMetrics(movements[0]?.bpm || metadata.defaultBpm, 'dense');
+          const heatColor = getDensityHeatColor(bar.syllableCount, metrics);
+          
+          // Anomaly detection: if a bar has > 8 syllables and is more than 2x the block average
+          const isAnomaly = bar.syllableCount > 8 && blockAvg > 0 && bar.syllableCount > blockAvg * 2;
+          
+          // Twista Physical Limit check (10.866 syllables per second)
+          const isTwistaRate = bar.syllableCount > (10.866 * metrics.barDurationSeconds);
+          
+          if (heatColor === '#EF4444' || isAnomaly || isTwistaRate) {
+            redBars.push({ secId: sec.id, blockIndex: block.blockIndex, barIndex: bar.barIndex, isTwistaRate });
+          }
+        });
+      });
+    });
+    return redBars;
+  }, [sections, movements, metadata.defaultBpm, metadata.stylePreset]);
+
+  const isTwistaCap = redBarsData.length > 2 || redBarsData.some((r) => r.isTwistaRate);
+
+  useEffect(() => {
+    if (isTwistaCap) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(globalBlinkAnim, { toValue: 0.1, duration: 400, useNativeDriver: true }),
+          Animated.timing(globalBlinkAnim, { toValue: 1, duration: 400, useNativeDriver: true }),
+        ])
+      ).start();
+    } else {
+      globalBlinkAnim.stopAnimation();
+      globalBlinkAnim.setValue(1);
+    }
+  }, [isTwistaCap, globalBlinkAnim]);
+
+  const handleGlobalAutoSync = useCallback(() => {
+    // Implement global auto sync using getOptimalSplitIndex in the future
+    alert('Global Auto-Sync Triggered! Splitting ' + redBarsData.length + ' bars.');
+  }, [redBarsData]);
+
   const rawSongLyrics = useMemo(() => sectionsToLyrics(sections), [sections]);
   const [blankText, setBlankText] = useState<string>(rawSongLyrics);
   const blankInputRef = useRef<TextInput>(null);
@@ -1203,14 +1258,22 @@ export function CadencePaperStudio({
         {showBars && (
           <View style={styles.columnLabelsRow}>
             <Text style={styles.columnLabelLeft}>Bar</Text>
-            <Text style={styles.columnLabelRight}>Syllable</Text>
+            {isTwistaCap ? (
+              <Pressable onPress={handleGlobalAutoSync}>
+                <Animated.Text style={[styles.columnLabelRight, { color: '#EF4444', opacity: globalBlinkAnim }]}>
+                  SYLLABLE (CAP)
+                </Animated.Text>
+              </Pressable>
+            ) : (
+              <Text style={styles.columnLabelRight}>Syllable</Text>
+            )}
           </View>
         )}
 
         {/* 4. Canvas Content: Single Blank Field (Bars Off) vs Structured Measures (Bars On) */}
         {!showBars ? (
-          <View style={[styles.blankCanvasContainer, { flex: 1 }]}>
-            <View style={[styles.blankInputWrapper, { flex: 1 }]}>
+          <View style={[styles.blankCanvasContainer, { flexGrow: 1 }]}>
+            <View style={[styles.blankInputWrapper, { flexGrow: 1 }]}>
               <TextInput
                 ref={blankInputRef}
                 value={blankText}
@@ -1328,6 +1391,9 @@ export function CadencePaperStudio({
                                 displayBarIndex={((bar.barIndex - 1) % 4) + 1}
                                 showRhymeMap={showRhymeMap}
                                 rhymeTokens={barData?.words}
+                                isAnomaly={redBarsData.some(r => r.secId === sec.id && r.blockIndex === block.blockIndex && r.barIndex === bar.barIndex)}
+                                isGlobalTwistaCap={isTwistaCap}
+                                onGlobalAutoSync={handleGlobalAutoSync}
                                 syllableTokens={barData?.syllables}
                                 bpm={movement.bpm || metadata.defaultBpm}
                                 onFocus={() =>
@@ -1899,7 +1965,7 @@ const styles = StyleSheet.create({
     height: 16,
   },
   blankInputWrapper: {
-    flex: 1,
+    flexGrow: 1,
   },
   blankInputNoticeRow: {
     marginBottom: 12,
@@ -1980,3 +2046,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
+
+
+
+
+

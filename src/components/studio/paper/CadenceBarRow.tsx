@@ -27,6 +27,9 @@ interface CadenceBarRowProps {
   syllableTokens?: VerseRhymeToken[];
   bpm?: number;
   stylePreset?: any;
+  isAnomaly?: boolean;
+  isGlobalTwistaCap?: boolean;
+  onGlobalAutoSync?: () => void;
   onFocus: () => void;
   onChangeText: (newText: string) => void;
   onSubmitEditing: () => void;
@@ -762,5 +765,6 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(239, 68, 68, 0.4)',
   },
 });
+
 
 
