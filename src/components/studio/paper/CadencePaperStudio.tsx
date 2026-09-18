@@ -726,15 +726,15 @@ export function CadencePaperStudio({
         onStartShouldSetPanResponder: () => false,
         onStartShouldSetPanResponderCapture: () => false,
         onMoveShouldSetPanResponderCapture: (evt, gs) => {
-          const isEdgeSwipe = gs.x0 < 45 && gs.dx > 5;
-          const isClosing = sidebarOpenRef.current && gs.dx < -5;
-          return isEdgeSwipe || isClosing;
-        },
-        onMoveShouldSetPanResponder: (evt, gs) => {
-          const isEdgeSwipe = gs.x0 < 45 && gs.dx > 5;
-          const isClosing = sidebarOpenRef.current && gs.dx < -5;
-          return isEdgeSwipe || isClosing;
-        },
+        const isEdgeSwipe = gs.x0 < 45 && gs.dx > 15 && Math.abs(gs.dx) > Math.abs(gs.dy) * 1.5;
+        const isClosing = sidebarOpenRef.current && gs.dx < -25 && Math.abs(gs.dx) > Math.abs(gs.dy) * 1.5;
+        return isEdgeSwipe || isClosing;
+      },
+      onMoveShouldSetPanResponder: (evt, gs) => {
+        const isEdgeSwipe = gs.x0 < 45 && gs.dx > 15 && Math.abs(gs.dx) > Math.abs(gs.dy) * 1.5;
+        const isClosing = sidebarOpenRef.current && gs.dx < -25 && Math.abs(gs.dx) > Math.abs(gs.dy) * 1.5;
+        return isEdgeSwipe || isClosing;
+      },
         onPanResponderMove: (evt, gs) => {
         let newX = (sidebarOpenRef.current ? 0 : -SIDEBAR_WIDTH) + gs.dx;
         if (newX > 0) newX = 0;
