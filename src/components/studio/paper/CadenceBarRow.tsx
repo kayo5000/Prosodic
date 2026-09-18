@@ -458,18 +458,12 @@ export function CadenceBarRow({
         </Pressable>
         {showRecommendation && (
           <Animated.View style={[styles.recommendationOverlay, { opacity: overlayFade }]}>
-            <Text style={styles.recommendationText}>
-              Cadence Overflow: Bar elongated beyond optimal pocket.
-            </Text>
-            <View style={{ flexDirection: 'row', gap: 12, marginTop: 8 }}>
-              <Pressable onPress={() => setShowRecommendation(false)} style={styles.recommendationActionBtn}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.59-9.21l-5.44-5.44"/></svg>
-                <Text style={styles.recommendationActionText}>Recommend Fix</Text>
-              </Pressable>
-              <Pressable onPress={() => setShowRecommendation(false)} style={styles.recommendationActionBtn}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-              </Pressable>
-            </View>
+            <Pressable onPress={() => setShowRecommendation(false)} style={styles.recommendationActionBtn}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.59-9.21l-5.44-5.44"/></svg>
+            </Pressable>
+            <Pressable onPress={() => setShowRecommendation(false)} style={styles.recommendationActionBtn}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </Pressable>
           </Animated.View>
         )}
       </Pressable>
@@ -665,39 +659,23 @@ const styles = StyleSheet.create({
   },
   recommendationOverlay: {
     position: 'absolute',
-    right: 0,
-    top: 40,
-    backgroundColor: 'rgba(239, 68, 68, 0.95)',
-    padding: 12,
-    borderRadius: 8,
-    zIndex: 100,
-    width: 240,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  recommendationText: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '600',
-    lineHeight: 18,
-  },
-  recommendationActionBtn: {
+    right: 48,
+    top: '50%',
+    transform: [{ translateY: -16 }],
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    backgroundColor: 'rgba(0,0,0,0.25)',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 16,
+    gap: 8,
+    zIndex: 100,
   },
-  recommendationActionText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '600',
+  recommendationActionBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(239, 68, 68, 0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.4)',
   },
 });
 
