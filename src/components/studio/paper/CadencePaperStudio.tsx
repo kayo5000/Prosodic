@@ -215,7 +215,7 @@ export function CadencePaperStudio({
       });
     });
     return redBars;
-  }, [sections, movements, metadata.defaultBpm, metadata.stylePreset]);
+  }, [sections, movements, metadata.defaultBpm]);
 
   const isTwistaCap = redBarsData.length > 2 || redBarsData.some((r) => r.isTwistaRate);
 
@@ -2046,6 +2046,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
+
 
 
 
