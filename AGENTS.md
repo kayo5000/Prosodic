@@ -59,3 +59,13 @@ Because any solo visionary has natural blind spots in code implementation:
 - Only use emojis if the user explicitly asks for them in a prompt.
 
 
+
+---
+
+# END-TO-END UI & FUNCTIONALITY RULE
+
+When building new features or UI elements, you must follow this checklist with absolute strictness:
+1. **NO GENERIC UI:** Never use basic Safari/browser UI (like \lert()\, default popups, or unstyled inputs). You must analyze the existing codebase and **exclusively use the established UI toolbox** (e.g., \LiquidGlassCard\, glass text fields, existing overlay/modal patterns).
+2. **NO DUMMY BUTTONS:** If the user asks for a UI element (a button, a toggle, a feature), it must be fully functional immediately. Do not build a button that just logs to the console or shows a placeholder message.
+3. **END-TO-END WIRING:** You must wire the UI directly to the underlying engine logic. If a feature requires engine work and UI work, build both and connect them so the feature is fully testable in a single prompt.
+4. **CRITICAL COMMON SENSE:** Anticipate the user's need to actually *test* the feature. If you build it, make sure there is an accessible button in the UI to trigger it, and that it actually modifies the state/engine as intended. Do not wait for the user to explicitly tell you to "connect it to the engine."

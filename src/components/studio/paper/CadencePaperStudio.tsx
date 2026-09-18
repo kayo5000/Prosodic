@@ -184,6 +184,10 @@ export function CadencePaperStudio({
   );
 
   // Single blank text field state for Bars Off mode
+  // Auto-Sync Selection Mode
+  const [syncSelectionMode, setSyncSelectionMode] = useState<boolean>(false);
+  const [selectedBarsForSync, setSelectedBarsForSync] = useState<Set<string>>(new Set());
+
   // Global Twista Cap logic
   const globalBlinkAnim = useRef(new Animated.Value(1)).current;
 
@@ -234,9 +238,39 @@ export function CadencePaperStudio({
   }, [isTwistaCap, globalBlinkAnim]);
 
   const handleGlobalAutoSync = useCallback(() => {
-    // Implement global auto sync using getOptimalSplitIndex in the future
-    alert('Global Auto-Sync Triggered! Splitting ' + redBarsData.length + ' bars.');
-  }, [redBarsData]);
+    setSyncSelectionMode(true);
+    const initialSelection = new Set<string>();
+    sections.forEach(sec => {
+      sec.blocks.forEach(block => {
+        block.bars.forEach(bar => {
+          if (bar.syllableCount > 0) {
+            initialSelection.add(bar.id);
+          }
+        });
+      });
+    });
+    setSelectedBarsForSync(initialSelection);
+  }, [sections]);
+
+  const toggleBarSyncSelection = useCallback((barId: string) => {
+    setSelectedBarsForSync(prev => {
+      const next = new Set(prev);
+      if (next.has(barId)) next.delete(barId);
+      else next.add(barId);
+      return next;
+    });
+  }, []);
+
+  const executeSelectedAutoSync = useCallback(() => {
+    // We will do the actual splitting of the selected bars here!
+    let updatedSections = [...sections];
+    // For now we just end selection mode. We MUST connect this to the engine next!
+    setSyncSelectionMode(false);
+  }, [selectedBarsForSync, sections]);
+
+  const cancelAutoSync = useCallback(() => {
+    setSyncSelectionMode(false);
+  }, []);
 
   const rawSongLyrics = useMemo(() => sectionsToLyrics(sections), [sections]);
   const [blankText, setBlankText] = useState<string>(rawSongLyrics);
@@ -1270,28 +1304,48 @@ export function CadencePaperStudio({
           </View>
         )}
 
+        {/* Sync Selection Mode Banner */}
+        {syncSelectionMode && (
+          <LiquidGlassCard blurIntensity="lg" shadowIntensity="lg" borderRadius={0} style={{ padding: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold' }}>
+              Select bars to auto-sync
+            </Text>
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <Pressable onPress={cancelAutoSync} style={{ paddingHorizontal: 16, paddingVertical: 8, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.1)' }}>
+                <Text style={{ color: '#fff' }}>Cancel</Text>
+              </Pressable>
+              <Pressable onPress={executeSelectedAutoSync} style={{ paddingHorizontal: 16, paddingVertical: 8, borderRadius: 16, backgroundColor: '#EF4444' }}>
+                <Text style={{ color: '#fff', fontWeight: 'bold' }}>Sync {selectedBarsForSync.size} Bars</Text>
+              </Pressable>
+            </View>
+          </LiquidGlassCard>
+        )}
+
         {/* 4. Canvas Content: Single Blank Field (Bars Off) vs Structured Measures (Bars On) */}
         {!showBars ? (
-          <View style={[styles.blankCanvasContainer, { flexGrow: 1 }]}>
-            <View style={[styles.blankInputWrapper, { flexGrow: 1 }]}>
-              <TextInput
-                ref={blankInputRef}
-                value={blankText}
-                onChangeText={handleBlankTextChange}
-                multiline
-                scrollEnabled={false}
+          <LiquidGlassCard blurIntensity="sm" shadowIntensity="sm" borderRadius={24} style={[styles.blankCanvasContainer, { flexGrow: 1, padding: 24 }]}>
+            <View style={{ flexGrow: 1 }}>
+              <View style={[styles.blankInputWrapper, { flexGrow: 1 }]}>
+                <TextInput
+                  ref={blankInputRef}
+                  value={blankText}
+                  onChangeText={handleBlankTextChange}
+                  multiline
+                  scrollEnabled={false}
                   
-                autoCapitalize="sentences"
-                autoCorrect={false}
-                placeholder="Start writing freely..."
-                placeholderTextColor="rgba(255, 255, 255, 0.25)"
-                style={[
-                  styles.blankTextInput,
-                  Platform.OS === 'web' ? ({ outlineStyle: 'none' } as any) : null,
-                ]}
-              />
+                  autoCapitalize="sentences"
+                  autoCorrect={false}
+                  placeholder="Start writing freely..."
+                  placeholderTextColor="rgba(255, 255, 255, 0.25)"
+                  style={[
+                    styles.blankTextInput,
+                    { flexGrow: 1, minHeight: 800 },
+                    Platform.OS === 'web' ? ({ outlineStyle: 'none' } as any) : null,
+                  ]}
+                />
+              </View>
             </View>
-          </View>
+          </LiquidGlassCard>
         ) : (
         <View style={styles.sectionsContainer}>
           {movements.map((movement, mIdx) => {
@@ -1394,6 +1448,9 @@ export function CadencePaperStudio({
                                 isAnomaly={redBarsData.some(r => r.secId === sec.id && r.blockIndex === block.blockIndex && r.barIndex === bar.barIndex)}
                                 isGlobalTwistaCap={isTwistaCap}
                                 onGlobalAutoSync={handleGlobalAutoSync}
+                                isSyncSelectionMode={syncSelectionMode}
+                                isSelectedForSync={selectedBarsForSync.has(bar.id)}
+                                onToggleSyncSelection={() => toggleBarSyncSelection(bar.id)}
                                 syllableTokens={barData?.syllables}
                                 bpm={movement.bpm || metadata.defaultBpm}
                                 onFocus={() =>
@@ -2046,6 +2103,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
+
+
+
 
 
 
