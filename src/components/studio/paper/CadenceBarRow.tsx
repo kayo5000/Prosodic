@@ -130,6 +130,9 @@ export function CadenceBarRow({
   onGutterPress,
   onSelectSyllable,
   onToggleCrossBarAlignment,
+  isSyncSelectionMode,
+  isSelectedForSync,
+  onToggleSyncSelection,
 }: CadenceBarRowProps) {
   const inputRef = useRef<TextInput>(null);
   const lastTapRef = useRef<Record<string, number>>({});
