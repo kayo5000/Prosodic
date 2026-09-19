@@ -1,239 +1,257 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import {
+  Animated,
+  Easing,
   Modal,
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
-
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Spacing } from '@/constants/theme';
 import { PaperSection, SongMetadata } from '../paper/types';
-
-import { Animated } from 'react-native';
 
 interface AffineSidebarProps {
   panX?: Animated.Value;
   isOpen: boolean;
   onClose: () => void;
-  sections: PaperSection[];
-  activeSectionId: string;
-  onSelectSection: (sectionId: string) => void;
-  onAddSection: (type: string) => void;
-  metadata: SongMetadata;
-  onOpenSettings: () => void;
-  onOpenWhiteboard: () => void;
+  sections?: PaperSection[];
+  activeSectionId?: string;
+  onSelectSection?: (sectionId: string) => void;
+  onAddSection?: (type: string) => void;
+  metadata?: SongMetadata;
+  onOpenSettings?: () => void;
+  onOpenWhiteboard?: () => void;
   onOpenVoiceTakes?: () => void;
   onOpenLexicon?: () => void;
 }
 
-export const AffineSidebar: React.FC<AffineSidebarProps> = ({
+const SvgChevronRight = ({ color = '#64748B', size = 14 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="9 18 15 12 9 6" />
+  </svg>
+);
+
+const SvgChevronDown = ({ color = '#64748B', size = 14 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="6 9 12 15 18 9" />
+  </svg>
+);
+
+const SvgLock = ({ color = '#64748B', size = 14 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+  </svg>
+);
+
+const SvgDragHandle = ({ color = '#475569', size = 14 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="8" y1="6" x2="21" y2="6" />
+    <line x1="8" y1="12" x2="21" y2="12" />
+    <line x1="8" y1="18" x2="21" y2="18" />
+    <line x1="3" y1="6" x2="3.01" y2="6" />
+    <line x1="3" y1="12" x2="3.01" y2="12" />
+    <line x1="3" y1="18" x2="3.01" y2="18" />
+  </svg>
+);
+
+const SectionTitle = ({ children }: { children: React.ReactNode }) => (
+  <Text style={styles.sectionTitle}>{children}</Text>
+);
+
+const DrawerItem = ({ title, onPress, indent = 0, rightElement, isActive = false }: any) => (
+  <Pressable
+    onPress={onPress}
+    style={({ pressed }) => [
+      styles.drawerItem,
+      { paddingLeft: Spacing.two + (indent * 12) },
+      isActive && styles.drawerItemActive,
+      pressed && styles.pressed
+    ]}
+  >
+    <Text style={[styles.drawerItemText, isActive && styles.drawerItemTextActive]}>{title}</Text>
+    {rightElement}
+  </Pressable>
+);
+
+const Accordion = ({ title, isExpanded, onToggle, children, indent = 0 }: any) => (
+  <View>
+    <Pressable
+      onPress={onToggle}
+      style={({ pressed }) => [
+        styles.drawerItem,
+        { paddingLeft: Spacing.two + (indent * 12) },
+        pressed && styles.pressed
+      ]}
+    >
+      <Text style={styles.drawerItemText}>{title}</Text>
+      {isExpanded ? <SvgChevronDown /> : <SvgChevronRight />}
+    </Pressable>
+    {isExpanded && <View style={styles.accordionContent}>{children}</View>}
+  </View>
+);
+
+export function AffineSidebar({
+  panX,
   isOpen,
   onClose,
-  sections,
-  activeSectionId,
-  onSelectSection,
-  onAddSection,
   metadata,
   onOpenSettings,
-  onOpenWhiteboard,
-  onOpenVoiceTakes,
-  onOpenLexicon,
-  panX,
-}) => {
-  // We render it always so we can animate it via parent
+}: AffineSidebarProps) {
+  // State for Accordions
+  const [expProjects, setExpProjects] = useState(false);
+  const [expInspoFolders, setExpInspoFolders] = useState(false);
+  const [expNewVisual, setExpNewVisual] = useState(false);
+  const [expNewMemo, setExpNewMemo] = useState(false);
+  const [expNewAudio, setExpNewAudio] = useState(false);
+  const [expGallery, setExpGallery] = useState(false);
+  const [expLexicon, setExpLexicon] = useState(false);
+  const [expBestOf, setExpBestOf] = useState(false);
+
+  // Fallback animation if panX is not provided
+  const fallbackAnim = useRef(new Animated.Value(0)).current;
+  
+  React.useEffect(() => {
+    if (!panX) {
+      Animated.timing(fallbackAnim, {
+        toValue: isOpen ? 1 : 0,
+        duration: 300,
+        easing: Easing.out(Easing.poly(4)),
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [isOpen, panX]);
+
+  const translateX = panX || fallbackAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-400, 0]
+  });
 
   const content = (
-    <Animated.View style={[styles.sidebarContainer, panX && { transform: [{ translateX: panX }] }]}>
-      {/* 1. Workspace Header */}
-      <View style={styles.workspaceHeader}>
-        <View style={styles.workspaceBrandRow}>
-          <View style={styles.workspaceLogoBadge}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="12 2 2 7 12 12 22 7 12 2" />
-              <polyline points="2 17 12 22 22 17" />
-              <polyline points="2 12 12 17 22 12" />
+    <Animated.View style={[styles.drawerContainer, { transform: [{ translateX }] }]}>
+      <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom', 'left']}>
+        {/* Header */}
+        <View style={styles.profileSection}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>PRO</Text>
+          </View>
+          <View style={styles.profileMeta}>
+            <Text style={styles.artistName}>Prosodic Writer</Text>
+            <View style={styles.proBadge}>
+              <Text style={styles.proBadgeText}>WORKSPACE</Text>
+            </View>
+          </View>
+          <Pressable onPress={onClose} style={styles.closeBtn}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
-          </View>
-          <View style={styles.workspaceTitleWrap}>
-            <Text style={styles.workspaceName} numberOfLines={1}>Prosodic Studio</Text>
-            <Text style={styles.workspaceSub} numberOfLines={1}>
-              {metadata.title || 'Master Session'}
-            </Text>
-          </View>
+          </Pressable>
         </View>
 
-        <TouchableOpacity
-          style={styles.collapseToggleBtn}
-          onPress={onClose}
-          accessibilityRole="button"
-          accessibilityLabel="Collapse Sidebar"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="3" width="18" height="18" rx="2" />
-            <path d="M9 3v18" />
-            <path d="M14 9l-3 3 3 3" />
-          </svg>
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView style={styles.scrollArea} showsVerticalScrollIndicator={false}>
-        {/* 2. Quick Access Navigation */}
-        <View style={styles.sectionGroup}>
-          <Text style={styles.groupLabel}>WORKSPACE</Text>
-
-          <TouchableOpacity
-            style={styles.navRow}
-            onPress={() => {
-              onClose();
-            }}
-            activeOpacity={0.7}
-          >
-            <View style={styles.navIconSlot}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                <polyline points="14 2 14 8 20 8" />
-                <line x1="16" y1="13" x2="8" y2="13" />
-                <line x1="16" y1="17" x2="8" y2="17" />
-                <polyline points="10 9 9 9 8 9" />
-              </svg>
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          
+          {/* MY SONGS */}
+          <View style={styles.section}>
+            <SectionTitle>MY SONGS</SectionTitle>
+            <DrawerItem title="New (Free Write or Song)" rightElement={<Text style={styles.accentText}>+</Text>} />
+            <Text style={styles.subTitle}>Recent Drafts</Text>
+            <View style={styles.listContainer}>
+              <DrawerItem title={metadata?.title || "Untitled Draft"} isActive={true} />
+              <DrawerItem title="Album Intro (Beat 3)" />
+              <DrawerItem title="Freestyle Take 1" />
             </View>
-            <Text style={[styles.navRowText, styles.navRowTextActive]}>Cadence Paper</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.navRow}
-            onPress={() => {
-              onOpenWhiteboard();
-              onClose();
-            }}
-            activeOpacity={0.7}
-          >
-            <View style={styles.navIconSlot}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="3" width="18" height="18" rx="2" />
-                <line x1="3" y1="9" x2="21" y2="9" />
-                <line x1="9" y1="21" x2="9" y2="9" />
-              </svg>
-            </View>
-            <Text style={styles.navRowText}>Edgeless Whiteboard</Text>
-          </TouchableOpacity>
-
-          {onOpenVoiceTakes && (
-            <TouchableOpacity
-              style={styles.navRow}
-              onPress={() => {
-                onOpenVoiceTakes();
-                onClose();
-              }}
-              activeOpacity={0.7}
-            >
-              <View style={styles.navIconSlot}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
-                  <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                  <line x1="12" y1="19" x2="12" y2="22" />
-                </svg>
-              </View>
-              <Text style={styles.navRowText}>Voice Takes Vault</Text>
-            </TouchableOpacity>
-          )}
-
-          {onOpenLexicon && (
-            <TouchableOpacity
-              style={styles.navRow}
-              onPress={() => {
-                onOpenLexicon();
-                onClose();
-              }}
-              activeOpacity={0.7}
-            >
-              <View style={styles.navIconSlot}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-                </svg>
-              </View>
-              <Text style={styles.navRowText}>Lexicon Armory</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {/* 3. Song Outline / Structure Tree */}
-        <View style={styles.sectionGroup}>
-          <View style={styles.groupHeaderRow}>
-            <Text style={styles.groupLabel}>SONG STRUCTURE</Text>
-            <TouchableOpacity
-              onPress={() => onAddSection('verse')}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-            </TouchableOpacity>
           </View>
 
-          {sections.map((sec, idx) => {
-            const isActive = sec.id === activeSectionId;
-            const totalBars = sec.blocks.reduce((acc, b) => acc + b.bars.length, 0);
+          {/* PROJECTS */}
+          <View style={styles.section}>
+            <SectionTitle>PROJECTS</SectionTitle>
+            <Accordion title="Most Recent" isExpanded={expProjects} onToggle={() => setExpProjects(!expProjects)}>
+              <DrawerItem title="Album 1" indent={1} />
+              <DrawerItem title="EP Demos" indent={1} />
+            </Accordion>
+          </View>
 
-            return (
-              <TouchableOpacity
-                key={sec.id || idx}
-                style={[styles.sectionTreeItem, isActive && styles.sectionTreeItemActive]}
-                onPress={() => {
-                  onSelectSection(sec.id);
-                  onClose();
-                }}
-                activeOpacity={0.7}
-              >
-                <View style={styles.sectionTreeLeft}>
-                  <View style={[styles.sectionDot, isActive && styles.sectionDotActive]} />
-                  <Text
-                    style={[styles.sectionTreeTitle, isActive && styles.sectionTreeTitleActive]}
-                    numberOfLines={1}
-                  >
-                    {sec.name}
-                  </Text>
-                </View>
+          {/* PINNED */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <SectionTitle>PINNED 📌</SectionTitle>
+              <Text style={styles.helperText}>(Drag to Reorder)</Text>
+            </View>
+            <View style={styles.listContainer}>
+              <DrawerItem title="Favorite Hook Idea" rightElement={<SvgDragHandle/>} />
+              <DrawerItem title="Beat #4 Reference" rightElement={<SvgDragHandle/>} />
+            </View>
+          </View>
 
-                <View style={styles.barCountBadge}>
-                  <Text style={styles.barCountText}>{totalBars} BARS</Text>
-                </View>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      </ScrollView>
+          {/* INSPO */}
+          <View style={styles.section}>
+            <SectionTitle>INSPO</SectionTitle>
+            <Accordion title="Folders (Pin // Most Recent)" isExpanded={expInspoFolders} onToggle={() => setExpInspoFolders(!expInspoFolders)}>
+              <DrawerItem title="Moodboard" indent={1} />
+              <DrawerItem title="Flow References" indent={1} />
+            </Accordion>
+            <Accordion title="New Visual" isExpanded={expNewVisual} onToggle={() => setExpNewVisual(!expNewVisual)}>
+              <DrawerItem title="Recent Visuals..." indent={1} />
+            </Accordion>
+            <Accordion title="New Memo" isExpanded={expNewMemo} onToggle={() => setExpNewMemo(!expNewMemo)}>
+              <DrawerItem title="Recent Memos..." indent={1} />
+            </Accordion>
+            <Accordion title="New Audio" isExpanded={expNewAudio} onToggle={() => setExpNewAudio(!expNewAudio)}>
+              <DrawerItem title="Recent Audio..." indent={1} />
+            </Accordion>
+            <Accordion title="Gallery" isExpanded={expGallery} onToggle={() => setExpGallery(!expGallery)}>
+              <DrawerItem title="Recent Gallery..." indent={1} />
+            </Accordion>
+          </View>
 
-      {/* 4. Bottom Utility Bar */}
-      <View style={styles.sidebarFooter}>
-        <TouchableOpacity
-          style={styles.footerActionBtn}
-          onPress={() => {
-            onOpenSettings();
-            onClose();
-          }}
-          activeOpacity={0.7}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="3" />
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
-          </svg>
-          <Text style={styles.footerActionText}>Song Settings</Text>
-        </TouchableOpacity>
+          {/* CRAFT MASTERS */}
+          <View style={styles.section}>
+            <SectionTitle>CRAFT MASTERS</SectionTitle>
+            <DrawerItem title="Fingerprint" />
+            <DrawerItem title="Your Lexicon" />
+            
+            <View style={styles.statsCard}>
+              <Text style={styles.statLine}>Total Word Count: <Text style={styles.statValue}>1,245</Text></Text>
+              <Text style={styles.statLine}>Avg Words/Song: <Text style={styles.statValue}>412</Text></Text>
+              <Text style={styles.statLine}>Avg Syllables/Song: <Text style={styles.statValue}>680</Text></Text>
+            </View>
 
-        <View style={styles.bpmIndicatorPill}>
-          <Text style={styles.bpmIndicatorText}>{metadata.defaultBpm || 120} BPM</Text>
-        </View>
-      </View>
+            <Accordion title="Lexicon Details" isExpanded={expLexicon} onToggle={() => setExpLexicon(!expLexicon)} indent={1}>
+              <DrawerItem title="Every Word" indent={2} />
+              <DrawerItem title="Most Used / Crutch Words" indent={2} />
+              <Accordion title="Best of Your Lexicon" isExpanded={expBestOf} onToggle={() => setExpBestOf(!expBestOf)} indent={2}>
+                <DrawerItem title="Scenery (Visual, Auditory, Touch, Smell, Taste)" indent={3} />
+                <DrawerItem title="Uncommon" indent={3} />
+                <DrawerItem title="Emotional (Light // Dark)" indent={3} />
+                <DrawerItem title="Rhyme & Sounds // Crutch Rhyme" indent={3} />
+                <DrawerItem title="Alliteration Frequency" indent={3} />
+              </Accordion>
+            </Accordion>
+
+            <View style={{ height: 16 }} />
+            <SectionTitle>ACTIONABLE FLAGS</SectionTitle>
+            <DrawerItem title='"Crutch Words" (Filler that weakens lines)' />
+            <DrawerItem title='Exclusive Context Words' />
+            <DrawerItem title='Suggested Underused Synonyms' />
+
+            <View style={{ height: 16 }} />
+            <SectionTitle>CRAFT DEVELOPMENT</SectionTitle>
+            <DrawerItem title="Prosodic Academy" rightElement={<SvgLock />} />
+            <DrawerItem title="Tool Box" />
+            <DrawerItem title="Freestyle Mode (AI Feedback)" />
+          </View>
+
+          <View style={{ height: 40 }} />
+        </ScrollView>
+      </SafeAreaView>
     </Animated.View>
   );
 
-  // On Mobile / Web overlay rendering
   return (
     <View style={[StyleSheet.absoluteFill, { zIndex: 1000 }]} pointerEvents={isOpen ? 'auto' : 'none'}>
       <Pressable 
@@ -243,14 +261,9 @@ export const AffineSidebar: React.FC<AffineSidebarProps> = ({
       {content}
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.65)',
-    flexDirection: 'row',
-  },
   backdropPressable: {
     position: 'absolute',
     top: 0,
@@ -258,193 +271,160 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
   },
-  sidebarContainer: {
-    width: 280,
+  drawerContainer: {
+    width: 310,
     maxWidth: '85%',
     height: '100%',
-    backgroundColor: '#121214',
+    backgroundColor: '#090D16',
     borderRightWidth: 1,
-    borderRightColor: 'rgba(255, 255, 255, 0.08)',
-    display: 'flex',
-    flexDirection: 'column',
+    borderColor: '#1E293B',
+    paddingHorizontal: Spacing.three,
+    paddingTop: Spacing.two,
+    shadowColor: '#000000',
+    shadowOffset: { width: 10, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 20,
+    elevation: 25,
     zIndex: 100,
   },
-  workspaceHeader: {
+  profileSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'ios' ? 52 : 18,
-    paddingBottom: 14,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
+    paddingBottom: Spacing.three,
+    borderBottomWidth: 1,
+    borderColor: '#1E293B',
+    gap: Spacing.two,
+    marginBottom: Spacing.three,
+    marginTop: Platform.OS === 'ios' ? 10 : 18,
   },
-  workspaceBrandRow: {
-    flexDirection: 'row',
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#2563EB',
     alignItems: 'center',
-    gap: 10,
-    flex: 1,
-  },
-  workspaceLogoBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderColor: '#60A5FA',
   },
-  workspaceTitleWrap: {
-    flex: 1,
-  },
-  workspaceName: {
-    fontSize: 13,
-    fontWeight: '700',
+  avatarText: {
     color: '#FFFFFF',
-    letterSpacing: 0.3,
+    fontWeight: '800',
+    fontSize: 15,
   },
-  workspaceSub: {
-    fontSize: 11,
-    color: 'rgba(255, 255, 255, 0.5)',
-    marginTop: 1,
-  },
-  collapseToggleBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
-  },
-  scrollArea: {
-    flex: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 14,
-  },
-  sectionGroup: {
-    marginBottom: 20,
-  },
-  groupHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 8,
-    marginBottom: 8,
-  },
-  groupLabel: {
-    fontSize: 10.5,
-    fontWeight: '700',
-    letterSpacing: 1.1,
-    color: 'rgba(255, 255, 255, 0.4)',
-    textTransform: 'uppercase',
-  },
-  navRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 8,
-    marginBottom: 2,
-  },
-  navIconSlot: {
-    width: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  navRowText: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: 'rgba(255, 255, 255, 0.7)',
-  },
-  navRowTextActive: {
-    color: '#FFFFFF',
-    fontWeight: '600',
-  },
-  sectionTreeItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 8,
-    marginBottom: 2,
-  },
-  sectionTreeItemActive: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  sectionTreeLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  profileMeta: {
     flex: 1,
   },
-  sectionDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
-  },
-  sectionDotActive: {
-    backgroundColor: '#FFFFFF',
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
-  },
-  sectionTreeTitle: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: 'rgba(255, 255, 255, 0.75)',
-    flex: 1,
-  },
-  sectionTreeTitleActive: {
-    color: '#FFFFFF',
+  artistName: {
+    color: '#F8FAFC',
+    fontSize: 15,
     fontWeight: '700',
   },
-  barCountBadge: {
+  proBadge: {
+    backgroundColor: '#1E293B',
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+    marginTop: 2,
+    borderWidth: 1,
+    borderColor: '#3B82F644',
   },
-  barCountText: {
-    fontSize: 9.5,
-    fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.5)',
-    letterSpacing: 0.4,
+  proBadgeText: {
+    color: '#60A5FA',
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
-  sidebarFooter: {
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(255, 255, 255, 0.08)',
+  closeBtn: {
+    padding: Spacing.one,
+  },
+  content: {
+    flex: 1,
+  },
+  section: {
+    marginBottom: Spacing.four,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    paddingRight: Spacing.two,
+  },
+  sectionTitle: {
+    color: '#94A3B8',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 1.2,
+    marginBottom: Spacing.two,
+    paddingLeft: Spacing.two,
+  },
+  subTitle: {
+    color: '#475569',
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+    marginTop: Spacing.two,
+    marginBottom: Spacing.one,
+    paddingLeft: Spacing.two,
+  },
+  helperText: {
+    color: '#475569',
+    fontSize: 9,
+    fontStyle: 'italic',
+  },
+  listContainer: {
+    gap: 2,
+  },
+  drawerItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingVertical: 10,
+    paddingRight: Spacing.two,
+    borderRadius: 8,
   },
-  footerActionBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  drawerItemActive: {
+    backgroundColor: 'rgba(59, 130, 246, 0.1)',
   },
-  footerActionText: {
-    fontSize: 12,
+  drawerItemText: {
+    color: '#E2E8F0',
+    fontSize: 14,
     fontWeight: '500',
-    color: '#8E8E93',
   },
-  bpmIndicatorPill: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.25)',
-  },
-  bpmIndicatorText: {
-    fontSize: 10.5,
+  drawerItemTextActive: {
+    color: '#60A5FA',
     fontWeight: '700',
-    color: '#FFFFFF',
-    letterSpacing: 0.4,
+  },
+  accentText: {
+    color: '#60A5FA',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  accordionContent: {
+    marginTop: 2,
+  },
+  statsCard: {
+    backgroundColor: 'rgba(30, 41, 59, 0.3)',
+    borderRadius: 8,
+    padding: Spacing.two,
+    marginVertical: Spacing.two,
+    marginLeft: Spacing.two,
+    borderWidth: 1,
+    borderColor: 'rgba(30, 41, 59, 0.8)',
+    gap: 4,
+  },
+  statLine: {
+    color: '#94A3B8',
+    fontSize: 12,
+  },
+  statValue: {
+    color: '#F8FAFC',
+    fontWeight: '700',
+  },
+  pressed: {
+    opacity: 0.6,
+    backgroundColor: 'rgba(255,255,255,0.02)',
   },
 });
