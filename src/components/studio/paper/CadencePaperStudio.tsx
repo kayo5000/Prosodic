@@ -1265,7 +1265,7 @@ export function CadencePaperStudio({
       <StudioBackdrop />
 
       {/* 1. Affine Collapsible Workspace Sidebar */}
-      <DynamicIslandHUD bpm={metadata.defaultBpm || 120} currentSps={null} />
+      {Platform.OS !== 'web' && <DynamicIslandHUD bpm={metadata.defaultBpm || 120} currentSps={null} />}
       <AffineSidebar
         panX={sidebarPanX}
         isOpen={sidebarOpen}
