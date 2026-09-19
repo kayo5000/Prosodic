@@ -264,7 +264,7 @@ export const PlannerModal: React.FC<PlannerModalProps> = ({
               </Text>
               <View style={styles.agendaRow}>
                 <Text style={styles.agendaItem}>Complete Bar 5-8 Rhyme Weave</Text>
-                <Text style={styles.agendaItem}>Lock 120 BPM Tap Cadence</Text>
+                <Text style={styles.agendaItem}>Lock 90 BPM Tap Cadence</Text>
               </View>
             </View>
 

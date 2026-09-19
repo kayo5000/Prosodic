@@ -13,7 +13,6 @@ import {
 import {
   blockToText,
 } from './cadenceFormat';
-import { analyzeVerseRhymes } from '../../../services/rhymeDetectionEngine';
 import { CadenceBarRow } from './CadenceBarRow';
 import { SectionTimelineBar } from './SectionTimelineBar';
 import type {
@@ -202,12 +201,12 @@ export function TextureScreen({
         {/* Title & Song Settings Header Row */}
         <View style={styles.headerSection}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
-            <Pressable onPress={onClose} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(17, 24, 39,0.1)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, gap: 6, alignSelf: 'flex-start' }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000000" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <Pressable onPress={onClose} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.1)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, gap: 6, alignSelf: 'flex-start' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="19" y1="12" x2="5" y2="12"></line>
                 <polyline points="12 19 5 12 12 5"></polyline>
               </svg>
-              <Text style={{ color: '#000000', fontSize: 13, fontWeight: '600' }}>Back to Cadence</Text>
+              <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600' }}>Back to Cadence</Text>
             </Pressable>
           </View>
           <Pressable
@@ -229,63 +228,22 @@ export function TextureScreen({
         {/* 3. Open Writing Space (Completely Blank with 60% Opacity Placeholder) */}
         {blockMode === 'freeform' ? (
           <View style={styles.openWritingCanvas}>
-            {(() => {
-              const lines = currentBlockText.split('\n');
-              const analysis = analyzeVerseRhymes(lines);
-              return (
-                <View style={{ position: 'relative' }}>
-                  {analysis && currentBlockText.trim().length > 0 && (
-                    <View style={[StyleSheet.absoluteFill, { zIndex: 1 }]} pointerEvents="none">
-                      <Text style={[styles.openTextInput, { padding: 0, margin: 0, color: 'transparent' }]}>
-                        {analysis.lineTokens.map((lineT, lIdx) => (
-                          <Text key={`line-${lIdx}`}>
-                            {lineT.map((tok, tIdx) => {
-                              if (!tok.isWord) {
-                                return <Text key={`space-${lIdx}-${tIdx}`}>{tok.text}</Text>;
-                              }
-                              const isRhyming = tok.colorId > 0;
-                              return (
-                                <Text
-                                  key={`tok-${lIdx}-${tIdx}`}
-                                  style={[
-                                    isRhyming && {
-                                      color: tok.color,
-                                      textDecorationLine: 'underline',
-                                      textDecorationColor: tok.color,
-                                      textDecorationStyle: tok.isRelative ? 'dashed' : 'solid',
-                                    }
-                                  ]}
-                                >
-                                  {tok.text}
-                                </Text>
-                              );
-                            })}
-                            {lIdx < analysis.lineTokens.length - 1 && '\n'}
-                          </Text>
-                        ))}
-                      </Text>
-                    </View>
-                  )}
-                  <TextInput
-                    value={currentBlockText}
-                    onChangeText={(newText) => {
-                      if (activeSection) {
-                        onUpdateBlockText(activeSection.id, activeBlockIndex, newText);
-                      }
-                    }}
-                    multiline
-                    autoCapitalize="sentences"
-                    placeholder="Brainstorm your vision…"
-                    placeholderTextColor="rgba(142, 142, 147, 0.60)"
-                    style={[
-                      styles.openTextInput,
-                      (analysis && currentBlockText.trim().length > 0) ? { color: 'transparent', caretColor: '#000000', zIndex: 2 } : null,
-                      Platform.OS === 'web' ? ({ outlineStyle: 'none' } as any) : null,
-                    ]}
-                  />
-                </View>
-              );
-            })()}
+            <TextInput
+              value={currentBlockText}
+              onChangeText={(newText) => {
+                if (activeSection) {
+                  onUpdateBlockText(activeSection.id, activeBlockIndex, newText);
+                }
+              }}
+              multiline
+              autoCapitalize="sentences"
+              placeholder="Brainstorm your vision…"
+              placeholderTextColor="rgba(142, 142, 147, 0.60)"
+              style={[
+                styles.openTextInput,
+                Platform.OS === 'web' ? ({ outlineStyle: 'none' } as any) : null,
+              ]}
+            />
           </View>
         ) : (
           /* Cadence Bars Row Grid for this block */
@@ -345,7 +303,7 @@ export function TextureScreen({
                       style={styles.deleteBadgeBtn}
                       accessibilityLabel="Delete photo"
                     >
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#000000" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}>
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}>
                         <line x1="18" y1="6" x2="6" y2="18" />
                         <line x1="6" y1="6" x2="18" y2="18" />
                       </svg>
@@ -375,12 +333,12 @@ export function TextureScreen({
                         accessibilityLabel={isPlaying ? 'Pause audio take' : 'Play audio take'}
                       >
                         {isPlaying ? (
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="#000000" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="#FFFFFF" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}>
                             <rect x="6" y="4" width="4" height="16" />
                             <rect x="14" y="4" width="4" height="16" />
                           </svg>
                         ) : (
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="#000000" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block', marginLeft: 1 }}>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="#FFFFFF" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block', marginLeft: 1 }}>
                             <polygon points="5 3 19 12 5 21 5 3" />
                           </svg>
                         )}
@@ -467,7 +425,7 @@ export function TextureScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: '#0A0A0C',
   },
   scrollView: {
     flex: 1,
@@ -484,7 +442,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     paddingBottom: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(17, 24, 39, 0.08)',
+    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
   },
   titleRowPressable: {
     flexDirection: 'row',
@@ -495,7 +453,7 @@ const styles = StyleSheet.create({
   titleHeading: {
     fontSize: 26,
     fontWeight: '700',
-    color: '#000000',
+    color: '#FFFFFF',
     letterSpacing: -0.4,
   },
   metaSettingsPill: {
@@ -504,16 +462,16 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(17, 24, 39, 0.1)',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   metaSettingsPillText: {
     fontSize: 12,
     fontWeight: '600',
-    color: 'rgba(17, 24, 39, 0.7)',
+    color: 'rgba(255, 255, 255, 0.7)',
   },
   dateText: {
     fontSize: 13,
-    color: 'rgba(17, 24, 39, 0.45)',
+    color: 'rgba(255, 255, 255, 0.45)',
     fontWeight: '400',
   },
   activeBlockBar: {
@@ -526,7 +484,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: 'rgba(17, 24, 39, 0.06)',
+    borderColor: 'rgba(255, 255, 255, 0.06)',
   },
   blockTitleBadge: {
     backgroundColor: '#2C2C2E',
@@ -537,7 +495,7 @@ const styles = StyleSheet.create({
   blockTitleText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#000000',
+    color: '#FFFFFF',
     letterSpacing: 0.2,
   },
   phrasePill: {
@@ -549,7 +507,7 @@ const styles = StyleSheet.create({
   phrasePillText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#000000',
+    color: '#FFFFFF',
     letterSpacing: 0.5,
   },
   modeToggleGroup: {
@@ -575,10 +533,10 @@ const styles = StyleSheet.create({
   modeToggleText: {
     fontSize: 11,
     fontWeight: '600',
-    color: 'rgba(17, 24, 39, 0.5)',
+    color: 'rgba(255, 255, 255, 0.5)',
   },
   modeToggleTextActive: {
-    color: '#000000',
+    color: '#FFFFFF',
   },
   openWritingCanvas: {
     minHeight: 240,
@@ -587,7 +545,7 @@ const styles = StyleSheet.create({
   openTextInput: {
     fontSize: 18,
     lineHeight: 28,
-    color: '#000000',
+    color: '#FFFFFF',
     fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
     minHeight: 180,
     textAlignVertical: 'top',
@@ -604,25 +562,25 @@ const styles = StyleSheet.create({
     paddingBottom: 6,
     marginBottom: 4,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(17, 24, 39, 0.08)',
+    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
   },
   columnLabelLeft: {
     fontSize: 11,
     fontWeight: '600',
-    color: 'rgba(17, 24, 39, 0.4)',
+    color: 'rgba(255, 255, 255, 0.4)',
     letterSpacing: 0.3,
   },
   columnLabelRight: {
     fontSize: 11,
     fontWeight: '600',
-    color: 'rgba(17, 24, 39, 0.4)',
+    color: 'rgba(255, 255, 255, 0.4)',
     letterSpacing: 0.3,
   },
   attachmentsSection: {
     marginTop: 24,
     paddingTop: 16,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(17, 24, 39, 0.08)',
+    borderTopColor: 'rgba(255, 255, 255, 0.08)',
   },
   attachmentsHeaderRow: {
     marginBottom: 12,
@@ -630,7 +588,7 @@ const styles = StyleSheet.create({
   attachmentsTitle: {
     fontSize: 13,
     fontWeight: '600',
-    color: 'rgba(17, 24, 39, 0.45)',
+    color: 'rgba(255, 255, 255, 0.45)',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -648,7 +606,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     backgroundColor: '#1C1C1E',
     borderWidth: 1,
-    borderColor: 'rgba(17, 24, 39, 0.08)',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   mediaThumbnail: {
     width: '100%',
@@ -666,7 +624,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   deleteBadgeText: {
-    color: '#000000',
+    color: '#FFFFFF',
     fontSize: 11,
     fontWeight: '700',
   },
@@ -680,7 +638,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   mediaCaptionText: {
-    color: '#000000',
+    color: '#FFFFFF',
     fontSize: 10,
     fontWeight: '500',
   },
@@ -696,7 +654,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(17, 24, 39, 0.08)',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
@@ -716,7 +674,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FF453A',
   },
   audioPlayIcon: {
-    color: '#000000',
+    color: '#FFFFFF',
     fontSize: 15,
   },
   audioTakeInfo: {
@@ -725,11 +683,11 @@ const styles = StyleSheet.create({
   audioTakeName: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#000000',
+    color: '#FFFFFF',
   },
   audioTakeMeta: {
     fontSize: 11,
-    color: 'rgba(17, 24, 39, 0.45)',
+    color: 'rgba(255, 255, 255, 0.45)',
     marginTop: 2,
   },
   miniWaveform: {
@@ -747,12 +705,12 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: 'rgba(17, 24, 39, 0.08)',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   removeAudioText: {
-    color: 'rgba(17, 24, 39, 0.6)',
+    color: 'rgba(255, 255, 255, 0.6)',
     fontSize: 12,
     fontWeight: '600',
   },
@@ -770,7 +728,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: 'rgba(17, 24, 39, 0.08)',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     maxWidth: 240,
   },
   fileIcon: {
@@ -784,23 +742,23 @@ const styles = StyleSheet.create({
   fileNameText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#000000',
+    color: '#FFFFFF',
   },
   fileSizeText: {
     fontSize: 10,
-    color: 'rgba(17, 24, 39, 0.45)',
+    color: 'rgba(255, 255, 255, 0.45)',
     marginTop: 1,
   },
   removeFileBtn: {
     width: 18,
     height: 18,
     borderRadius: 9,
-    backgroundColor: 'rgba(17, 24, 39, 0.08)',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   removeFileText: {
-    color: 'rgba(17, 24, 39, 0.6)',
+    color: 'rgba(255, 255, 255, 0.6)',
     fontSize: 10,
     fontWeight: '600',
   },

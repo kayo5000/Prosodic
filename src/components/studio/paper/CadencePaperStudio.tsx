@@ -14,8 +14,6 @@ import {
   PanResponder,
   Dimensions,
 } from 'react-native';
-import { useRouter } from 'expo-router';
-import { DynamicIslandHUD } from '../DynamicIslandHUD';
 
 import { AppleNotesFormatBar } from './AppleNotesFormatBar';
 import {
@@ -41,8 +39,6 @@ import { colorForFamily } from '../../../theme/theme';
 import { SyllableInspectorModal, type SyllableOverride } from '../SyllableInspectorModal';
 import { LexiconModal } from '../LexiconModal';
 import { PracticeModal } from '../PracticeModal';
-import { useSongPersistence } from '../../../hooks/useSongPersistence';
-import { generateId } from '../../../data/id';
 import {
   AffineSidebar,
   AffineHeaderBar,
@@ -75,7 +71,6 @@ import type {
 } from './types';
 
 export interface CadencePaperStudioProps {
-  songId?: string;
   initialTitle?: string;
   initialLyrics?: string;
   initialBpm?: number;
@@ -84,22 +79,15 @@ export interface CadencePaperStudioProps {
 }
 
 export function CadencePaperStudio({
-  songId,
   initialTitle,
   initialLyrics,
   initialBpm = 120,
   onClose,
   onLyricsChange,
 }: CadencePaperStudioProps) {
-  const router = useRouter();
-
-  const activeSongIdRef = useRef(songId || generateId());
-  const { debouncedSave, forceSave } = useSongPersistence(activeSongIdRef.current);
-
   // 1. Initial State Setup
   const [initialData] = useState(() => {
     const defaultState = createInitialSongState(initialBpm);
-    // defaultState.metadata.id = activeSongIdRef.current;
     if (initialTitle && initialTitle !== 'New Song') {
       defaultState.metadata.title = initialTitle;
     }
@@ -115,14 +103,9 @@ export function CadencePaperStudio({
   const [movements, setMovements] = useState<BeatMovement[]>(initialData.movements);
   const [sections, setSections] = useState<PaperSection[]>(initialData.sections);
   const [activeSectionId, setActiveSectionId] = useState<string>(initialData.sections[0]?.id || '');
-  const [viewMode, setViewMode] = useState<'cadence' | 'texture' | 'my-songs'>('cadence');
+  const [viewMode, setViewMode] = useState<'cadence' | 'texture'>('cadence');
   const [showBars, setShowBars] = useState<boolean>(true);
   const [showRhymeMap, setShowRhymeMap] = useState<boolean>(true);
-
-  // Autosave to SQLite whenever sections or title changes
-  useEffect(() => {
-    debouncedSave(sections, metadata.title);
-  }, [sections, metadata.title, debouncedSave]);
 
   // Formatted Date & Time
   const formattedDateTime = useMemo(() => {
@@ -231,7 +214,7 @@ export function CadencePaperStudio({
           // Twista Physical Limit check (10.866 syllables per second)
           const isTwistaRate = bar.syllableCount > (10.866 * metrics.barDurationSeconds);
           
-          if (heatColor === '#007AFF' || isAnomaly || isTwistaRate) {
+          if (heatColor === '#EF4444' || isAnomaly || isTwistaRate) {
             redBars.push({ secId: sec.id, blockIndex: block.blockIndex, barIndex: bar.barIndex, isTwistaRate });
           }
         });
@@ -321,7 +304,7 @@ export function CadencePaperStudio({
             const isAnomaly = bar.syllableCount > 8 && blockAvg > 0 && bar.syllableCount > blockAvg * 2;
             const isTwistaRate = bar.syllableCount > (10.866 * metrics.barDurationSeconds);
 
-            if (heatColor === '#007AFF' || isAnomaly || isTwistaRate) {
+            if (heatColor === '#EF4444' || isAnomaly || isTwistaRate) {
               const barData = barTokensMap.get(`${sec.id}:${block.blockIndex}:${bar.barIndex}`);
               const inBarTokens = barData?.words || [];
               const splitResult = getOptimalSplitResult(bar.rawText, inBarTokens, openingAnchorColorId);
@@ -472,7 +455,7 @@ export function CadencePaperStudio({
       return {
         ...tok,
         colorId,
-        color: colorId > 0 ? colorForFamily(colorId) : '#000000',
+        color: colorId > 0 ? colorForFamily(colorId) : '#FFFFFF',
         stress: override.stress !== undefined ? override.stress : tok.stress,
         gridPosition: override.gridPos !== undefined ? override.gridPos : tok.gridPosition,
       };
@@ -505,7 +488,7 @@ export function CadencePaperStudio({
         return {
           ...tok,
           colorId: finalColorId,
-          color: finalColorId > 0 ? colorForFamily(finalColorId) : '#000000',
+          color: finalColorId > 0 ? colorForFamily(finalColorId) : '#FFFFFF',
           stress: finalStress,
         };
       }),
@@ -553,7 +536,7 @@ export function CadencePaperStudio({
       return {
         ...tok,
         colorId,
-        color: colorId > 0 ? colorForFamily(colorId) : '#000000',
+        color: colorId > 0 ? colorForFamily(colorId) : '#FFFFFF',
         stress: override.stress !== undefined ? override.stress : tok.stress,
         gridPosition: override.gridPos !== undefined ? override.gridPos : tok.gridPosition,
       };
@@ -586,7 +569,7 @@ export function CadencePaperStudio({
         return {
           ...tok,
           colorId: finalColorId,
-          color: finalColorId > 0 ? colorForFamily(finalColorId) : '#000000',
+          color: finalColorId > 0 ? colorForFamily(finalColorId) : '#FFFFFF',
           stress: finalStress,
         };
       }),
@@ -1281,47 +1264,44 @@ export function CadencePaperStudio({
       {/* 0. Ambient mesh-gradient backdrop, fixed behind everything */}
       <StudioBackdrop />
 
-      {/* Native-style Top Header */}
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8, zIndex: 10 }}>
-        <View style={{ flexDirection: 'row', gap: 16 }}>
-          <Pressable onPress={() => setWhiteboardModalVisible(true)} style={{ padding: 8 }}>
-            <Text style={{ fontSize: 16 }}>Whiteboard</Text>
-          </Pressable>
-          <Pressable onPress={() => {
-            setRecordingBlockName(sections.find((sec) => sec.id === activeSectionId)?.name || 'Verse');
-            setAudioRecordingVisible(true);
-          }} style={{ padding: 8 }}>
-            <Text style={{ fontSize: 16 }}>Mic</Text>
-          </Pressable>
-          <Pressable onPress={() => setLexiconModalVisible(true)} style={{ padding: 8 }}>
-            <Text style={{ fontSize: 16 }}>Lexicon</Text>
-          </Pressable>
-        </View>
-        <View style={{ flexDirection: 'row', gap: 16 }}>
-          <Pressable onPress={handleUndo} disabled={historyIndex <= 0} style={{ padding: 8, opacity: historyIndex > 0 ? 1 : 0.5 }}>
-            <Text style={{ fontSize: 16 }}>Undo</Text>
-          </Pressable>
-          <Pressable onPress={handleRedo} disabled={historyIndex >= history.length - 1} style={{ padding: 8, opacity: historyIndex < history.length - 1 ? 1 : 0.5 }}>
-            <Text style={{ fontSize: 16 }}>Redo</Text>
-          </Pressable>
-          <Pressable onPress={() => setSongSettingsVisible(true)} style={{ padding: 8 }}>
-            <Text style={{ fontSize: 16 }}>Settings</Text>
-          </Pressable>
-        </View>
-      </View>
+      {/* 1. Affine Collapsible Workspace Sidebar */}
+      <DynamicIslandHUD bpm={metadata.defaultBpm || 120} currentSps={null} />
+      <AffineSidebar
+        panX={sidebarPanX}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        sections={sections}
+        activeSectionId={activeSectionId}
+        onSelectSection={handleSelectSection}
+        onAddSection={(type) => handleAddNewSection((type as any) || 'verse', movements[0]?.id || 'mov_1')}
+        metadata={metadata}
+        onOpenSettings={() => setSongSettingsVisible(true)}
+        onOpenWhiteboard={() => setWhiteboardModalVisible(true)}
+        onOpenVoiceTakes={() => {
+          setRecordingBlockName(
+            sections.find((sec) => sec.id === activeSectionId)?.name || 'Verse',
+          );
+          setAudioRecordingVisible(true);
+        }}
+        onOpenLexicon={() => setLexiconModalVisible(true)}
+      />
 
-      {/* Main Screen Mode: Texture vs Cadence vs My Songs */}
-      {viewMode === 'my-songs' ? (
-        <View style={{ flex: 1, backgroundColor: '#F2F2F7', padding: 24, paddingTop: 60 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 24 }}>
-            <Pressable onPress={() => setViewMode('cadence')} style={{ marginRight: 16, padding: 8 }}>
-              <Text style={{ color: '#007AFF', fontSize: 16 }}>← Back</Text>
-            </Pressable>
-            <Text style={{ color: '#000000', fontSize: 24, fontWeight: 'bold' }}>My Songs</Text>
-          </View>
-          <Text style={{ color: '#94A3B8' }}>Vault and saved tracks will be here.</Text>
-        </View>
-      ) : viewMode === 'texture' ? (
+      {/* 2. Affine Workspace Top Header */}
+      <AffineHeaderBar
+        onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
+        showBars={showBars}
+        onToggleShowBars={() => setShowBars((prev) => !prev)}
+        showRhymeMap={showRhymeMap}
+        onToggleShowRhymeMap={() => setShowRhymeMap((prev) => !prev)}
+        canUndo={historyIndex > 0}
+        canRedo={historyIndex < history.length - 1}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
+        onOpenSettings={() => setSongSettingsVisible(true)}
+      />
+
+      {/* Main Screen Mode: Texture vs Cadence */}
+      {viewMode === 'texture' ? (
         <TextureScreen
           metadata={metadata}
           movements={movements}
@@ -1401,7 +1381,7 @@ export function CadencePaperStudio({
             <Text style={styles.columnLabelLeft}>Bar</Text>
             {isTwistaCap ? (
               <Pressable onPress={handleGlobalAutoSync}>
-                <Animated.Text style={[styles.columnLabelRight, { color: '#007AFF', opacity: globalBlinkAnim }]}>
+                <Animated.Text style={[styles.columnLabelRight, { color: '#EF4444', opacity: globalBlinkAnim }]}>
                   SYLLABLE (CAP)
                 </Animated.Text>
               </Pressable>
@@ -1414,15 +1394,15 @@ export function CadencePaperStudio({
         {/* Sync Selection Mode Banner */}
         {syncSelectionMode ? (
           <LiquidGlassCard blurIntensity="lg" shadowIntensity="lg" borderRadius={0} style={{ padding: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Text style={{ color: '#000000', fontSize: 16, fontWeight: 'bold' }}>
+            <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold' }}>
               Select bars to auto-sync
             </Text>
             <View style={{ flexDirection: 'row', gap: 12 }}>
-              <Pressable onPress={cancelAutoSync} style={{ paddingHorizontal: 16, paddingVertical: 8, borderRadius: 16, backgroundColor: 'rgba(17, 24, 39,0.1)' }}>
-                <Text style={{ color: '#000000' }}>Cancel</Text>
+              <Pressable onPress={cancelAutoSync} style={{ paddingHorizontal: 16, paddingVertical: 8, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.1)' }}>
+                <Text style={{ color: '#fff' }}>Cancel</Text>
               </Pressable>
-              <Pressable onPress={executeSelectedAutoSync} style={{ paddingHorizontal: 16, paddingVertical: 8, borderRadius: 16, backgroundColor: '#007AFF' }}>
-                <Text style={{ color: '#000000', fontWeight: 'bold' }}>Sync {selectedBarsForSync.length} Bars</Text>
+              <Pressable onPress={executeSelectedAutoSync} style={{ paddingHorizontal: 16, paddingVertical: 8, borderRadius: 16, backgroundColor: '#EF4444' }}>
+                <Text style={{ color: '#fff', fontWeight: 'bold' }}>Sync {selectedBarsForSync.length} Bars</Text>
               </Pressable>
             </View>
           </LiquidGlassCard>
@@ -1443,7 +1423,7 @@ export function CadencePaperStudio({
                   autoCapitalize="sentences"
                   autoCorrect={false}
                   placeholder="Start writing freely..."
-                  placeholderTextColor="rgba(17, 24, 39, 0.25)"
+                  placeholderTextColor="rgba(255, 255, 255, 0.25)"
                   style={[
                     styles.blankTextInput,
                     { flexGrow: 1, minHeight: 800 },
@@ -1844,7 +1824,7 @@ export function CadencePaperStudio({
       {showBpmPrompt && (
         <View style={[StyleSheet.absoluteFill as any, { zIndex: 9999, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.8)' }]}>
           <LiquidGlassCard borderRadius={16} style={{ padding: 24, maxWidth: 350, alignItems: 'center' }}>
-            <Text style={{ color: '#000000', fontSize: 20, fontWeight: 'bold', marginBottom: 16 }}>
+            <Text style={{ color: '#fff', fontSize: 20, fontWeight: 'bold', marginBottom: 16 }}>
               {hasSkippedBpm ? "Wait, are you sure?" : "Set Your BPM"}
             </Text>
             
@@ -1863,7 +1843,7 @@ export function CadencePaperStudio({
                     setShowBpmPrompt(false);
                   }
                 }}
-                style={[styles.craftButton, { flex: 1, backgroundColor: 'transparent', borderWidth: 1, borderColor: 'rgba(17, 24, 39,0.2)' }]}
+                style={[styles.craftButton, { flex: 1, backgroundColor: 'transparent', borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' }]}
               >
                 <Text style={[styles.craftButtonText, { color: '#ccc' }]}>Skip</Text>
               </Pressable>
@@ -1873,25 +1853,14 @@ export function CadencePaperStudio({
                   setShowBpmPrompt(false);
                   setSongSettingsVisible(true); // Open settings to actually set it
                 }}
-                style={[styles.craftButton, { flex: 1, backgroundColor: '#007AFF' }]}
+                style={[styles.craftButton, { flex: 1, backgroundColor: '#3b82f6' }]}
               >
-                <Text style={[styles.craftButtonText, { color: '#000000' }]}>Set BPM</Text>
+                <Text style={[styles.craftButtonText, { color: '#fff' }]}>Set BPM</Text>
               </Pressable>
             </View>
           </LiquidGlassCard>
         </View>
       )}
-
-      <DynamicIslandHUD bpm={metadata.defaultBpm || 120} currentSps={null} />
-      <AffineSidebar 
-        isOpen={sidebarOpen} 
-        onClose={() => setSidebarOpen(false)} 
-        onOpenSettings={() => {}} onMySongsPress={() => {
-           // Let the active song force save before leaving
-           forceSave(sections, metadata.title);
-           router.push('/my-songs' as any);
-        }} 
-      />
     </KeyboardAvoidingView>
   );
 }
@@ -1933,7 +1902,7 @@ const styles = StyleSheet.create({
   titleHeading: {
     fontSize: 30,
     fontWeight: '700',
-    color: '#1C1C1E',
+    color: '#FFFFFF',
     letterSpacing: -0.5,
     flex: 1,
     fontFamily: Platform.select({
@@ -2011,7 +1980,7 @@ const styles = StyleSheet.create({
   beatSwitchBadgeText: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#1C1C1E',
+    color: '#FFFFFF',
     letterSpacing: 0.6,
   },
   sectionCanvasBlock: {
@@ -2033,7 +2002,7 @@ const styles = StyleSheet.create({
   sectionTitleText: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#1C1C1E',
+    color: '#FFFFFF',
     letterSpacing: 0.5,
     textTransform: 'uppercase',
   },
@@ -2077,7 +2046,7 @@ const styles = StyleSheet.create({
   blankTextInput: {
     fontSize: 17,
     lineHeight: 28,
-    color: '#1C1C1E',
+    color: '#FFFFFF',
     padding: 0,
     minHeight: 240,
     fontFamily: Platform.select({
@@ -2101,7 +2070,7 @@ const styles = StyleSheet.create({
   interactiveLyricsInstruction: {
     fontSize: 10,
     fontWeight: '800',
-    color: '#1C1C1E',
+    color: '#FFFFFF',
     letterSpacing: 0.8,
     textTransform: 'uppercase',
   },
@@ -2116,7 +2085,7 @@ const styles = StyleSheet.create({
   editModeSwitchBtnText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#1C1C1E',
+    color: '#FFFFFF',
   },
   interactiveLyricLine: {
     flexDirection: 'row',
@@ -2182,12 +2151,12 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
     borderWidth: 1,
-    borderColor: '#1C1C1E',
+    borderColor: '#FFFFFF',
   },
   doneEditingNoticeBtnText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#1C1C1E',
+    color: '#FFFFFF',
   },
   // Ghost spacer in scroll when keyboard is open (prevents content jump)
   blankKeyboardSpacer: {
@@ -2199,7 +2168,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#1C1C1E',
+    backgroundColor: '#0A0A0C',
     borderTopWidth: 1,
     borderTopColor: 'rgba(255, 255, 255, 0.1)',
     paddingBottom: Platform.OS === 'ios' ? 0 : 8,
@@ -2218,19 +2187,19 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
     borderWidth: 1,
-    borderColor: '#1C1C1E',
+    borderColor: '#FFFFFF',
     flexShrink: 0,
   },
   dockedDoneBtnText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#1C1C1E',
+    color: '#FFFFFF',
   },
   dockedTextInput: {
     flex: 1,
     fontSize: 16,
     lineHeight: 24,
-    color: '#1C1C1E',
+    color: '#FFFFFF',
     padding: 0,
     maxHeight: 120,
     fontFamily: Platform.select({

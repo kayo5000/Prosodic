@@ -1,7 +1,8 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   Animated,
   Easing,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -10,99 +11,111 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { SongContext } from '../../../data/types';
-import { listPinnedSongContexts, listSongContexts } from '../../../data/repositories/songContext';
-import { getDb } from '../../../data/db/client';
+import { Spacing } from '@/constants/theme';
+import { PaperSection, SongMetadata } from '../paper/types';
 
-export interface AffineSidebarProps {
-  panX?: Animated.AnimatedInterpolation<number>;
+interface AffineSidebarProps {
+  panX?: Animated.Value;
   isOpen: boolean;
   onClose: () => void;
-  onOpenSettings: () => void;
-  onMySongsPress: () => void;
-  onNewSongPress?: () => void;
+  sections?: PaperSection[];
+  activeSectionId?: string;
+  onSelectSection?: (sectionId: string) => void;
+  onAddSection?: (type: string) => void;
+  metadata?: SongMetadata;
+  onOpenSettings?: () => void;
+  onOpenWhiteboard?: () => void;
+  onOpenVoiceTakes?: () => void;
+  onOpenLexicon?: () => void;
 }
 
-// Simple vector icons using basic SVG elements to fit the aesthetic
-const SvgVault = ({ color = '#A1A1AA', size = 20 }) => (
+const SvgChevronRight = ({ color = '#64748B', size = 14 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-    <path d="M7 11V7a5 5 0 0110 0v4"></path>
+    <polyline points="9 18 15 12 9 6" />
   </svg>
 );
 
-const SvgDrafts = ({ color = '#A1A1AA', size = 20 }) => (
+const SvgChevronDown = ({ color = '#64748B', size = 14 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-    <polyline points="14 2 14 8 20 8"></polyline>
-    <line x1="16" y1="13" x2="8" y2="13"></line>
-    <line x1="16" y1="17" x2="8" y2="17"></line>
-    <polyline points="10 9 9 9 8 9"></polyline>
+    <polyline points="6 9 12 15 18 9" />
   </svg>
 );
 
-const SvgSettings = ({ color = '#A1A1AA', size = 20 }) => (
+const SvgLock = ({ color = '#64748B', size = 14 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="3"></circle>
-    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l-.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
   </svg>
 );
 
-const SvgItem = ({ color = '#A1A1AA', size = 16 }) => (
+const SvgDragHandle = ({ color = '#475569', size = 14 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="10"></circle>
+    <line x1="8" y1="6" x2="21" y2="6" />
+    <line x1="8" y1="12" x2="21" y2="12" />
+    <line x1="8" y1="18" x2="21" y2="18" />
+    <line x1="3" y1="6" x2="3.01" y2="6" />
+    <line x1="3" y1="12" x2="3.01" y2="12" />
+    <line x1="3" y1="18" x2="3.01" y2="18" />
   </svg>
 );
 
-const DrawerItem = ({ title, onPress, icon: Icon, isActive = false }: any) => (
+const SectionTitle = ({ children }: { children: React.ReactNode }) => (
+  <Text style={styles.sectionTitle}>{children}</Text>
+);
+
+const DrawerItem = ({ title, onPress, indent = 0, rightElement, isActive = false }: any) => (
   <Pressable
     onPress={onPress}
     style={({ pressed }) => [
       styles.drawerItem,
+      { paddingLeft: Spacing.two + (indent * 12) },
       isActive && styles.drawerItemActive,
       pressed && styles.pressed
     ]}
   >
-    {Icon && <View style={styles.iconContainer}><Icon color={isActive ? '#FFFFFF' : '#A1A1AA'} /></View>}
     <Text style={[styles.drawerItemText, isActive && styles.drawerItemTextActive]}>{title}</Text>
+    {rightElement}
   </Pressable>
 );
 
-const SongItem = ({ song, onPress }: { song: SongContext, onPress: () => void }) => (
-  <Pressable
-    onPress={onPress}
-    style={({ pressed }) => [
-      styles.songItem,
-      pressed && styles.pressed
-    ]}
-  >
-    <View style={styles.iconContainer}>
-      <SvgItem color="#666666" size={12} />
-    </View>
-    <Text style={styles.songItemText} numberOfLines={1}>
-      {song.title || 'Untitled Song'}
-    </Text>
-  </Pressable>
+const Accordion = ({ title, isExpanded, onToggle, children, indent = 0 }: any) => (
+  <View>
+    <Pressable
+      onPress={onToggle}
+      style={({ pressed }) => [
+        styles.drawerItem,
+        { paddingLeft: Spacing.two + (indent * 12) },
+        pressed && styles.pressed
+      ]}
+    >
+      <Text style={styles.drawerItemText}>{title}</Text>
+      {isExpanded ? <SvgChevronDown /> : <SvgChevronRight />}
+    </Pressable>
+    {isExpanded && <View style={styles.accordionContent}>{children}</View>}
+  </View>
 );
 
 export function AffineSidebar({
   panX,
   isOpen,
   onClose,
+  metadata,
   onOpenSettings,
-  onMySongsPress,
-  onNewSongPress,
 }: AffineSidebarProps) {
-  const router = useRouter();
-  
-  const [pinnedSongs, setPinnedSongs] = useState<SongContext[]>([]);
-  const [recentSongs, setRecentSongs] = useState<SongContext[]>([]);
+  // State for Accordions
+  const [expProjects, setExpProjects] = useState(false);
+  const [expInspoFolders, setExpInspoFolders] = useState(false);
+  const [expNewVisual, setExpNewVisual] = useState(false);
+  const [expNewMemo, setExpNewMemo] = useState(false);
+  const [expNewAudio, setExpNewAudio] = useState(false);
+  const [expGallery, setExpGallery] = useState(false);
+  const [expLexicon, setExpLexicon] = useState(false);
+  const [expBestOf, setExpBestOf] = useState(false);
 
   // Fallback animation if panX is not provided
   const fallbackAnim = useRef(new Animated.Value(0)).current;
   
-  useEffect(() => {
+  React.useEffect(() => {
     if (!panX) {
       Animated.timing(fallbackAnim, {
         toValue: isOpen ? 1 : 0,
@@ -113,80 +126,123 @@ export function AffineSidebar({
     }
   }, [isOpen, panX]);
 
-  useEffect(() => {
-    if (isOpen) {
-      try {
-        const db = getDb();
-        setPinnedSongs(listPinnedSongContexts(db));
-        setRecentSongs(listSongContexts(db, 5, 0));
-      } catch (e) {
-        console.error('Failed to load songs for sidebar:', e);
-      }
-    }
-  }, [isOpen]);
-
   const translateX = panX || fallbackAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [-400, 0]
   });
 
-  const navigateToSong = (id: string) => {
-    onClose();
-    router.push(`/?id=${id}` as any);
-  };
-
   const content = (
     <Animated.View style={[styles.drawerContainer, { transform: [{ translateX }] }]}>
       <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom', 'left']}>
-        {/* Header matches Claude's top title */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Prosodic</Text>
+        {/* Header */}
+        <View style={styles.profileSection}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>PRO</Text>
+          </View>
+          <View style={styles.profileMeta}>
+            <Text style={styles.artistName}>Prosodic Writer</Text>
+            <View style={styles.proBadge}>
+              <Text style={styles.proBadgeText}>WORKSPACE</Text>
+            </View>
+          </View>
+          <Pressable onPress={onClose} style={styles.closeBtn}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </Pressable>
         </View>
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           
-          {/* GENERIC NAV */}
+          {/* MY SONGS */}
           <View style={styles.section}>
-            <DrawerItem title="Vault" icon={SvgVault} onPress={onMySongsPress} />
-            <DrawerItem title="Drafts" icon={SvgDrafts} />
-            <DrawerItem title="Settings" icon={SvgSettings} onPress={onOpenSettings} />
-          </View>
-
-          {/* PINNED SECTION */}
-          {pinnedSongs.length > 0 && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Pinned</Text>
-              <View style={styles.listContainer}>
-                {pinnedSongs.map(song => (
-                  <SongItem key={song.id} song={song} onPress={() => navigateToSong(song.id)} />
-                ))}
-              </View>
-            </View>
-          )}
-
-          {/* RECENTS SECTION */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Recents</Text>
+            <SectionTitle>MY SONGS</SectionTitle>
+            <DrawerItem title="New (Free Write or Song)" rightElement={<Text style={styles.accentText}>+</Text>} />
+            <Text style={styles.subTitle}>Recent Drafts</Text>
             <View style={styles.listContainer}>
-              {recentSongs.length > 0 ? (
-                recentSongs.map(song => (
-                  <SongItem key={song.id} song={song} onPress={() => navigateToSong(song.id)} />
-                ))
-              ) : (
-                <Text style={styles.emptyText}>No recent songs</Text>
-              )}
+              <DrawerItem title={metadata?.title || "Untitled Draft"} isActive={true} />
             </View>
           </View>
-          
-          <View style={{ height: 100 }} />
-        </ScrollView>
 
-        {/* BOTTOM FLOATING CTA */}
-        <View style={styles.bottomArea}>
-          <Pressable style={styles.newSongPill} onPress={() => { onClose(); if(onNewSongPress) onNewSongPress(); else router.push('/'); }}>
-            <Text style={styles.newSongPillText}>+ New song</Text>
-          </Pressable>
-        </View>
+          {/* PROJECTS */}
+          <View style={styles.section}>
+            <SectionTitle>PROJECTS</SectionTitle>
+            <Accordion title="Most Recent" isExpanded={expProjects} onToggle={() => setExpProjects(!expProjects)}>
+              <DrawerItem title="No recent projects" indent={1} />
+            </Accordion>
+          </View>
+
+          {/* PINNED */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <SectionTitle>PINNED 📌</SectionTitle>
+              <Text style={styles.helperText}>(Drag to Reorder)</Text>
+            </View>
+            <View style={styles.listContainer}>
+              <DrawerItem title="No pinned items" />
+            </View>
+          </View>
+
+          {/* INSPO */}
+          <View style={styles.section}>
+            <SectionTitle>INSPO</SectionTitle>
+            <Accordion title="Folders (Pin // Most Recent)" isExpanded={expInspoFolders} onToggle={() => setExpInspoFolders(!expInspoFolders)}>
+              <DrawerItem title="Empty" indent={1} />
+            </Accordion>
+            <Accordion title="New Visual" isExpanded={expNewVisual} onToggle={() => setExpNewVisual(!expNewVisual)}>
+              <DrawerItem title="No recent visuals" indent={1} />
+            </Accordion>
+            <Accordion title="New Memo" isExpanded={expNewMemo} onToggle={() => setExpNewMemo(!expNewMemo)}>
+              <DrawerItem title="No recent memos" indent={1} />
+            </Accordion>
+            <Accordion title="New Audio" isExpanded={expNewAudio} onToggle={() => setExpNewAudio(!expNewAudio)}>
+              <DrawerItem title="No recent audio" indent={1} />
+            </Accordion>
+            <Accordion title="Gallery" isExpanded={expGallery} onToggle={() => setExpGallery(!expGallery)}>
+              <DrawerItem title="Gallery empty" indent={1} />
+            </Accordion>
+          </View>
+
+          {/* CRAFT MASTERS */}
+          <View style={styles.section}>
+            <SectionTitle>CRAFT MASTERS</SectionTitle>
+            <DrawerItem title="Fingerprint" />
+            <DrawerItem title="Your Lexicon" />
+            
+            <View style={styles.statsCard}>
+              <Text style={styles.statLine}>Total Word Count: <Text style={styles.statValue}>0</Text></Text>
+              <Text style={styles.statLine}>Avg Words/Song: <Text style={styles.statValue}>0</Text></Text>
+              <Text style={styles.statLine}>Avg Syllables/Song: <Text style={styles.statValue}>0</Text></Text>
+            </View>
+
+            <Accordion title="Lexicon Details" isExpanded={expLexicon} onToggle={() => setExpLexicon(!expLexicon)} indent={1}>
+              <DrawerItem title="Every Word" indent={2} />
+              <DrawerItem title="Most Used / Crutch Words" indent={2} />
+              <Accordion title="Best of Your Lexicon" isExpanded={expBestOf} onToggle={() => setExpBestOf(!expBestOf)} indent={2}>
+                <DrawerItem title="Scenery (Visual, Auditory, Touch, Smell, Taste)" indent={3} />
+                <DrawerItem title="Uncommon" indent={3} />
+                <DrawerItem title="Emotional (Light // Dark)" indent={3} />
+                <DrawerItem title="Rhyme & Sounds // Crutch Rhyme" indent={3} />
+                <DrawerItem title="Alliteration Frequency" indent={3} />
+              </Accordion>
+            </Accordion>
+
+            <View style={{ height: 16 }} />
+            <SectionTitle>ACTIONABLE FLAGS</SectionTitle>
+            <DrawerItem title='"Crutch Words" (Filler that weakens lines)' />
+            <DrawerItem title='Exclusive Context Words' />
+            <DrawerItem title='Suggested Underused Synonyms' />
+
+            <View style={{ height: 16 }} />
+            <SectionTitle>CRAFT DEVELOPMENT</SectionTitle>
+            <DrawerItem title="Prosodic Academy" rightElement={<SvgLock />} />
+            <DrawerItem title="Tool Box" />
+            <DrawerItem title="Freestyle Mode (AI Feedback)" />
+          </View>
+
+          <View style={{ height: 40 }} />
+        </ScrollView>
       </SafeAreaView>
     </Animated.View>
   );
@@ -194,7 +250,7 @@ export function AffineSidebar({
   return (
     <View style={[StyleSheet.absoluteFill, { zIndex: 1000 }]} pointerEvents={isOpen ? 'auto' : 'none'}>
       <Pressable 
-        style={[styles.backdropPressable, { opacity: isOpen ? 1 : 0 }]} 
+        style={[styles.backdropPressable, { opacity: isOpen ? 1 : 0, backgroundColor: 'rgba(0,0,0,0.65)' }]} 
         onPress={onClose} 
       />
       {content}
@@ -209,118 +265,161 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.7)',
   },
   drawerContainer: {
-    width: 300,
+    width: 310,
     maxWidth: '85%',
     height: '100%',
-    backgroundColor: '#121212', // Pure dark mode
+    backgroundColor: '#090D16',
     borderRightWidth: 1,
-    borderColor: '#222222', 
-    shadowColor: '#000',
-    shadowOffset: { width: 4, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 16,
-    elevation: 10,
+    borderColor: '#1E293B',
+    paddingHorizontal: Spacing.three,
+    paddingTop: Spacing.two,
+    shadowColor: '#000000',
+    shadowOffset: { width: 10, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 20,
+    elevation: 25,
     zIndex: 100,
   },
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'ios' ? 10 : 20,
-    paddingBottom: 24,
+  profileSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingBottom: Spacing.three,
+    borderBottomWidth: 1,
+    borderColor: '#1E293B',
+    gap: Spacing.two,
+    marginBottom: Spacing.three,
+    marginTop: Platform.OS === 'ios' ? 10 : 18,
   },
-  headerTitle: {
-    color: '#E4E4E7',
-    fontSize: 22,
-    fontWeight: '600',
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#2563EB',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#60A5FA',
+  },
+  avatarText: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+    fontSize: 15,
+  },
+  profileMeta: {
+    flex: 1,
+  },
+  artistName: {
+    color: '#F8FAFC',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  proBadge: {
+    backgroundColor: '#1E293B',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+    marginTop: 2,
+    borderWidth: 1,
+    borderColor: '#3B82F644',
+  },
+  proBadgeText: {
+    color: '#60A5FA',
+    fontSize: 9,
+    fontWeight: '800',
     letterSpacing: 0.5,
-    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif', // Match Claude's serif-ish logo maybe, or keep system
+  },
+  closeBtn: {
+    padding: Spacing.one,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 12,
   },
   section: {
-    marginBottom: 28,
+    marginBottom: Spacing.four,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    paddingRight: Spacing.two,
   },
   sectionTitle: {
-    color: '#71717A',
-    fontSize: 13,
-    fontWeight: '500',
-    marginBottom: 10,
-    paddingHorizontal: 8,
+    color: '#94A3B8',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 1.2,
+    marginBottom: Spacing.two,
+    paddingLeft: Spacing.two,
+  },
+  subTitle: {
+    color: '#475569',
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+    marginTop: Spacing.two,
+    marginBottom: Spacing.one,
+    paddingLeft: Spacing.two,
+  },
+  helperText: {
+    color: '#475569',
+    fontSize: 9,
+    fontStyle: 'italic',
   },
   listContainer: {
-    gap: 4,
+    gap: 2,
   },
   drawerItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    borderRadius: 10,
-    minHeight: 44, // 44pt touch target minimum
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    paddingRight: Spacing.two,
+    borderRadius: 8,
   },
   drawerItemActive: {
-    backgroundColor: '#27272A',
+    backgroundColor: 'rgba(59, 130, 246, 0.1)',
   },
   drawerItemText: {
-    color: '#E4E4E7',
-    fontSize: 16,
-    fontWeight: '400',
+    color: '#E2E8F0',
+    fontSize: 14,
+    fontWeight: '500',
   },
   drawerItemTextActive: {
-    fontWeight: '500',
-    color: '#FFFFFF',
+    color: '#60A5FA',
+    fontWeight: '700',
   },
-  songItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
+  accentText: {
+    color: '#60A5FA',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  accordionContent: {
+    marginTop: 2,
+  },
+  statsCard: {
+    backgroundColor: 'rgba(30, 41, 59, 0.3)',
     borderRadius: 8,
-    minHeight: 44,
+    padding: Spacing.two,
+    marginVertical: Spacing.two,
+    marginLeft: Spacing.two,
+    borderWidth: 1,
+    borderColor: 'rgba(30, 41, 59, 0.8)',
+    gap: 4,
   },
-  songItemText: {
-    color: '#A1A1AA',
-    fontSize: 15,
-    fontWeight: '400',
-    flex: 1,
+  statLine: {
+    color: '#94A3B8',
+    fontSize: 12,
   },
-  iconContainer: {
-    width: 24,
-    marginRight: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emptyText: {
-    color: '#52525B',
-    fontSize: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+  statValue: {
+    color: '#F8FAFC',
+    fontWeight: '700',
   },
   pressed: {
-    backgroundColor: '#27272A',
-  },
-  bottomArea: {
-    padding: 16,
-    borderTopWidth: 1,
-    borderColor: '#222222',
-    backgroundColor: '#121212',
-  },
-  newSongPill: {
-    backgroundColor: '#E4E4E7', // Claude's light button
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 48,
-  },
-  newSongPillText: {
-    color: '#000000',
-    fontSize: 16,
-    fontWeight: '600',
+    opacity: 0.6,
+    backgroundColor: 'rgba(255,255,255,0.02)',
   },
 });
