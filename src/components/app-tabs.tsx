@@ -1,9 +1,42 @@
+import { Platform } from 'react-native';
+import { Tabs } from 'expo-router';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 
 import { useTheme } from '@/hooks/use-theme';
 
 export default function AppTabs() {
   const colors = useTheme();
+
+  if (Platform.OS === 'web') {
+    return (
+      <Tabs
+        screenOptions={{
+          headerShown: false,
+          tabBarStyle: { backgroundColor: colors.background },
+          tabBarActiveTintColor: colors.text,
+        }}
+      >
+        <Tabs.Screen
+          name="my-songs"
+          options={{
+            title: 'Vault',
+          }}
+        />
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: 'Studio',
+          }}
+        />
+        <Tabs.Screen
+          name="explore"
+          options={{
+            title: 'Dashboard',
+          }}
+        />
+      </Tabs>
+    );
+  }
 
   return (
     <NativeTabs
