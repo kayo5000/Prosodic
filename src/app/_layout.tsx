@@ -8,14 +8,15 @@ import AppTabs from '@/components/app-tabs';
 
 SplashScreen.preventAutoHideAsync();
 
-const OLEDTheme = {
+const EditorialCreamTheme = {
   ...DarkTheme,
+  dark: false,
   colors: {
     ...DarkTheme.colors,
-    background: '#000000',
-    card: '#000000',
-    border: '#1C1C1E',
-    text: '#F2F2F7',
+    background: '#F5F4EF',
+    card: '#F5F4EF',
+    border: '#111111',
+    text: '#111111',
   },
 };
 
@@ -23,7 +24,7 @@ export default function TabLayout() {
   return (
     <SafeAreaProvider>
       <View style={styles.rootContainer}>
-        <ThemeProvider value={OLEDTheme}>
+        <ThemeProvider value={EditorialCreamTheme}>
           <AppTabs />
           {/* Splash overlay renders on top of tabs while initializing */}
           <AnimatedSplashOverlay />
@@ -36,6 +37,6 @@ export default function TabLayout() {
 const styles = StyleSheet.create({
   rootContainer: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: '#F5F4EF',
   },
 });
