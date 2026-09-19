@@ -14,6 +14,7 @@ import {
   PanResponder,
   Dimensions,
 } from 'react-native';
+import Reanimated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
 import { DynamicIslandHUD } from '../DynamicIslandHUD';
 import { AppleNotesFormatBar } from './AppleNotesFormatBar';
@@ -56,6 +57,7 @@ import { SectionTimelineBar } from './SectionTimelineBar';
 import { SongSettingsModal } from './SongSettingsModal';
 import { SongWhiteboardModal } from './SongWhiteboardModal';
 import { TextureScreen } from './TextureScreen';
+import { CanvasInput } from './components/CanvasInput';
 import { LiquidGlassCard } from '../../ui/LiquidGlassCard';
 import type {
   AudioRecordingData,
@@ -1410,34 +1412,20 @@ export function CadencePaperStudio({
           </LiquidGlassCard>
         ) : null}
 
-        {/* 4. Canvas Content: Single Blank Field (Bars Off) vs Structured Measures (Bars On) */}
-        {!showBars ? (
-          <LiquidGlassCard blurIntensity="sm" shadowIntensity="sm" borderRadius={24} style={[styles.blankCanvasContainer, { flexGrow: 1, padding: 24 }]}>
-            <View style={{ flexGrow: 1 }}>
-              <View style={[styles.blankInputWrapper, { flexGrow: 1 }]}>
-                <TextInput
-                  ref={blankInputRef}
-                  value={blankText}
-                  onChangeText={handleBlankTextChange}
-                  multiline
-                  scrollEnabled={false}
-                  
-                  autoCapitalize="sentences"
-                  autoCorrect={false}
-                  placeholder="Start writing freely..."
-                  placeholderTextColor="rgba(255, 255, 255, 0.25)"
-                  style={[
-                    styles.blankTextInput,
-                    { flexGrow: 1, minHeight: 800 },
-                    Platform.OS === 'web' ? ({ outlineStyle: 'none' } as any) : null,
-                  ]}
-                />
-              </View>
-            </View>
-          </LiquidGlassCard>
-        ) : (
-        <View style={styles.sectionsContainer}>
-          {movements.map((movement, mIdx) => {
+          {/* 4. Canvas Content: Single Blank Field (Bars Off) vs Structured Measures (Bars On) */}
+          {!showBars ? (
+            <CanvasInput
+              ref={blankInputRef}
+              value={blankText}
+              onChangeText={handleBlankTextChange}
+            />
+          ) : (
+          <Reanimated.View 
+            entering={FadeIn.duration(400)} 
+            exiting={FadeOut.duration(300)} 
+            style={styles.sectionsContainer}
+          >
+            {movements.map((movement, mIdx) => {
             const movementSections = sections.filter((s) => s.movementId === movement.id);
 
             return (
@@ -1676,7 +1664,7 @@ export function CadencePaperStudio({
               </View>
             );
           })}
-          </View>
+          </Reanimated.View>
         )}
       </ScrollView>
     </>
