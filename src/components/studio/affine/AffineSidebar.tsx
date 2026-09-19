@@ -162,8 +162,6 @@ export function AffineSidebar({
             <Text style={styles.subTitle}>Recent Drafts</Text>
             <View style={styles.listContainer}>
               <DrawerItem title={metadata?.title || "Untitled Draft"} isActive={true} />
-              <DrawerItem title="Album Intro (Beat 3)" />
-              <DrawerItem title="Freestyle Take 1" />
             </View>
           </View>
 
@@ -171,8 +169,7 @@ export function AffineSidebar({
           <View style={styles.section}>
             <SectionTitle>PROJECTS</SectionTitle>
             <Accordion title="Most Recent" isExpanded={expProjects} onToggle={() => setExpProjects(!expProjects)}>
-              <DrawerItem title="Album 1" indent={1} />
-              <DrawerItem title="EP Demos" indent={1} />
+              <DrawerItem title="No recent projects" indent={1} />
             </Accordion>
           </View>
 
@@ -183,8 +180,7 @@ export function AffineSidebar({
               <Text style={styles.helperText}>(Drag to Reorder)</Text>
             </View>
             <View style={styles.listContainer}>
-              <DrawerItem title="Favorite Hook Idea" rightElement={<SvgDragHandle/>} />
-              <DrawerItem title="Beat #4 Reference" rightElement={<SvgDragHandle/>} />
+              <DrawerItem title="No pinned items" />
             </View>
           </View>
 
@@ -192,20 +188,19 @@ export function AffineSidebar({
           <View style={styles.section}>
             <SectionTitle>INSPO</SectionTitle>
             <Accordion title="Folders (Pin // Most Recent)" isExpanded={expInspoFolders} onToggle={() => setExpInspoFolders(!expInspoFolders)}>
-              <DrawerItem title="Moodboard" indent={1} />
-              <DrawerItem title="Flow References" indent={1} />
+              <DrawerItem title="Empty" indent={1} />
             </Accordion>
             <Accordion title="New Visual" isExpanded={expNewVisual} onToggle={() => setExpNewVisual(!expNewVisual)}>
-              <DrawerItem title="Recent Visuals..." indent={1} />
+              <DrawerItem title="No recent visuals" indent={1} />
             </Accordion>
             <Accordion title="New Memo" isExpanded={expNewMemo} onToggle={() => setExpNewMemo(!expNewMemo)}>
-              <DrawerItem title="Recent Memos..." indent={1} />
+              <DrawerItem title="No recent memos" indent={1} />
             </Accordion>
             <Accordion title="New Audio" isExpanded={expNewAudio} onToggle={() => setExpNewAudio(!expNewAudio)}>
-              <DrawerItem title="Recent Audio..." indent={1} />
+              <DrawerItem title="No recent audio" indent={1} />
             </Accordion>
             <Accordion title="Gallery" isExpanded={expGallery} onToggle={() => setExpGallery(!expGallery)}>
-              <DrawerItem title="Recent Gallery..." indent={1} />
+              <DrawerItem title="Gallery empty" indent={1} />
             </Accordion>
           </View>
 
@@ -216,9 +211,9 @@ export function AffineSidebar({
             <DrawerItem title="Your Lexicon" />
             
             <View style={styles.statsCard}>
-              <Text style={styles.statLine}>Total Word Count: <Text style={styles.statValue}>1,245</Text></Text>
-              <Text style={styles.statLine}>Avg Words/Song: <Text style={styles.statValue}>412</Text></Text>
-              <Text style={styles.statLine}>Avg Syllables/Song: <Text style={styles.statValue}>680</Text></Text>
+              <Text style={styles.statLine}>Total Word Count: <Text style={styles.statValue}>0</Text></Text>
+              <Text style={styles.statLine}>Avg Words/Song: <Text style={styles.statValue}>0</Text></Text>
+              <Text style={styles.statLine}>Avg Syllables/Song: <Text style={styles.statValue}>0</Text></Text>
             </View>
 
             <Accordion title="Lexicon Details" isExpanded={expLexicon} onToggle={() => setExpLexicon(!expLexicon)} indent={1}>
