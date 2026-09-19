@@ -15,6 +15,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { DynamicIslandHUD } from '../DynamicIslandHUD';
 
 import { AppleNotesFormatBar } from './AppleNotesFormatBar';
 import {
@@ -1881,6 +1882,7 @@ export function CadencePaperStudio({
         </View>
       )}
 
+      <DynamicIslandHUD bpm={metadata.defaultBpm || 120} currentSps={null} />
       <AffineSidebar 
         isOpen={sidebarOpen} 
         onClose={() => setSidebarOpen(false)} 
