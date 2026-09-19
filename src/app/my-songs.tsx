@@ -46,7 +46,7 @@ export default function MySongsScreen() {
                 styles.songItem,
                 pressed && styles.songItemPressed
               ]}
-              onPress={() => router.push(\/?id=\\ as any)}
+              onPress={() => router.push(`/?id=${item.id}` as any)}
             >
               <View style={styles.songContent}>
                 <Text style={styles.songTitle} numberOfLines={1}>{item.title || 'Untitled Draft'}</Text>
