@@ -15,6 +15,7 @@ import {
   Dimensions,
 } from 'react-native';
 
+import { DynamicIslandHUD } from '../DynamicIslandHUD';
 import { AppleNotesFormatBar } from './AppleNotesFormatBar';
 import {
   createBeatSwitchMovement,
@@ -71,6 +72,7 @@ import type {
 } from './types';
 
 export interface CadencePaperStudioProps {
+  songId?: string;
   initialTitle?: string;
   initialLyrics?: string;
   initialBpm?: number;
