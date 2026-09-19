@@ -1820,21 +1820,34 @@ export function CadencePaperStudio({
         onOpenPractice={() => setPracticeModalVisible(true)}
       />
 
-      {/* BPM Prompt Modal */}
+      {/* BPM Prompt Modal (Impeccable Design) */}
       {showBpmPrompt && (
-        <View style={[StyleSheet.absoluteFill as any, { zIndex: 9999, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.8)' }]}>
-          <LiquidGlassCard borderRadius={16} style={{ padding: 24, maxWidth: 350, alignItems: 'center' }}>
-            <Text style={{ color: '#fff', fontSize: 20, fontWeight: 'bold', marginBottom: 16 }}>
-              {hasSkippedBpm ? "Wait, are you sure?" : "Set Your BPM"}
+        <View style={[StyleSheet.absoluteFill as any, { zIndex: 9999, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.85)' }]}>
+          <LiquidGlassCard borderRadius={32} style={{ padding: 32, width: '85%', maxWidth: 400, alignItems: 'center', backgroundColor: 'rgba(28,28,30,0.85)', borderColor: 'rgba(255,255,255,0.08)' }}>
+            <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: '#CC8800', justifyContent: 'center', alignItems: 'center', marginBottom: 24, shadowColor: '#CC8800', shadowOffset: {width:0,height:4}, shadowOpacity:0.4, shadowRadius:12 }}>
+              <Text style={{ fontSize: 24 }}>🎵</Text>
+            </View>
+            <Text style={{ color: '#F2F2F7', fontSize: 22, fontWeight: '800', marginBottom: 12, letterSpacing: -0.5, textAlign: 'center' }}>
+              {hasSkippedBpm ? 'Are you absolutely sure?' : 'Set The Tempo'}
             </Text>
             
-            <Text style={{ color: '#ccc', fontSize: 16, textAlign: 'center', marginBottom: 24 }}>
+            <Text style={{ color: 'rgba(235,235,245,0.6)', fontSize: 16, textAlign: 'center', marginBottom: 32, lineHeight: 22, fontWeight: '500' }}>
               {hasSkippedBpm 
-                ? "BPM is a vital metric to accurately measure cadence, rhyme stress, and all the other things that use stress." 
-                : "Tap out your tempo or enter a BPM to start mapping your cadence."}
+                ? 'BPM is the heartbeat of Prosodic. We cannot map cadence, rhyme stress, or syllabic velocity without it.' 
+                : 'Tap out your tempo or enter a BPM manually to start calculating your cadence matrix.'}
             </Text>
             
-            <View style={{ flexDirection: 'row', gap: 12, width: '100%' }}>
+            <View style={{ flexDirection: 'column', gap: 16, width: '100%' }}>
+              <Pressable
+                onPress={() => {
+                  setShowBpmPrompt(false);
+                  setSongSettingsVisible(true);
+                }}
+                style={({ pressed }) => [{ width: '100%', height: 56, borderRadius: 28, backgroundColor: '#CC8800', justifyContent: 'center', alignItems: 'center', opacity: pressed ? 0.8 : 1 }]}
+              >
+                <Text style={{ color: '#000000', fontSize: 17, fontWeight: '700', letterSpacing: -0.3 }}>Set BPM</Text>
+              </Pressable>
+
               <Pressable
                 onPress={() => {
                   if (!hasSkippedBpm) {
@@ -1843,19 +1856,9 @@ export function CadencePaperStudio({
                     setShowBpmPrompt(false);
                   }
                 }}
-                style={[styles.craftButton, { flex: 1, backgroundColor: 'transparent', borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' }]}
+                style={({ pressed }) => [{ width: '100%', height: 56, borderRadius: 28, backgroundColor: 'transparent', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)', opacity: pressed ? 0.6 : 1 }]}
               >
-                <Text style={[styles.craftButtonText, { color: '#ccc' }]}>Skip</Text>
-              </Pressable>
-              
-              <Pressable
-                onPress={() => {
-                  setShowBpmPrompt(false);
-                  setSongSettingsVisible(true); // Open settings to actually set it
-                }}
-                style={[styles.craftButton, { flex: 1, backgroundColor: '#3b82f6' }]}
-              >
-                <Text style={[styles.craftButtonText, { color: '#fff' }]}>Set BPM</Text>
+                <Text style={{ color: '#F2F2F7', fontSize: 17, fontWeight: '600' }}>{hasSkippedBpm ? 'Skip anyway' : 'Skip for now'}</Text>
               </Pressable>
             </View>
           </LiquidGlassCard>

@@ -1,4 +1,4 @@
-import { StyleSheet, View, FlatList, Pressable, Text } from 'react-native';
+import { StyleSheet, View, FlatList, Pressable, Text, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEffect, useState } from 'react';
 import { getDb } from '../data/db/client';
@@ -21,11 +21,10 @@ export default function MySongsScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.background} />
-
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
-          <Text style={styles.hugeTitle}>VAULT</Text>
+          <Text style={styles.title}>Vault</Text>
+          <Text style={styles.subtitle}>Your phonetic drafts & arrangements</Text>
         </View>
 
         <FlatList
@@ -33,7 +32,13 @@ export default function MySongsScreen() {
           keyExtractor={item => item.id}
           contentContainerStyle={styles.listContent}
           ListEmptyComponent={
-            <Text style={styles.emptyText}>NO SAVED TRACKS FOUND.</Text>
+            <View style={styles.emptyState}>
+              <View style={styles.emptyIconWrap}>
+                <Text style={{ fontSize: 28 }}>??</Text>
+              </View>
+              <Text style={styles.emptyText}>No drafts yet</Text>
+              <Text style={styles.emptySubtext}>Your cadence matrices will appear here.</Text>
+            </View>
           }
           renderItem={({item}) => (
             <Pressable 
@@ -41,10 +46,15 @@ export default function MySongsScreen() {
                 styles.songItem,
                 pressed && styles.songItemPressed
               ]}
-              onPress={() => router.push(`/?id=${item.id}` as any)}
+              onPress={() => router.push(\/?id=\\ as any)}
             >
-              <Text style={styles.songTitle} numberOfLines={1}>{item.title ? item.title.toUpperCase() : 'UNTITLED'}</Text>
-              <Text style={styles.songDate}>{new Date(item.updatedAt).toLocaleDateString()}</Text>
+              <View style={styles.songContent}>
+                <Text style={styles.songTitle} numberOfLines={1}>{item.title || 'Untitled Draft'}</Text>
+                <Text style={styles.songDate}>{new Date(item.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</Text>
+              </View>
+              <View style={styles.chevron}>
+                <Text style={{ color: 'rgba(235,235,245,0.3)' }}>�</Text>
+              </View>
             </Pressable>
           )}
         />
@@ -57,7 +67,7 @@ export default function MySongsScreen() {
             ]}
             onPress={() => router.push('/')}
           >
-            <Text style={styles.ctaText}>+ NEW SONG</Text>
+            <Text style={styles.ctaText}>Create New Draft</Text>
           </Pressable>
         </View>
       </SafeAreaView>
@@ -70,76 +80,105 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000000',
   },
-  background: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: '#0A0A0A', 
-  },
   safeArea: {
     flex: 1,
   },
   header: {
     paddingHorizontal: 24,
-    paddingTop: 40,
-    paddingBottom: 20,
+    paddingTop: 32,
+    paddingBottom: 24,
   },
-  hugeTitle: {
-    fontSize: 56,
-    fontWeight: '900',
-    color: '#FFFFFF',
-    letterSpacing: -2,
-    lineHeight: 60,
+  title: {
+    fontSize: 34,
+    fontWeight: '700',
+    color: '#F2F2F7',
+    letterSpacing: -1.2,
+    marginBottom: 6,
+  },
+  subtitle: {
+    fontSize: 15,
+    color: 'rgba(235,235,245,0.6)',
+    letterSpacing: -0.2,
+    fontWeight: '500',
   },
   listContent: {
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
     paddingBottom: 40,
   },
   songItem: {
-    paddingVertical: 20,
-    borderBottomWidth: 2,
-    borderBottomColor: '#222222',
-    minHeight: 64, // Apple HIG minimum 44pt
-    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    backgroundColor: '#1C1C1E',
+    borderRadius: 16,
+    marginBottom: 12,
+    minHeight: 64, // Apple HIG target
   },
   songItemPressed: {
-    opacity: 0.5,
+    backgroundColor: '#2C2C2E',
+  },
+  songContent: {
+    flex: 1,
   },
   songTitle: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    letterSpacing: -0.5,
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#F2F2F7',
+    letterSpacing: -0.4,
     marginBottom: 4,
   },
   songDate: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#888888',
-    letterSpacing: 1,
+    fontWeight: '500',
+    color: 'rgba(235,235,245,0.5)',
+  },
+  chevron: {
+    paddingLeft: 12,
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 80,
+  },
+  emptyIconWrap: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   emptyText: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
-    color: '#666666',
-    marginTop: 40,
+    color: '#F2F2F7',
+    marginBottom: 8,
+  },
+  emptySubtext: {
+    fontSize: 15,
+    color: 'rgba(235,235,245,0.5)',
+    textAlign: 'center',
   },
   footer: {
     padding: 24,
-    paddingBottom: 32,
+    paddingBottom: Platform.OS === 'ios' ? 0 : 32,
   },
   ctaButton: {
-    backgroundColor: '#FF2A00', // Stark red
-    paddingVertical: 20,
+    backgroundColor: '#CC8800',
+    height: 56,
+    borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 64, // Apple HIG minimum 44pt
   },
   ctaButtonPressed: {
-    backgroundColor: '#CC2200',
+    opacity: 0.8,
   },
   ctaText: {
-    fontSize: 20,
-    fontWeight: '900',
-    color: '#FFFFFF',
-    letterSpacing: 1,
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#000000',
+    letterSpacing: -0.3,
   },
 });
