@@ -721,7 +721,7 @@ export function CadencePaperStudio({
   useEffect(() => { sidebarOpenRef.current = sidebarOpen; }, [sidebarOpen]);
 
   const screenWidth = Dimensions.get('window').width;
-  const SIDEBAR_WIDTH = Math.min(280, screenWidth * 0.85);
+  const SIDEBAR_WIDTH = Math.min(310, screenWidth * 0.85);
   const sidebarPanX = useRef(new Animated.Value(-SIDEBAR_WIDTH)).current;
 
     const sidebarPanResponder = useRef(
