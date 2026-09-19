@@ -226,6 +226,28 @@ export const migrations: Migration[] = [
       `);
     },
   },
+  {
+    version: 10,
+    description: 'Add is_pinned to song_context for Claude-style sidebar, and create song_attachments for Apple Journal-style vision board.',
+    up: (db) => {
+      // 1. Add is_pinned to song_context
+      db.execSync(`ALTER TABLE song_context ADD COLUMN is_pinned INTEGER NOT NULL DEFAULT 0;`);
+      
+      // 2. Create song_attachments table for Vision Board media
+      db.execSync(`
+        CREATE TABLE IF NOT EXISTS song_attachments (
+          id TEXT PRIMARY KEY,
+          song_id TEXT NOT NULL REFERENCES song_context(id),
+          type TEXT NOT NULL, /* 'image', 'audio', 'map', 'link' */
+          uri TEXT NOT NULL,
+          metadata_json TEXT, /* e.g. duration, location coordinates, caption */
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_song_attachments_song_id ON song_attachments(song_id);
+      `);
+    },
+  },
 ];
 
 export function assertMigrationsWellFormed(list: Migration[]): void {

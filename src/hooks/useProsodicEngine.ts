@@ -18,7 +18,7 @@ import type { TimeSignature } from '@/utils/tempoDensity';
 
 export function useProsodicEngine(
   lyrics: string,
-  bpm: number = 90,
+  bpm: number = 120,
   timeSignature: TimeSignature = '4/4',
   title: string = 'Untitled Verse',
   statedAspiration: AspirationLabel = 'aggressive',

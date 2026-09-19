@@ -41,7 +41,7 @@ export const ENGINE_IDS = {
  * still lay out bars. It never reaches a metric — `measurability.ts` refuses
  * tempo-dependent metrics when the real BPM is null.
  */
-const LAYOUT_FALLBACK_BPM = 90;
+const LAYOUT_FALLBACK_BPM = 120;
 
 /**
  * Composite weights.

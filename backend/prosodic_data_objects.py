@@ -249,7 +249,7 @@ class SongSection:
     cadence_events: List[CadenceEvent] = field(default_factory=list)
     motif_events: List[MotifEvent] = field(default_factory=list)
     bar_count: int = 0
-    bpm: float = 90.0
+    bpm: float = 120.0
     density_gradient: List[float] = field(default_factory=list)
     arc_type: ArcType = ArcType.FLAT
     average_syllables_per_bar: float = 0.0
@@ -292,7 +292,7 @@ class SongAnalysis:
     global_rhyme_events: List[RhymeEvent] = field(default_factory=list)
     global_motif_events: List[MotifEvent] = field(default_factory=list)
     total_bars: int = 0
-    bpm: float = 90.0
+    bpm: float = 120.0
     emotional_signature: Dict[str, float] = field(default_factory=dict)
     aspiration_gap_score: Optional[float] = None
     metadata: Dict[str, Any] = field(default_factory=dict)

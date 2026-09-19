@@ -147,7 +147,7 @@ export function CadenceBarRow({
   const prevHeatColorRef = useRef<string | null>(null);
 
   React.useEffect(() => {
-    if (heatColor === '#EF4444' && prevHeatColorRef.current !== '#EF4444') {
+    if (heatColor === '#007AFF' && prevHeatColorRef.current !== '#007AFF') {
       blinkAnim.setValue(1);
       Animated.loop(
         Animated.sequence([
@@ -310,7 +310,7 @@ export function CadenceBarRow({
     );
 
     const isRhyming = tok.colorId > 0;
-    const wordColor = isRhyming ? tok.color : '#FFFFFF';
+    const wordColor = isRhyming ? tok.color : '#000000';
 
     return (
       <Pressable
@@ -336,7 +336,7 @@ export function CadenceBarRow({
           <View style={styles.syllableClusterRow}>
             {wordSylls.map((syl, sIdx) => {
               const isSyllRhyming = syl.colorId > 0;
-              const syllColor = isSyllRhyming ? syl.color : '#FFFFFF';
+              const syllColor = isSyllRhyming ? syl.color : '#000000';
               return (
                 <View
                   key={`syll-${sIdx}-${syl.text}`}
@@ -386,11 +386,11 @@ export function CadenceBarRow({
     );
   };
 
-  const shouldRenderRhymeChips = showRhymeMap && !isActive && tokensToRender.length > 0;
+  const shouldRenderRhymeChips = showRhymeMap && tokensToRender.length > 0;
 
   return (
     <View style={[styles.barOuterWrapper, { opacity: (isSyncSelectionMode && !isSelectedForSync) ? 0.3 : 1 }]}>
-      {isSyncSelectionMode ? (<Pressable onPress={onToggleSyncSelection} style={{ width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: '#fff', backgroundColor: isSelectedForSync ? '#EF4444' : 'transparent', marginRight: 12, marginTop: 12, justifyContent: 'center', alignItems: 'center' }}>{isSelectedForSync ? <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: '#fff' }} /> : null}</Pressable>) : null}
+      {isSyncSelectionMode ? (<Pressable onPress={onToggleSyncSelection} style={{ width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: '#000000', backgroundColor: isSelectedForSync ? '#007AFF' : 'transparent', marginRight: 12, marginTop: 12, justifyContent: 'center', alignItems: 'center' }}>{isSelectedForSync ? <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: '#000000' }} /> : null}</Pressable>) : null}
       <Pressable
         onPress={() => {
           onFocus();
@@ -457,7 +457,7 @@ export function CadenceBarRow({
 
           {/* Lyric Input Field / Interactive Rhyme Chips */}
           <View style={styles.inputWrapper}>
-            {shouldRenderRhymeChips ? (
+            {shouldRenderRhymeChips && !isActive && (
               <Pressable
                 onPress={() => {
                   onFocus();
@@ -467,27 +467,60 @@ export function CadenceBarRow({
               >
                 {inBarTokens.map((tok, tIdx) => renderToken(tok, tIdx, 'in-bar'))}
               </Pressable>
-            ) : (
-              <TextInput
-                ref={inputRef}
-                value={bar.rawText}
-                onChangeText={onChangeText}
-                onFocus={onFocus}
-                onSubmitEditing={handleSubmit}
-                onKeyPress={handleKeyPress}
-                onSelectionChange={(e) => setCursorPos(e.nativeEvent.selection.start)}
-                {...(Platform.OS === 'web' ? ({ onPaste: handlePaste } as any) : {})}
-                blurOnSubmit={false}
-                returnKeyType="next"
-                autoCorrect={false}
-                autoCapitalize="sentences"
-                placeholder=""
-                style={[
-                  styles.textInput,
-                  textStyle,
-                  Platform.OS === 'web' ? ({ outlineStyle: 'none' } as any) : null,
-                ]}
-              />
+            )}
+
+            {/* When active, show the text input but overlay the exact text styling underneath */}
+            <TextInput
+              ref={inputRef}
+              value={bar.rawText}
+              onChangeText={onChangeText}
+              onFocus={onFocus}
+              onSubmitEditing={handleSubmit}
+              onKeyPress={handleKeyPress}
+              onSelectionChange={(e) => setCursorPos(e.nativeEvent.selection.start)}
+              {...(Platform.OS === 'web' ? ({ onPaste: handlePaste } as any) : {})}
+              blurOnSubmit={false}
+              returnKeyType="next"
+              autoCorrect={false}
+              autoCapitalize="sentences"
+              placeholder=""
+              style={[
+                styles.textInput,
+                textStyle,
+                (isActive && shouldRenderRhymeChips) ? { color: 'transparent', caretColor: '#000000', zIndex: 2 } : null,
+                !isActive ? { position: 'absolute', opacity: 0, height: 0, width: 0 } : null,
+                Platform.OS === 'web' ? ({ outlineStyle: 'none' } as any) : null,
+              ]}
+            />
+            
+            {isActive && shouldRenderRhymeChips && (
+              <View style={[StyleSheet.absoluteFill, { zIndex: 1, paddingVertical: 8, paddingHorizontal: 8 }]} pointerEvents="none">
+                <Text style={[styles.wordChipText, textStyle, { padding: 0, margin: 0 }]}>
+                  {inBarTokens.map((tok, tIdx) => {
+                    if (!tok.isWord) {
+                      return <Text key={`space-${tIdx}`} style={{ color: 'rgba(17, 24, 39, 0.4)' }}>{tok.text}</Text>;
+                    }
+                    const isRhyming = tok.colorId > 0;
+                    const wordColor = isRhyming ? tok.color : '#000000';
+                    return (
+                      <Text
+                        key={`tok-${tIdx}`}
+                        style={[
+                          { color: wordColor },
+                          isRhyming && {
+                            textDecorationLine: 'underline',
+                            textDecorationColor: tok.color,
+                            textDecorationStyle: tok.isRelative ? 'dashed' : 'solid',
+                          }
+                        ]}
+                      >
+                        {tok.text}
+                      </Text>
+                    );
+                  })}
+                  {bar.rawText.endsWith(' ') && <Text style={{ color: 'transparent' }}> </Text>}
+                </Text>
+              </View>
             )}
           </View>
 
@@ -527,20 +560,20 @@ export function CadenceBarRow({
               style={styles.recommendationActionBtn}
               accessibilityLabel="Apply intelligent split recommendation"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.59-9.21l-5.44-5.44"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000000" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.59-9.21l-5.44-5.44"/></svg>
             </Pressable>
             <Pressable 
               onPress={() => setShowRecommendation(false)} 
               style={styles.recommendationActionBtn}
               accessibilityLabel="Dismiss recommendation"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000000" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </Pressable>
           </Animated.View>
           <Pressable
             onPress={(e) => {
               e.stopPropagation();
-              if (heatColor === '#EF4444') {
+              if (heatColor === '#007AFF') {
                 setShowRecommendation(true);
               }
             }}
@@ -583,7 +616,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     minHeight: 44,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
+    borderBottomColor: 'rgba(17, 24, 39, 0.08)',
     paddingHorizontal: 12,
   },
   rowContainerBorderless: {
@@ -591,7 +624,7 @@ const styles = StyleSheet.create({
     borderBottomColor: 'transparent',
   },
   activeRowHighlight: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: 'rgba(17, 24, 39, 0.05)',
   },
   barNumberContainer: {
     width: 28,
@@ -601,11 +634,11 @@ const styles = StyleSheet.create({
   barNumberText: {
     fontSize: 14,
     fontWeight: '500',
-    color: 'rgba(255, 255, 255, 0.4)',
+    color: 'rgba(17, 24, 39, 0.4)',
     fontVariant: ['tabular-nums'],
   },
   activeBarNumberText: {
-    color: '#FFFFFF',
+    color: '#000000',
     fontWeight: '700',
   },
   preBarContainer: {
@@ -643,7 +676,7 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   crossBarPill: {
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: 'rgba(17, 24, 39, 0.12)',
     paddingHorizontal: 4,
     borderRadius: 3,
     marginHorizontal: 2,
@@ -669,7 +702,7 @@ const styles = StyleSheet.create({
   markerText: {
     fontSize: 16,
     fontWeight: '700',
-    color: 'rgba(255, 255, 255, 0.45)',
+    color: 'rgba(17, 24, 39, 0.45)',
     letterSpacing: -0.5,
   },
   barOuterWrapper: {
@@ -683,7 +716,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     lineHeight: 22,
-    color: '#FFFFFF',
+    color: '#000000',
     paddingVertical: 8,
     paddingHorizontal: 8,
     fontFamily: Platform.select({
@@ -726,7 +759,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.2,
   },
   whitespaceText: {
-    color: 'rgba(255, 255, 255, 0.4)',
+    color: 'rgba(17, 24, 39, 0.4)',
     fontWeight: '400',
   },
   syllableContainer: {
@@ -752,15 +785,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   syllableTextActive: {
-    color: '#FFFFFF',
+    color: '#000000',
     fontWeight: '600',
   },
   syllableTextZero: {
-    color: 'rgba(255, 255, 255, 0.25)',
+    color: 'rgba(17, 24, 39, 0.25)',
     fontWeight: '400',
   },
   syllableTextHighlight: {
-    color: '#FFFFFF', // Amber highlight when editing
+    color: '#000000', // Amber highlight when editing
     fontWeight: '700',
   },
   recommendationActionBtn: {

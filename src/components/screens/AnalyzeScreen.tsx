@@ -47,7 +47,7 @@ interface AnalyzeScreenProps {
 }
 
 export function AnalyzeScreen({ onClose }: AnalyzeScreenProps) {
-  const [bpm, setBpm] = useState('90');
+  const [bpm, setBpm] = useState('120');
   const [verseText, setVerseText] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -147,7 +147,7 @@ export function AnalyzeScreen({ onClose }: AnalyzeScreenProps) {
             value={bpm}
             onChangeText={setBpm}
             keyboardType="number-pad"
-            placeholder="90"
+            placeholder="120"
             placeholderTextColor={colors.textFaint}
           />
         </View>

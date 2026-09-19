@@ -11,6 +11,7 @@ interface SongContextRow {
   body_text: string | null;
   backing_track_uri: string | null;
   audio_offset_ms: number | null;
+  is_pinned: number;
   created_at: string;
   updated_at: string;
 }
@@ -26,6 +27,7 @@ function fromRow(row: SongContextRow): SongContext {
     bodyText: row.body_text,
     backingTrackUri: row.backing_track_uri,
     audioOffsetMs: row.audio_offset_ms,
+    isPinned: row.is_pinned === 1,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -35,8 +37,8 @@ export function insertSongContext(db: SQLiteDatabaseLike, song: SongContext): vo
   db.runSync(
     `INSERT INTO song_context
        (id, title, input_mode, bpm, bpm_source, structure_json, body_text,
-        backing_track_uri, audio_offset_ms, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        backing_track_uri, audio_offset_ms, is_pinned, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       song.id,
       song.title,
@@ -47,6 +49,7 @@ export function insertSongContext(db: SQLiteDatabaseLike, song: SongContext): vo
       song.bodyText,
       song.backingTrackUri ?? null,
       song.audioOffsetMs ?? null,
+      song.isPinned ? 1 : 0,
       song.createdAt,
       song.updatedAt,
     ],
@@ -144,6 +147,28 @@ export function listSongContexts(
   return rows.map(fromRow);
 }
 
+/** Fetch all pinned song contexts sorted by most recently updated. */
+export function listPinnedSongContexts(db: SQLiteDatabaseLike): SongContext[] {
+  const rows = db.getAllSync<SongContextRow>(
+    'SELECT * FROM song_context WHERE is_pinned = 1 ORDER BY updated_at DESC',
+  );
+  return rows.map(fromRow);
+}
+
+/** Toggles the pinned status of a song. */
+export function toggleSongPin(
+  db: SQLiteDatabaseLike,
+  songId: string,
+  isPinned: boolean,
+  updatedAt: string,
+): void {
+  db.runSync('UPDATE song_context SET is_pinned = ?, updated_at = ? WHERE id = ?', [
+    isPinned ? 1 : 0,
+    updatedAt,
+    songId,
+  ]);
+}
+
 /**
  * Offline resume for the Song View: the draft most recently touched,
  * regardless of input mode.
@@ -154,3 +179,4 @@ export function getMostRecentSongContext(db: SQLiteDatabaseLike): SongContext | 
   );
   return row ? fromRow(row) : null;
 }
+

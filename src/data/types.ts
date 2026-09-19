@@ -195,6 +195,21 @@ export interface SongContext {
   backingTrackUri?: string | null;
   /** Offset in milliseconds for beat alignment. */
   audioOffsetMs?: number | null;
+  /** Is this project pinned to the Claude-style sidebar? */
+  isPinned: boolean;
   createdAt: string; // ISO 8601
   updatedAt: string; // ISO 8601
+}
+
+export type AttachmentType = 'image' | 'audio' | 'map' | 'link';
+
+/** Vision Board / Apple Journal style media attachments tied to a Song. */
+export interface SongAttachment {
+  id: string;
+  songId: string;
+  type: AttachmentType;
+  uri: string;
+  metadata?: string | null; // e.g. location, duration, caption
+  createdAt: string;
+  updatedAt: string;
 }

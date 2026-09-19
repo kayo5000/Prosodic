@@ -78,7 +78,7 @@ export function getBarMetrics(
   isHalfTime: boolean = false,
   timeSignature: TimeSignature = '4/4',
 ): BarMetrics {
-  const safeBpm = Math.max(30, Math.min(300, bpm || 90));
+  const safeBpm = Math.max(30, Math.min(300, bpm || 120));
   const preset = STYLE_PRESETS[presetKey] ?? STYLE_PRESETS.dense;
   const barMultiplier = isHalfTime ? 2 : 1;
 

@@ -773,7 +773,7 @@ export function classifyGenreAndStyle(
  * reach a metric: `trackMeta.bpm` carries the real value (null when unknown),
  * and `measurability.ts` refuses tempo-dependent metrics without one.
  */
-const LAYOUT_FALLBACK_BPM = 90;
+const LAYOUT_FALLBACK_BPM = 120;
 
 export function analyzeTrackUnified(
   lyrics: string,
